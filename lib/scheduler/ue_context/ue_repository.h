@@ -83,7 +83,21 @@ public:
   /// \brief Initiate removal of existing UE from the repository.
   void schedule_ue_rem(ue_config_delete_event ev);
 
+  /// \brief Deactivates the UE, which stops being scheduled in any of its cells.
+  void deactivate_ue(du_ue_index_t ue_index);
+
   bounded_bitset<MAX_NOF_DU_UES> get_ues_with_pending_newtx_data(ran_slice_id_t slice_id, bool is_dl) const;
+
+  /// Whether any active UE in fallback has the given cell as PCell.
+  bool has_fallback_ues(du_cell_index_t pcell_index) const;
+
+  /// Retrieves the UEs in fallback with the given PCell and with pending newTx data.
+  bounded_bitset<MAX_NOF_DU_UES> get_fallback_ues_with_pending_newtx_data(du_cell_index_t pcell_index,
+                                                                          bool            is_dl) const;
+
+  /// Retrieves the UEs configured in the given cell with pending newTx data for the given RAN slice.
+  bounded_bitset<MAX_NOF_DU_UES>
+  get_ues_with_pending_newtx_data(ran_slice_id_t slice_id, du_cell_index_t cell_index, bool is_dl) const;
 
   ue*       find(du_ue_index_t ue_index) { return ues.contains(ue_index) ? &ues[ue_index] : nullptr; }
   const ue* find(du_ue_index_t ue_index) const { return ues.contains(ue_index) ? &ues[ue_index] : nullptr; }
@@ -103,6 +117,12 @@ public:
   void handle_cell_deactivation(du_cell_index_t cell_index);
 
 private:
+  /// Updates the masks of the UE in each of its cells, given the state of its PCell.
+  void update_cell_ue_state(const ue& u);
+
+  /// Moves the UE to fallback, where only its PCell schedules it.
+  void enter_fallback(ue& u);
+
   /// Force the removal of the UE without waiting for the flushing of pending events.
   void rem_ue(const ue& u);
 

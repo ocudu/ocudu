@@ -109,7 +109,9 @@ units::bytes ue::pending_ul_newtx_bytes() const
   static constexpr unsigned SR_GRANT_BYTES = 512;
 
   // Sum the last BSRs.
-  units::bytes pending_bytes{lc_ch_mgr.ul_pending_bytes()};
+  // In fallback, only the SRB LCG is served.
+  units::bytes pending_bytes{get_pcell().is_in_fallback_mode() ? lc_ch_mgr.fallback_ul_pending_bytes()
+                                                               : lc_ch_mgr.ul_pending_bytes()};
 
   // Subtract the bytes already allocated in UL HARQs.
   for (const ue_cell* ue_cc : cells.ue_cells) {

@@ -250,10 +250,8 @@ bool cell_group_event_handler_impl::handle_ue_deactivation_request(du_ue_index_t
     log_invalid_ue_index(ue_idx, "ue_deactivation");
     return false;
   }
-  auto& u = ue_db[ue_idx];
-
   // Deactivate the UE (no more grants after this point).
-  u.deactivate();
+  ue_db.deactivate_ue(ue_idx);
 
   // Schedule removal of UE from slice scheduler so it doesn't get scheduled PDSCH/PUSCH.
   slice_sched.rem_ue(ue_idx);
@@ -271,11 +269,6 @@ bool cell_group_event_handler_impl::handle_ul_bsr_indication(const ul_bsr_indica
 
   // Handle event.
   u.handle_bsr_indication(bsr_ind);
-
-  if (u.get_pcell().is_in_fallback_mode()) {
-    // Signal SRB fallback scheduler with the new SRB0/SRB1 buffer state.
-    fallback_sched.handle_ul_bsr_indication(bsr_ind.ue_index, bsr_ind);
-  }
 
   return true;
 }
@@ -310,9 +303,6 @@ void cell_group_event_handler_impl::handle_sr_detected(du_ue_index_t ue_index, s
   }
 
   u.handle_sr_indication(uci_slot);
-  if (ue_cc->is_in_fallback_mode()) {
-    fallback_sched.handle_sr_indication(ue_index);
-  }
 }
 
 void cell_group_event_handler_impl::handle_ul_n_ta_update(du_ue_index_t              ue_index,
@@ -447,10 +437,6 @@ bool cell_group_event_handler_impl::handle_dl_buffer_state_indication(const dl_b
 
   // Forward DL BO update to UE.
   u.handle_dl_buffer_state_indication(dl_bo.lcid, dl_bo.bs, dl_bo.hol_toa);
-  if (u.get_pcell().is_in_fallback_mode()) {
-    // Signal SRB fallback scheduler with the new SRB0/SRB1 buffer state.
-    fallback_sched.handle_dl_buffer_state_indication(dl_bo.ue_index);
-  }
 
   return true;
 }

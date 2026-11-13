@@ -305,9 +305,6 @@ protected:
       bench->ue_db[ue_idx].handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_idx, lcid_dl_sch_t::UE_CON_RES_ID});
       bench->fallback_sched.handle_conres_indication(ue_idx);
     }
-
-    // Notify scheduler of DL buffer state.
-    bench->fallback_sched.handle_dl_buffer_state_indication(ue_idx);
   }
 
   void push_buffer_state_to_ul_ue(du_ue_index_t ue_idx, slot_point sl, unsigned buffer_size)
@@ -321,18 +318,12 @@ protected:
     msg.reported_lcgs.emplace_back(ul_bsr_lcg_report{.lcg_id = uint_to_lcg_id(0U), .nof_bytes = buffer_size});
 
     bench->ue_db[ue_idx].handle_bsr_indication(msg);
-
-    // Notify scheduler of UL buffer status report.
-    bench->fallback_sched.handle_ul_bsr_indication(ue_idx, msg);
   }
 
   void generate_sr_for_ue(du_ue_index_t ue_idx, slot_point sl)
   {
     // Notification from upper layers of UL .
     bench->ue_db[ue_idx].handle_sr_indication(current_slot);
-
-    // Notify scheduler of SR.
-    bench->fallback_sched.handle_sr_indication(ue_idx);
   }
 
   unsigned get_srb0_pending_bytes(du_ue_index_t ue_idx)
@@ -1460,7 +1451,7 @@ TEST_P(fallback_scheduler_srb1_segmentation, test_scheduling_srb1_segmentation)
 
   for (auto& tester : ues_testers) {
     ASSERT_EQ(0, tester.missing_retx);
-    ASSERT_FALSE(tester.test_ue.logical_channels().has_dl_pending_bytes())
+    ASSERT_FALSE(tester.test_ue.logical_channels().has_fallback_dl_pending_bytes())
         << fmt::format("UE {} has still pending DL bytes", tester.test_ue.ue_index);
   }
 }
@@ -1671,6 +1662,31 @@ protected:
   const unsigned MAC_SRB_SDU_SIZE   = 101;
   const unsigned MAX_TEST_RUN_SLOTS = 50;
 };
+
+TEST_F(fallback_sched_ue_w_out_pucch_cfg, oldest_conres_ce_is_scheduled_first)
+{
+  // UE 1 sent its Msg3 before UE 0, so its ConRes CE is older.
+  const du_ue_index_t newer_ue_idx = to_du_ue_index(0);
+  const du_ue_index_t older_ue_idx = to_du_ue_index(1);
+  ASSERT_TRUE(add_ue(to_rnti(0x4601), newer_ue_idx, false, current_slot));
+  ASSERT_TRUE(add_ue(to_rnti(0x4602), older_ue_idx, false, current_slot - 2));
+  for (du_ue_index_t ue_idx : {newer_ue_idx, older_ue_idx}) {
+    bench->ue_db[ue_idx].handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_idx, lcid_dl_sch_t::UE_CON_RES_ID});
+    bench->fallback_sched.handle_conres_indication(ue_idx);
+  }
+
+  // Order in which the UEs got their first PDSCH.
+  std::vector<du_ue_index_t> pdsch_order;
+  for (unsigned i = 0; i != MAX_TEST_RUN_SLOTS and pdsch_order.size() < 2; ++i) {
+    run_slot();
+    for (const dl_msg_alloc& grant : bench->res_grid[0].result_reader().dl().ue_grants()) {
+      if (std::find(pdsch_order.begin(), pdsch_order.end(), grant.context.ue_index) == pdsch_order.end()) {
+        pdsch_order.push_back(grant.context.ue_index);
+      }
+    }
+  }
+  ASSERT_EQ(pdsch_order, (std::vector<du_ue_index_t>{older_ue_idx, newer_ue_idx}));
+}
 
 TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_srb0_is_retx_ed_only_pucch_common_is_scheduled)
 {

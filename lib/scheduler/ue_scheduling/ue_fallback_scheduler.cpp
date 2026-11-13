@@ -56,9 +56,9 @@ ue_fallback_scheduler::ue_fallback_scheduler(const scheduler_ue_expert_config& e
   // Pre-reserve memory to avoid allocations in RT.
   // Note: The number of tracked HARQs can exceed the number of UE contexts, but UEs in fallback mode generally have a
   // single active HARQ, and only a fraction of the cell UEs are in fallback mode at any given time.
-  pending_dl_ues_new_tx.reserve(cell_cfg.max_nof_ue_contexts);
   ongoing_ues_ack_retxs.reserve(cell_cfg.max_nof_ue_contexts);
-  pending_ul_ues.reserve(cell_cfg.max_nof_ue_contexts);
+  dl_candidates.reserve(cell_cfg.max_nof_ue_contexts);
+  ul_candidates.reserve(cell_cfg.max_nof_ue_contexts);
 
   // NOTE 1: We use a std::vector instead of a std::array because we can later on initialize the vector with the minimum
   // value of k1, passed through the expert config.
@@ -86,10 +86,14 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
 
   slot_indication(sched_ref_slot);
 
+  // Rotate the UE index from which candidates of equal priority are served.
+  ++rr_offset;
+
   // Reset the scheduling counters; this takes into account retxs and new txs.
   sched_attempts_cnt = 0;
 
-  if (ues.empty()) {
+  if (not ues.has_fallback_ues(cell_cfg.cell_index) and ongoing_ues_ack_retxs.empty() and ues_with_ul_harqs.none()) {
+    // No UE in fallback in this cell and no HARQ process left to track.
     return;
   }
 
@@ -98,9 +102,17 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
     return;
   }
 
+  // The candidates with a ConRes CE come first, followed by the ones with SRB0 and SRB1 data.
+  fill_dl_new_tx_candidates();
+  const auto srb_begin =
+      std::find_if(dl_candidates.begin(), dl_candidates.end(), [](const ue_candidate& c) { return c.event_rank > 0; });
+  span<const ue_candidate> conres_candidates(dl_candidates.data(), srb_begin - dl_candidates.begin());
+  span<const ue_candidate> srb_candidates(dl_candidates.data() + conres_candidates.size(),
+                                          dl_candidates.size() - conres_candidates.size());
+
   // Schedule the first ConRes CE txs before any other DL or UL transmission, as the ra-ContentionResolutionTimer is
   // already running for these UEs and, under RACH load, pending ConRes CE retxs often target UEs that are gone.
-  bool stop_dl_scheduling = not schedule_dl_new_tx(res_alloc, dl_new_tx_alloc_type::conres_only);
+  bool stop_dl_scheduling = not schedule_dl_new_tx(res_alloc, conres_candidates, true);
 
   // Schedule DL retransmissions before the remaining DL and UL transmissions.
   if (not stop_dl_scheduling) {
@@ -114,43 +126,15 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
     return;
   }
 
-  // Schedule the remaining DL new txs with the following priority: SRB0 and SRB1.
-  if (not schedule_dl_new_tx(res_alloc, dl_new_tx_alloc_type::srb0)) {
-    return;
-  }
-  schedule_dl_new_tx(res_alloc, dl_new_tx_alloc_type::srb1);
+  // Schedule the remaining DL new txs, with SRB0 before SRB1.
+  schedule_dl_new_tx(res_alloc, srb_candidates, false);
 }
 
 void ue_fallback_scheduler::stop()
 {
   ongoing_ues_ack_retxs.clear();
   slots_with_no_pdxch_space = {};
-  pending_dl_ues_new_tx.clear();
-  pending_ul_ues.clear();
-}
-
-void ue_fallback_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_index)
-{
-  if (not ues.contains(ue_index)) {
-    logger.error("ue={}: DL Buffer Occupancy update discarded. UE is not found in the scheduler", ue_index);
-    return;
-  }
-  ue& u = ues[ue_index];
-  if (not u.get_pcell().is_in_fallback_mode()) {
-    logger.error("ue={}: DL Buffer Occupancy update discarded. UE is not in fallback mode", ue_index);
-    return;
-  }
-
-  auto ue_it = std::find_if(pending_dl_ues_new_tx.begin(),
-                            pending_dl_ues_new_tx.end(),
-                            [ue_index](const fallback_ue& ue) { return ue.ue_index == ue_index; });
-
-  if (ue_it != pending_dl_ues_new_tx.end()) {
-    return;
-  }
-
-  // The UE doesn't exist in the internal fallback scheduler list, add it.
-  pending_dl_ues_new_tx.push_back({ue_index});
+  ues_with_ul_harqs.reset();
 }
 
 void ue_fallback_scheduler::handle_conres_indication(du_ue_index_t ue_index)
@@ -170,59 +154,6 @@ void ue_fallback_scheduler::handle_conres_indication(du_ue_index_t ue_index)
 
   // Mark the start of the conRes timer.
   u.drx_controller().on_con_res_start();
-
-  auto ue_it = std::find_if(pending_dl_ues_new_tx.begin(),
-                            pending_dl_ues_new_tx.end(),
-                            [ue_index](const fallback_ue& ue) { return ue.ue_index == ue_index; });
-
-  // Entry for this UE already exists.
-  if (ue_it != pending_dl_ues_new_tx.end()) {
-    return;
-  }
-
-  pending_dl_ues_new_tx.push_back({ue_index});
-}
-
-void ue_fallback_scheduler::handle_ul_bsr_indication(du_ue_index_t ue_index, const ul_bsr_indication_message& bsr_ind)
-{
-  if (not ues.contains(ue_index) or not ues[ue_index].get_pcell().is_in_fallback_mode()) {
-    logger.error("ue_index={} not found in the scheduler or not in fallback", ue_index);
-    return;
-  }
-
-  const auto* srb_lcg_report =
-      std::find_if(bsr_ind.reported_lcgs.begin(), bsr_ind.reported_lcgs.end(), [](const auto& lcg_report) {
-        // We assume the LCG ID for SRB is 0.
-        constexpr lcg_id_t srb_lcg_id = uint_to_lcg_id(0U);
-        return lcg_report.lcg_id == srb_lcg_id;
-      });
-  const unsigned bsr_bytes = srb_lcg_report != bsr_ind.reported_lcgs.end() ? srb_lcg_report->nof_bytes : 0U;
-  if (bsr_bytes == 0) {
-    return;
-  }
-
-  auto ue_it = std::find(pending_ul_ues.begin(), pending_ul_ues.end(), ue_index);
-
-  // For UL UEs, we don't keep an internal estimate of the UL traffic, but we rely on the UL logical channel manager for
-  // that task. Thus, compared to the DL case, the only operation that is needed for the UL is the addition of a new UE
-  // to the pending UL UEs list.
-  if (ue_it == pending_ul_ues.end()) {
-    pending_ul_ues.emplace_back(ue_index);
-  }
-}
-
-void ue_fallback_scheduler::handle_sr_indication(du_ue_index_t ue_index)
-{
-  if (not ues.contains(ue_index) or not ues[ue_index].get_pcell().is_in_fallback_mode()) {
-    logger.error("ue_index={} not found in the scheduler or not in fallback", ue_index);
-    return;
-  }
-
-  auto ue_it = std::find(pending_ul_ues.begin(), pending_ul_ues.end(), ue_index);
-
-  if (ue_it == pending_ul_ues.end()) {
-    pending_ul_ues.emplace_back(ue_index);
-  }
 }
 
 bool ue_fallback_scheduler::schedule_dl_retx(cell_resource_allocator& res_alloc)
@@ -245,20 +176,44 @@ bool ue_fallback_scheduler::schedule_dl_retx(cell_resource_allocator& res_alloc)
 void ue_fallback_scheduler::schedule_ul_new_tx_and_retx(cell_resource_allocator& res_alloc)
 {
   // Processes all the UL UEs at once, including UEs with new transmissions and UEs with retransmissions.
-  for (auto next_ue = pending_ul_ues.begin(); next_ue != pending_ul_ues.end();) {
-    auto& u = ues[*next_ue];
+  bounded_bitset<MAX_NOF_DU_UES> ul_ues = ues.get_fallback_ues_with_pending_newtx_data(cell_cfg.cell_index, false);
+  if (ul_ues.size() < ues_with_ul_harqs.size()) {
+    ul_ues.resize(ues_with_ul_harqs.size());
+  }
+  ues_with_ul_harqs.for_each(0, ues_with_ul_harqs.size(), [&ul_ues](size_t ue_idx) { ul_ues.set(ue_idx); });
+
+  // Serve the oldest SRs first.
+  ul_candidates.clear();
+  ul_ues.for_each(0, ul_ues.size(), [this](size_t ue_idx) {
+    const auto& lchs = ues[to_du_ue_index(ue_idx)].logical_channels();
+    ul_candidates.push_back(
+        ue_candidate{to_du_ue_index(ue_idx), 0, lchs.has_pending_sr() ? lchs.pending_sr_slot_rx() : slot_point{}});
+  });
+  sort_candidates(ul_candidates);
+
+  for (const ue_candidate& candidate : ul_candidates) {
+    const du_ue_index_t ue_index = candidate.ue_index;
+    auto&               u        = ues[ue_index];
     // While the UE is in pending_cfra state, its UL HARQ process 0 (Msg3) is owned by the RA scheduler until Msg3 is
     // ACKed. Scheduling a UL grant here would collide with the RA scheduler on the same HARQ process, so skip it.
     if (u.get_pcell().get_pcell_state().conres_st == ue_conres_state::pending_cfra) {
-      ++next_ue;
       continue;
     }
     ul_srb_sched_outcome outcome = schedule_ul_ue(res_alloc, u);
+
+    // Keep track of the UE until its UL HARQ processes are empty, for it to be considered for retransmissions.
+    const auto& harqs = u.get_pcell().harqs;
+    if (harqs.nof_ul_harqs() != harqs.nof_empty_ul_harqs()) {
+      if (ues_with_ul_harqs.size() <= ue_index) {
+        ues_with_ul_harqs.resize(ue_index + 1);
+      }
+      ues_with_ul_harqs.set(ue_index);
+    }
+
     if (outcome == ul_srb_sched_outcome::stop_ul_scheduling) {
       // If there is no PDCCH space, then stop the scheduling for all UL UEs.
       return;
     }
-    ++next_ue;
   }
 }
 
@@ -273,17 +228,57 @@ ue_fallback_scheduler::dl_new_tx_alloc_type ue_fallback_scheduler::get_dl_new_tx
   return u.logical_channels().is_con_res_id_pending() ? dl_new_tx_alloc_type::conres_only : dl_new_tx_alloc_type::error;
 }
 
-bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_alloc,
-                                               dl_new_tx_alloc_type     selected_alloc_type)
+void ue_fallback_scheduler::sort_candidates(std::vector<ue_candidate>& candidates) const
 {
-  for (auto next_ue = pending_dl_ues_new_tx.begin(); next_ue != pending_dl_ues_new_tx.end();) {
-    // Determine if we should schedule ConRes, SRB0, SRB1 for the given UE.
-    auto& u = ues[next_ue->ue_index];
+  // Distance of the UE index from the rotating offset, so that no UE of equal priority is always served last.
+  auto rr_rank = [this](du_ue_index_t ue_idx) {
+    return (static_cast<unsigned>(ue_idx) + MAX_NOF_DU_UES - rr_offset % MAX_NOF_DU_UES) % MAX_NOF_DU_UES;
+  };
+  std::sort(candidates.begin(), candidates.end(), [&rr_rank](const ue_candidate& lhs, const ue_candidate& rhs) {
+    if (lhs.event_rank != rhs.event_rank) {
+      return lhs.event_rank < rhs.event_rank;
+    }
+    if (lhs.event_slot.valid() != rhs.event_slot.valid()) {
+      return lhs.event_slot.valid();
+    }
+    if (lhs.event_slot.valid() and lhs.event_slot != rhs.event_slot) {
+      return lhs.event_slot < rhs.event_slot;
+    }
+    return rr_rank(lhs.ue_index) < rr_rank(rhs.ue_index);
+  });
+}
+
+void ue_fallback_scheduler::fill_dl_new_tx_candidates()
+{
+  dl_candidates.clear();
+  const bounded_bitset<MAX_NOF_DU_UES> dl_ues = ues.get_fallback_ues_with_pending_newtx_data(cell_cfg.cell_index, true);
+  dl_ues.for_each(0, dl_ues.size(), [this](size_t ue_idx) {
+    const ue&   u    = ues[to_du_ue_index(ue_idx)];
+    const auto& lchs = u.logical_channels();
+    if (lchs.is_con_res_id_pending()) {
+      // The oldest ConRes CEs are the closest to the expiry of the ra-ContentionResolutionTimer.
+      dl_candidates.push_back(ue_candidate{
+          u.ue_index, 0, u.get_pcell().get_pcell_state().conres_win_start(cell_cfg.ntn_ul_alloc_delay_slots())});
+    } else if (lchs.has_pending_bytes(LCID_SRB0)) {
+      dl_candidates.push_back(ue_candidate{u.ue_index, 1, lchs.hol_toa(LCID_SRB0)});
+    } else if (lchs.has_pending_bytes(LCID_SRB1)) {
+      dl_candidates.push_back(ue_candidate{u.ue_index, 2, lchs.hol_toa(LCID_SRB1)});
+    }
+  });
+  sort_candidates(dl_candidates);
+}
+
+bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_alloc,
+                                               span<const ue_candidate> candidates,
+                                               bool                     conres_pass)
+{
+  for (const ue_candidate& candidate : candidates) {
+    const du_ue_index_t ue_index = candidate.ue_index;
+    auto&               u        = ues[ue_index];
 
     // 2-step RACH: don't schedule ConRes CE/SRB0/SRB1 before the UE's successRAR HARQ-ACK PUCCH slot has passed.
     auto ra_it = ra_ue_repo.find(u.crnti);
     if (ra_it != ra_ue_repo.end() and ra_it->is_msgb_success_rar_pending(res_alloc.slot_tx())) {
-      ++next_ue;
       continue;
     }
 
@@ -294,66 +289,52 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
           cell_cfg.params.ssb_cfg.ssb_beams.get_beam(ra_it->ssb_index.value()));
     }
 
-    const auto alloc_type = get_dl_new_tx_alloc_type(u);
-    if (alloc_type == dl_new_tx_alloc_type::error) {
-      // The UE is not in a state for scheduling
-      logger.error("ue={}: UE is an inconsistent state in the fallback scheduler. Pending bytes={}",
-                   next_ue->ue_index,
-                   u.logical_channels().dl_pending_bytes());
-      next_ue = pending_dl_ues_new_tx.erase(next_ue);
-      continue;
-    }
-    // Any new tx carrying a ConRes CE, with or without a multiplexed SRB0/SRB1 PDU, belongs to the ConRes pass.
-    const bool has_conres_ce = u.logical_channels().is_con_res_id_pending();
-    const bool selected      = selected_alloc_type == dl_new_tx_alloc_type::conres_only
-                                   ? has_conres_ce
-                                   : (not has_conres_ce and alloc_type == selected_alloc_type);
-    if (not selected) {
-      // This type of alloc is not being prioritized.
-      ++next_ue;
-      continue;
-    }
+    // Give priority to the same UE while it has pending bytes. At each attempt, the scheduler starts from the next
+    // available slot.
+    while (u.logical_channels().has_fallback_dl_pending_bytes()) {
+      const auto alloc_type = get_dl_new_tx_alloc_type(u);
+      if (alloc_type == dl_new_tx_alloc_type::error) {
+        // The UE is not in a state for scheduling
+        logger.error("ue={}: UE is an inconsistent state in the fallback scheduler. Pending bytes={}",
+                     ue_index,
+                     u.logical_channels().fallback_dl_pending_bytes());
+        break;
+      }
+      // Any new tx carrying a ConRes CE, with or without a multiplexed SRB0/SRB1 PDU, belongs to the ConRes pass.
+      const bool has_conres_ce = u.logical_channels().is_con_res_id_pending();
+      const bool selected      = conres_pass == has_conres_ce;
+      if (not selected) {
+        // This type of alloc is not being prioritized.
+        break;
+      }
 
-    const bool srb0_or_srb1_only =
-        alloc_type != dl_new_tx_alloc_type::conres_only and not u.logical_channels().is_con_res_id_pending();
-    if (srb0_or_srb1_only and u.get_pcell().get_pcell_state().conres_st != ue_conres_state::conres_completed) {
-      // If ConRes is not completed, SRB0/SRB1 cannot be scheduled. Any MAC PDU without the ConRes MAC CE would cause
-      // Contention Resolution to fail (TS 38.331, Section 5.1.5).
-      // F1AP-created UEs can also only start to transmit after C-RNTI CE is received.
-      ++next_ue;
-      continue;
-    }
+      const bool srb0_or_srb1_only = alloc_type != dl_new_tx_alloc_type::conres_only and not has_conres_ce;
+      if (srb0_or_srb1_only and u.get_pcell().get_pcell_state().conres_st != ue_conres_state::conres_completed) {
+        // If ConRes is not completed, SRB0/SRB1 cannot be scheduled. Any MAC PDU without the ConRes MAC CE would cause
+        // Contention Resolution to fail (TS 38.331, Section 5.1.5).
+        // F1AP-created UEs can also only start to transmit after C-RNTI CE is received.
+        break;
+      }
 
-    const bool conres_ce_pending_before = u.logical_channels().is_con_res_id_pending();
+      // Make the scheduling attempt.
+      dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, std::nullopt);
+      if (outcome == dl_sched_outcome::next_ue) {
+        // Allocation failed but we can attempt with another UE.
+        break;
+      }
+      if (outcome == dl_sched_outcome::stop_dl_scheduling) {
+        // This is the case the DL fallback scheduler has reached the maximum number of scheduling attempts.
+        return false;
+      }
 
-    // Make the scheduling attempt.
-    dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, std::nullopt);
-    if (outcome == dl_sched_outcome::next_ue) {
-      // Allocation failed but we can attempt with another UE.
-      ++next_ue;
-      continue;
-    }
-    if (outcome == dl_sched_outcome::stop_dl_scheduling) {
-      // This is the case the DL fallback scheduler has reached the maximum number of scheduling attempts and the fnc
-      // returns \ref stop_dl_scheduling.
-      return false;
-    }
-
-    if (ra_it != ra_ue_repo.end() and conres_ce_pending_before and not u.logical_channels().is_con_res_id_pending()) {
-      // Free the RA entry's ring slot now that ConRes CE was scheduled, instead of waiting for the ConRes-timer
-      // sweep. erase() defers removal if a Msg3 HARQ is still awaiting ACK/CRC.
-      ra_ue_repo.erase(ra_it);
-    }
-
-    // There was a successful allocation. This does not, however, mean that the pending data was completely flushed.
-    // Move to the next UE ONLY IF the UE has no more pending bytes. This is to give priority to the same UE, if
-    // there are still some bytes left in the buffer. At the next iteration, the scheduler will try
-    // again with the same scheduler, but starting from the next available slot.
-    if (not u.logical_channels().has_dl_pending_bytes()) {
-      next_ue = pending_dl_ues_new_tx.erase(next_ue);
+      if (ra_it != ra_ue_repo.end() and has_conres_ce and not u.logical_channels().is_con_res_id_pending()) {
+        // Free the RA entry's ring slot now that ConRes CE was scheduled, instead of waiting for the ConRes-timer
+        // sweep. erase() defers removal if a Msg3 HARQ is still awaiting ACK/CRC.
+        ra_ue_repo.erase(ra_it);
+        ra_it = ra_ue_repo.end();
+      }
     }
   }
-
   return true;
 }
 
@@ -390,6 +371,10 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
                                        ue&                                   u,
                                        std::optional<dl_harq_process_handle> h_dl_retx)
 {
+  ocudu_sanity_check(u.get_pcell().cell_index == cell_cfg.cell_index and u.get_pcell().is_in_fallback_mode(),
+                     "ue={}: Only UEs in fallback with this cell as PCell are scheduled by its fallback scheduler",
+                     u.ue_index);
+
   // Search valid PDSCH time domain resource.
 
   const bool is_retx = h_dl_retx.has_value();
@@ -1067,7 +1052,7 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
   if (not is_retx) {
     build_dl_fallback_transport_block_info(
         msg.tb_list.emplace_back(), u.logical_channels(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
-    msg.context.buffer_occupancy = u.logical_channels().dl_pending_bytes();
+    msg.context.buffer_occupancy = u.logical_channels().fallback_dl_pending_bytes();
   }
 
   // Save in HARQ the parameters set for this PDCCH and PDSCH PDUs.
@@ -1080,6 +1065,10 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
 ue_fallback_scheduler::ul_srb_sched_outcome ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc,
                                                                                   ue&                      u)
 {
+  ocudu_sanity_check(u.get_pcell().cell_index == cell_cfg.cell_index and u.get_pcell().is_in_fallback_mode(),
+                     "ue={}: Only UEs in fallback with this cell as PCell are scheduled by its fallback scheduler",
+                     u.ue_index);
+
   std::optional<ul_harq_process_handle> h_ul_retx     = u.get_pcell().harqs.find_pending_ul_retx();
   const bool                            is_retx       = h_ul_retx.has_value();
   const unsigned                        pending_bytes = u.pending_ul_newtx_bytes().value();
@@ -1578,71 +1567,31 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
   slots_with_no_pdxch_space[(sl - 1).count() % FALLBACK_SCHED_RING_BUFFER_SIZE] = false;
   last_sl_ind                                                                   = sl;
 
-  // Remove any DL UE that is no longer in fallback mode. This happens when the higher layers confirm that the UE has
-  // successfully received its config.
-  for (auto ue_it = pending_dl_ues_new_tx.begin(); ue_it != pending_dl_ues_new_tx.end();) {
-    if (not ues.contains(ue_it->ue_index)) {
-      // UE was removed in the meantime.
-      logger.debug(
-          "ue={}: will be removed from fallback scheduler. Cause: not present anymore in the scheduler UE repository",
-          ue_it->ue_index);
-      auto ue_idx = ue_it->ue_index;
-      ue_it       = pending_dl_ues_new_tx.erase(ue_it);
-      rem_fallback_ue(ue_idx);
-      continue;
-    }
-    auto& u        = ues[ue_it->ue_index];
-    auto& ue_pcell = u.get_pcell();
-    if (not ue_pcell.is_in_fallback_mode()) {
-      // UE exited fallback.
-      logger.debug("ue={} rnti={}: will be removed from fallback scheduler. Cause: UE exited fallback mode",
-                   ue_it->ue_index,
-                   u.crnti);
-      ue_it = pending_dl_ues_new_tx.erase(ue_it);
-      continue;
-    }
-    if (not u.logical_channels().has_dl_pending_bytes()) {
-      // UE has no new txs pending. It can be removed.
-      logger.debug("ue={} rnti={}: will be removed from fallback scheduler. Cause: no pending new transmissions",
-                   ue_it->ue_index,
-                   u.crnti);
-      ue_it = pending_dl_ues_new_tx.erase(ue_it);
-      continue;
-    }
-
-    if (handle_conres_expiry(u, sl)) {
-      // Remove the UE from the fallback scheduler.
-      ue_it = pending_dl_ues_new_tx.erase(ue_it);
-      if (not ue_pcell.is_active()) {
+  // Deactivate the UEs with pending DL new txs whose ra-ContentionResolutionTimer expired.
+  if (ues.has_fallback_ues(cell_cfg.cell_index)) {
+    const bounded_bitset<MAX_NOF_DU_UES> dl_ues =
+        ues.get_fallback_ues_with_pending_newtx_data(cell_cfg.cell_index, true);
+    dl_ues.for_each(0, dl_ues.size(), [this, sl](size_t ue_idx) {
+      auto& u = ues[to_du_ue_index(ue_idx)];
+      if (handle_conres_expiry(u, sl) and not u.get_pcell().is_active()) {
         rem_fallback_ue(u.ue_index);
       }
-      continue;
-    }
-
-    ++ue_it;
+    });
   }
 
-  for (auto ue_it = pending_ul_ues.begin(); ue_it != pending_ul_ues.end();) {
-    if (not ues.contains(*ue_it)) {
-      // UE was removed in the meantime.
-      ue_it = pending_ul_ues.erase(ue_it);
-      continue;
+  // Stop tracking the UL HARQ processes of UEs that left fallback or have no UL HARQ process in use.
+  const bounded_bitset<MAX_NOF_DU_UES> tracked_ul_ues = ues_with_ul_harqs;
+  tracked_ul_ues.for_each(0, tracked_ul_ues.size(), [this](size_t ue_idx) {
+    const du_ue_index_t ue_index = to_du_ue_index(ue_idx);
+    if (not ues.contains(ue_index) or not ues[ue_index].get_pcell().is_in_fallback_mode()) {
+      ues_with_ul_harqs.reset(ue_idx);
+      return;
     }
-    auto& ue = ues[*ue_it];
-    if (not ue.get_pcell().is_in_fallback_mode()) {
-      // UE has left fallback mode.
-      ue_it = pending_ul_ues.erase(ue_it);
-      continue;
+    const auto& harqs = ues[ue_index].get_pcell().harqs;
+    if (harqs.nof_ul_harqs() == harqs.nof_empty_ul_harqs()) {
+      ues_with_ul_harqs.reset(ue_idx);
     }
-    const auto& harqs               = ue.get_pcell().harqs;
-    bool        all_harqs_are_empty = harqs.nof_ul_harqs() == harqs.nof_empty_ul_harqs();
-    if (all_harqs_are_empty and ue.pending_ul_newtx_bytes().value() == 0) {
-      // UE has no pending data.
-      ue_it = pending_ul_ues.erase(ue_it);
-      continue;
-    }
-    ++ue_it;
-  }
+  });
 
   // Only remove the {UE, HARQ-process} elements that have been retransmitted and positively acked. The rest of the
   // elements are potential candidates for retransmissions.
@@ -1679,14 +1628,7 @@ void ue_fallback_scheduler::rem_fallback_ue(du_ue_index_t ue_index)
                      ongoing_ues_ack_retxs.end(),
                      [ue_index](const ack_and_retx_tracker& tracker) { return tracker.ue_index == ue_index; }),
       ongoing_ues_ack_retxs.end());
-  pending_dl_ues_new_tx.erase(
-      std::remove_if(pending_dl_ues_new_tx.begin(),
-                     pending_dl_ues_new_tx.end(),
-                     [ue_index = ue_index](const fallback_ue& ue) { return ue.ue_index == ue_index; }),
-      pending_dl_ues_new_tx.end());
-  // Note: We do not use the erase+remove pattern because we want to maintain the order of pending_ul_ues.
-  // The UE may not be in the list, so we must check the iterator before erasing; erasing end() is UB.
-  if (auto it = std::find(pending_ul_ues.begin(), pending_ul_ues.end(), ue_index); it != pending_ul_ues.end()) {
-    pending_ul_ues.erase(it);
+  if (ue_index < ues_with_ul_harqs.size()) {
+    ues_with_ul_harqs.reset(ue_index);
   }
 }

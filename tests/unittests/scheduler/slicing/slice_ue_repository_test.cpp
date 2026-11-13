@@ -62,12 +62,16 @@ protected:
     slices.push_back(std::make_unique<slice_ue_repository>(ran_slice_id_t{2}, du_cell_index_t(0), ue_db));
   }
 
-  void add_ue(du_ue_index_t ue_idx, span<const test_lc_ch_cfg> lc_chs)
+  void add_ue(du_ue_index_t              ue_idx,
+              span<const test_lc_ch_cfg> lc_chs,
+              bool                       starts_in_fallback = false,
+              std::optional<slot_point>  ul_ccch_slot_rx    = std::nullopt)
   {
     auto req               = test_cfg.get_default_ue_config_request();
     req.ue_index           = ue_idx;
     req.crnti              = to_rnti(0x4601 + ue_idx);
-    req.starts_in_fallback = false;
+    req.starts_in_fallback = starts_in_fallback;
+    req.ul_ccch_slot_rx    = ul_ccch_slot_rx;
     std::vector<logical_channel_config> lc_cfg_list;
     lc_cfg_list.reserve(lc_chs.size() + 1);
     lc_cfg_list.push_back(logical_channel_config{LCID_SRB0, uint_to_lcg_id(0)});
@@ -85,13 +89,15 @@ protected:
   }
 
   // add_ue that automatically adds UE to all slices.
-  void add_ue(du_ue_index_t ue_idx)
+  void add_ue(du_ue_index_t             ue_idx,
+              bool                      starts_in_fallback = false,
+              std::optional<slot_point> ul_ccch_slot_rx    = std::nullopt)
   {
     std::vector<test_lc_ch_cfg> lc_chs = {
         test_lc_ch_cfg{LCID_SRB1, uint_to_lcg_id(0), SRB_RAN_SLICE_ID},
         test_lc_ch_cfg{LCID_MIN_DRB, uint_to_lcg_id(1), DEFAULT_DRB_RAN_SLICE_ID},
         test_lc_ch_cfg{uint_to_lcid(LCID_MIN_DRB + 1), uint_to_lcg_id(2), ran_slice_id_t{2}}};
-    add_ue(ue_idx, lc_chs);
+    add_ue(ue_idx, lc_chs, starts_in_fallback, ul_ccch_slot_rx);
   }
 
   /// Marks the given number of bytes as allocated in a UL HARQ of the UE, so that they count as already in flight.
@@ -110,10 +116,12 @@ protected:
     h_ul->save_grant_params(ctxt, pusch);
   }
 
-  ocudulog::basic_logger&                           logger = ocudulog::fetch_basic_logger("TEST");
-  const scheduler_expert_config                     expert_cfg;
-  test_helpers::test_sched_config_manager           test_cfg;
-  std::optional<ue_cell_repository>                 cell_ues;
+  ocudulog::basic_logger&                 logger = ocudulog::fetch_basic_logger("TEST");
+  const scheduler_expert_config           expert_cfg;
+  test_helpers::test_sched_config_manager test_cfg;
+  std::optional<ue_cell_repository>       cell_ues;
+  // Second cell of the UE repository, for the tests that need one.
+  std::optional<ue_cell_repository>                 cell1_ues;
   ue_repository                                     ue_db;
   std::vector<std::unique_ptr<slice_ue_repository>> slices;
 
@@ -133,25 +141,87 @@ TEST_F(slice_ue_repository_test, add_ue_to_slice_repo_alters_repo_size)
   ASSERT_TRUE(slices[SRB_RAN_SLICE_ID.value()]->contains(ue_idx));
 }
 
-TEST_F(slice_ue_repository_test, ues_with_pending_newtx_data_only_include_slice_members)
+TEST_F(slice_ue_repository_test, sr_and_ce_of_ue_in_fallback_are_not_pending_newtx_data_of_srb_slice)
 {
-  const du_ue_index_t member_idx     = to_du_ue_index(0);
-  const du_ue_index_t non_member_idx = to_du_ue_index(3);
-  add_ue(member_idx);
-  const std::vector<test_lc_ch_cfg> drb_only = {
-      test_lc_ch_cfg{LCID_MIN_DRB, uint_to_lcg_id(1), DEFAULT_DRB_RAN_SLICE_ID}};
-  add_ue(non_member_idx, drb_only);
+  const du_ue_index_t active_idx   = to_du_ue_index(0);
+  const du_ue_index_t fallback_idx = to_du_ue_index(3);
+  add_ue(active_idx);
+  // UE created by the upper layers, in fallback until its C-RNTI CE is received.
+  add_ue(fallback_idx, true);
   const slice_ue_repository& srb_slice = *slices[SRB_RAN_SLICE_ID.value()];
 
-  ue_db[member_idx].handle_sr_indication(next_slot);
-  ue_db[non_member_idx].handle_sr_indication(next_slot);
+  for (du_ue_index_t ue_idx : {active_idx, fallback_idx}) {
+    ue_db[ue_idx].handle_sr_indication(next_slot);
+    ue_db[ue_idx].handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_idx, lcid_dl_sch_t::TA_CMD});
+  }
 
-  const bounded_bitset<MAX_NOF_DU_UES> ul_ues = srb_slice.get_ues_with_pending_newtx_data(false);
-  ASSERT_TRUE(ul_ues.test(member_idx));
-  ASSERT_EQ(ul_ues.count(), 1);
+  // The SR stays visible to the UE and to the fallback scheduler, but not to the SRB slice.
+  ASSERT_TRUE(ue_db[fallback_idx].logical_channels().has_pending_sr());
+  ASSERT_TRUE(ue_db.get_fallback_ues_with_pending_newtx_data(to_du_cell_index(0), false).test(fallback_idx));
+  for (bool is_dl : {true, false}) {
+    const bounded_bitset<MAX_NOF_DU_UES> pending_ues = srb_slice.get_ues_with_pending_newtx_data(is_dl);
+    ASSERT_TRUE(pending_ues.test(active_idx));
+    ASSERT_FALSE(pending_ues.size() > fallback_idx and pending_ues.test(fallback_idx));
+  }
 
-  slices[SRB_RAN_SLICE_ID.value()]->rem_ue(member_idx);
-  ASSERT_TRUE(srb_slice.get_ues_with_pending_newtx_data(false).none());
+  ASSERT_TRUE(ue_db.crnti_ce_received(fallback_idx));
+  ASSERT_FALSE(ue_db.get_fallback_ues_with_pending_newtx_data(to_du_cell_index(0), false).any());
+  for (bool is_dl : {true, false}) {
+    ASSERT_TRUE(srb_slice.get_ues_with_pending_newtx_data(is_dl).test(fallback_idx));
+  }
+}
+
+TEST_F(slice_ue_repository_test, sr_and_ce_of_deactivated_ue_are_not_pending_newtx_data_of_srb_slice)
+{
+  const du_ue_index_t ue_idx = to_du_ue_index(0);
+  // UE created by a RACH, whose ConRes CE is never acked.
+  add_ue(ue_idx, true, next_slot);
+  const slice_ue_repository& srb_slice = *slices[SRB_RAN_SLICE_ID.value()];
+
+  ASSERT_TRUE(ue_db.handle_conres_ce_outcome(ue_idx, false));
+  ue_db[ue_idx].handle_sr_indication(next_slot);
+  ue_db[ue_idx].handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_idx, lcid_dl_sch_t::TA_CMD});
+
+  for (bool is_dl : {true, false}) {
+    ASSERT_TRUE(srb_slice.get_ues_with_pending_newtx_data(is_dl).none());
+    ASSERT_TRUE(ue_db.get_fallback_ues_with_pending_newtx_data(to_du_cell_index(0), is_dl).none());
+  }
+}
+
+TEST_F(slice_ue_repository_test, ues_with_pending_newtx_data_only_include_ues_of_the_slice_cell)
+{
+  // Add a second cell to the same UE repository.
+  auto cell_req       = test_cfg.get_default_cell_config_request();
+  cell_req.cell_index = to_du_cell_index(1);
+  test_cfg.add_cell(cell_req);
+  cell1_ues.emplace(test_cfg.get_cell(to_du_cell_index(1)), nullptr);
+  ue_db.register_cell(*cell1_ues);
+  slice_ue_repository cell1_srb_slice(SRB_RAN_SLICE_ID, to_du_cell_index(1), ue_db);
+
+  // UE 0 in cell 0 and UE 1 in cell 1, both with SRB1 data.
+  const du_ue_index_t cell0_ue_idx = to_du_ue_index(0);
+  const du_ue_index_t cell1_ue_idx = to_du_ue_index(1);
+  add_ue(cell0_ue_idx);
+  auto ue_req                                          = test_cfg.get_default_ue_config_request();
+  ue_req.ue_index                                      = cell1_ue_idx;
+  ue_req.crnti                                         = to_rnti(0x4601 + cell1_ue_idx);
+  ue_req.starts_in_fallback                            = false;
+  (*ue_req.cfg.cells)[0].cell_index                    = to_du_cell_index(1);
+  (*ue_req.cfg.cells)[0].ded->serv_cell_cfg.cell_index = to_du_cell_index(1);
+  const ue_configuration* ue_cfg                       = test_cfg.add_ue(ue_req);
+  ue_db.add_ue(*ue_cfg, {sched_config_helper::to_ue_creation_mode(ue_req), ue_req.ul_ccch_slot_rx});
+  cell1_srb_slice.add_logical_channel(ue_db[cell1_ue_idx], LCID_SRB1, uint_to_lcg_id(0));
+  for (du_ue_index_t ue_idx : {cell0_ue_idx, cell1_ue_idx}) {
+    ue_db[ue_idx].handle_dl_buffer_state_indication(LCID_SRB1, 100);
+  }
+
+  const bounded_bitset<MAX_NOF_DU_UES> cell0_ues =
+      slices[SRB_RAN_SLICE_ID.value()]->get_ues_with_pending_newtx_data(true);
+  ASSERT_TRUE(cell0_ues.test(cell0_ue_idx));
+  ASSERT_EQ(cell0_ues.count(), 1);
+  const bounded_bitset<MAX_NOF_DU_UES> cell1_ues_with_data = cell1_srb_slice.get_ues_with_pending_newtx_data(true);
+  ASSERT_TRUE(cell1_ues_with_data.test(cell1_ue_idx));
+  ASSERT_EQ(cell1_ues_with_data.count(), 1);
 }
 
 TEST_F(slice_ue_repository_test, if_positive_dl_bs_added_to_slice_then_slice_ue_has_pending_bytes)

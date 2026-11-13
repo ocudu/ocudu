@@ -22,7 +22,7 @@ TEST(inactive_ta_management_system_test, add_ue_returns_inactive_manager)
   logical_channel_config_pool   cfg_pool;
   logical_channel_system        lc_ch_sys;
   ue_logical_channel_repository ue_lc_chs =
-      lc_ch_sys.create_ue(to_du_ue_index(0), subcarrier_spacing::kHz15, false, cfg_pool.create({}));
+      lc_ch_sys.create_ue(to_du_ue_index(0), subcarrier_spacing::kHz15, cfg_pool.create({}));
   ue_ta_manager ta_mgr = ta_sys.add_ue(
       time_alignment_group::id_t{0}, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15, ue_lc_chs.view());
 
@@ -64,7 +64,7 @@ protected:
     auto ret = ues.insert(std::make_pair(ue_index, ue_context{}));
     ocudu_assert(ret.second, "Failed to insert UE in the repository");
     auto& u     = ret.first->second;
-    u.ue_lc_chs = lc_ch_sys.create_ue(to_du_ue_index(ue_index), ul_scs, false, cfg_pool.create({}));
+    u.ue_lc_chs = lc_ch_sys.create_ue(to_du_ue_index(ue_index), ul_scs, cfg_pool.create({}));
     u.ta_mgr    = ta_sys.add_ue(time_alignment_group::id_t{0}, ul_scs, ul_scs, u.ue_lc_chs.view(), ntn_koffset);
     return ue_index;
   }

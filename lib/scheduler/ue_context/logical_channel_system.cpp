@@ -239,14 +239,13 @@ static const logical_channel_config_list_ptr empty_lc_cfg_list_ptr{empty_lc_cfg_
 
 ue_logical_channel_repository logical_channel_system::create_ue(du_ue_index_t                   ue_index,
                                                                 subcarrier_spacing              scs_common,
-                                                                bool                            starts_in_fallback,
                                                                 logical_channel_config_list_ptr log_channels_configs)
 {
   ocudu_assert(configured_ues.size() <= ue_index or not configured_ues.test(ue_index), "duplicate UE index");
   // Creates a UE entry in the table.
   const soa::row_id ue_rid =
       ues.insert(ue_config_context{ue_index, get_nof_slots_per_subframe(scs_common), empty_lc_cfg_list_ptr},
-                 ue_context{starts_in_fallback},
+                 ue_context{},
                  ue_dl_slice_context{},
                  ue_ul_slice_context{},
                  ue_dl_channel_context{},
@@ -256,6 +255,8 @@ ue_logical_channel_repository logical_channel_system::create_ue(du_ue_index_t   
     configured_ues.resize(ue_index + 1);
     ues_with_pending_ces.resize(ue_index + 1);
     ues_with_pending_sr.resize(ue_index + 1);
+    fallback_pending_dl_ues.resize(ue_index + 1);
+    fallback_pending_ul_ues.resize(ue_index + 1);
     for (auto it = slices.begin(); it != slices.end(); ++it) {
       it->second.pending_dl_ues.resize(ue_index + 1);
       it->second.pending_ul_ues.resize(ue_index + 1);
@@ -305,58 +306,6 @@ bounded_bitset<MAX_NOF_DU_UES> logical_channel_system::get_ues_with_ul_pending_d
   return slice_it->second.pending_ul_ues | ues_with_pending_sr;
 }
 
-void ue_logical_channel_repository::set_fallback_state(bool enter_fallback)
-{
-  auto        u      = get_ue_row();
-  ue_context& ue_ctx = u.at<ue_context>();
-  if (ue_ctx.fallback_state == enter_fallback) {
-    // no-op.
-    return;
-  }
-  // Fallback state toggled.
-  ue_ctx.fallback_state = enter_fallback;
-
-  // Update pending newTx data for all UE slices.
-  auto  ueidx     = u.at<ue_config_context>().ue_index;
-  auto& ue_dl_ctx = u.at<ue_dl_slice_context>();
-  auto& ue_ul_ctx = u.at<ue_ul_slice_context>();
-  if (ue_ctx.fallback_state) {
-    // Entering fallback mode, clear all pending data in slices.
-    for (auto it = ue_dl_ctx.pending_bytes_per_slice.begin(), it_end = ue_dl_ctx.pending_bytes_per_slice.end();
-         it != it_end;
-         ++it) {
-      if (it->second > 0) {
-        it->second = 0;
-        parent->slices.at(it->first).pending_dl_ues.reset(ueidx);
-      }
-    }
-    parent->ues_with_pending_ces.reset(ueidx);
-    for (auto it = ue_ul_ctx.pending_bytes_per_slice.begin(), it_end = ue_ul_ctx.pending_bytes_per_slice.end();
-         it != it_end;
-         ++it) {
-      if (it->second > 0) {
-        it->second = 0;
-        parent->slices.at(it->first).pending_ul_ues.reset(ueidx);
-      }
-    }
-  } else {
-    // Exiting fallback mode, recompute pending data in slices.
-    const auto& ue_ch = u.at<ue_dl_channel_context>();
-    for (const auto& [lcid, lc_rid] : ue_ch.channels) {
-      parent->on_single_channel_buf_st_update(
-          u, parent->lc_mapper.dl_slice_id(lc_rid), parent->lc_mapper.dl_buf_st(lc_rid).value(), 0);
-    }
-    if (not ue_ch.pending_ces.empty()) {
-      parent->ues_with_pending_ces.set(ueidx);
-    }
-    auto& ue_ul_ch = u.at<ue_ul_channel_context>();
-    for (const auto& [lcgid, lcg_rid] : ue_ul_ch.lcgs) {
-      parent->on_single_lcg_buf_st_update(
-          u, lcgid, parent->lc_mapper.ul_slice_id(lcg_rid), parent->lc_mapper.ul_buf_st(lcg_rid).value(), 0);
-    }
-  }
-}
-
 /// Helper to retrieve logical channel priority.
 static uint16_t get_lc_prio(const logical_channel_config& cfg)
 {
@@ -400,6 +349,8 @@ void logical_channel_system::remove_ue(soa::row_id ue_rid)
     configured_ues.resize(new_size);
     ues_with_pending_ces.resize(new_size);
     ues_with_pending_sr.resize(new_size);
+    fallback_pending_dl_ues.resize(new_size);
+    fallback_pending_ul_ues.resize(new_size);
     for (auto it = slices.begin(), it_end = slices.end(); it != it_end; ++it) {
       it->second.pending_dl_ues.resize(new_size);
       it->second.pending_ul_ues.resize(new_size);
@@ -469,6 +420,28 @@ void logical_channel_system::configure(soa::row_id ue_rid, logical_channel_confi
   });
 
   refresh_restricted_slices(ue_rid);
+  refresh_fallback_pending_data(ue_rid);
+}
+
+void logical_channel_system::refresh_fallback_pending_data(soa::row_id ue_rid)
+{
+  auto       u      = get_ue(ue_rid);
+  const auto ue_idx = u.at<ue_config_context>().ue_index;
+
+  const auto& ue_ch           = u.at<ue_dl_channel_context>();
+  auto        has_srb_dl_data = [this, &ue_ch](lcid_t lcid) {
+    auto it = ue_ch.channels.find(lcid);
+    return it != ue_ch.channels.end() and lc_mapper.dl_buf_st(it->second).value() > 0;
+  };
+  fallback_pending_dl_ues.set(
+      ue_idx, u.at<ue_context>().pending_con_res_id or has_srb_dl_data(LCID_SRB0) or has_srb_dl_data(LCID_SRB1));
+
+  // Note: SRBs are assumed to use the LCG-ID 0.
+  const auto& ue_ul_ch = u.at<ue_ul_channel_context>();
+  auto        lcg_it   = ue_ul_ch.lcgs.find(uint_to_lcg_id(0));
+  fallback_pending_ul_ues.set(ue_idx,
+                              ues_with_pending_sr.test(ue_idx) or
+                                  (lcg_it != ue_ul_ch.lcgs.end() and lc_mapper.ul_buf_st(lcg_it->second).value() > 0));
 }
 
 void logical_channel_system::refresh_restricted_slices(soa::row_id ue_rid)
@@ -700,6 +673,10 @@ void logical_channel_system::handle_dl_buffer_status_indication(soa::row_id ue_r
 
   // Update slice pending bytes.
   on_single_channel_buf_st_update(u, lc_mapper.dl_slice_id(lc_rid), buf_st.value(), prev_buf_st);
+  if (lcid <= LCID_SRB1) {
+    // Only SRB0 and SRB1 data is served in fallback.
+    refresh_fallback_pending_data(ue_row_id);
+  }
 }
 
 void logical_channel_system::on_single_channel_buf_st_update(ue_row&                              u,
@@ -711,12 +688,6 @@ void logical_channel_system::on_single_channel_buf_st_update(ue_row&            
     // No slice associated with this logical channel or it is inactive.
     return;
   }
-  auto& ue_ctx = u.at<ue_context>();
-  if (ue_ctx.fallback_state) {
-    // In fallback mode, slices are disabled.
-    return;
-  }
-
   // In case this logical channel has a RAN slice associated, (differentially) update the pending bytes for the slice.
   auto&      ue_dl_ctx               = u.at<ue_dl_slice_context>();
   auto&      slice_pending_bytes     = ue_dl_ctx.pending_bytes_per_slice.find(*slice_id)->second;
@@ -740,9 +711,8 @@ void logical_channel_system::on_single_lcg_buf_st_update(ue_row&                
                                                          unsigned                             new_buf_st,
                                                          unsigned                             prev_buf_st)
 {
-  if (not slice_id.has_value() or u.at<ue_context>().fallback_state) {
-    // No slice associated with this logical channel group, the logical channel group is inactive or the UE is in
-    // fallback.
+  if (not slice_id.has_value()) {
+    // No slice associated with this logical channel group or the logical channel group is inactive.
     return;
   }
   auto& ue_ctx = u.at<ue_ul_slice_context>();
@@ -769,6 +739,7 @@ void logical_channel_system::handle_mac_ce_indication(soa::row_id ue_row_id, con
   if (ce.ce_lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
     // CON RES is a special case, as it needs to be always scheduled first.
     ue_ctx.pending_con_res_id = true;
+    refresh_fallback_pending_data(ue_row_id);
     return;
   }
   auto&      ue_ch_ctx          = u.at<ue_dl_channel_context>();
@@ -832,7 +803,10 @@ void logical_channel_system::handle_bsr_indication(soa::row_id ue_row_id, const 
   auto  u     = get_ue(ue_row_id);
   auto& ue_ch = u.at<ue_ul_channel_context>();
 
+  // Note: SRBs are assumed to use the LCG-ID 0, which is the only LCG served in fallback.
+  bool srb_lcg_reported = false;
   for (const auto& lcg_report : msg.reported_lcgs) {
+    srb_lcg_reported |= lcg_report.lcg_id == uint_to_lcg_id(0);
     // In the scheduler, we use 300000 to indicate the max (unbounded) S-BSR value; therefore, if the short or short
     // truncated BSRs report a value that is > 150000 and the current status of the lcg_id is > 150000, we can't
     // update buf_st, as the actual UE BSR (buf_st) could be much bigger than the max (unbounded) S-BSR reported
@@ -854,6 +828,9 @@ void logical_channel_system::handle_bsr_indication(soa::row_id ue_row_id, const 
       }
       on_single_lcg_buf_st_update(u, it->first, lc_mapper.ul_slice_id(lcg_rid), buf_st.value(), prev_buf_st);
     }
+  }
+  if (srb_lcg_reported) {
+    refresh_fallback_pending_data(ue_row_id);
   }
 }
 
@@ -921,6 +898,10 @@ logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& sub
   auto prev_buf_st = buf_st.value();
   buf_st           = units::bytes{new_buf_st};
   on_single_channel_buf_st_update(u, lc_mapper.dl_slice_id(lc_rid), new_buf_st, prev_buf_st);
+  if (lcid <= LCID_SRB1) {
+    // Only SRB0 and SRB1 data is served in fallback.
+    refresh_fallback_pending_data(ue_rid);
+  }
   if (unsigned* last_sched_ptr = lc_mapper.last_dl_sched_bytes(lc_rid); last_sched_ptr != nullptr) {
     // In case of QoS tracking is activated, set the last scheduled bytes.
     *last_sched_ptr = last_sched_bytes;
@@ -1018,6 +999,7 @@ logical_channel_system::allocate_ue_con_res_id_mac_ce(soa::row_id ue_rid, dl_msg
 
   if (alloc_bytes > 0) {
     ue_ctx.pending_con_res_id = false;
+    refresh_fallback_pending_data(ue_rid);
 
     subpdu.lcid        = lcid_dl_sch_t{lcid_dl_sch_t::UE_CON_RES_ID};
     subpdu.sched_bytes = ce_size;
@@ -1070,10 +1052,7 @@ unsigned ue_logical_channel_repository::total_dl_pending_bytes() const
 
 unsigned ue_logical_channel_repository::dl_pending_bytes() const
 {
-  auto u = get_ue_row();
-  if (u.at<ue_context>().fallback_state) {
-    return pending_con_res_ce_bytes() + pending_bytes(LCID_SRB0) + pending_bytes(LCID_SRB1);
-  }
+  auto     u     = get_ue_row();
   unsigned bytes = pending_ce_bytes();
   auto&    ue_ch = u.at<ue_dl_channel_context>();
   for (auto [lcid, lc_rid] : ue_ch.channels) {
@@ -1086,15 +1065,22 @@ unsigned ue_logical_channel_repository::dl_pending_bytes() const
 
 unsigned ue_logical_channel_repository::ul_pending_bytes() const
 {
-  auto u = get_ue_row();
-  if (u.at<ue_context>().fallback_state) {
-    return pending_bytes(uint_to_lcg_id(0U));
-  }
+  auto     u     = get_ue_row();
   unsigned bytes = 0;
   for (const auto& [lcgid, ul_ch_ctx] : u.at<ue_ul_channel_context>().lcgs) {
     bytes += pending_bytes(lcgid);
   }
   return bytes;
+}
+
+unsigned ue_logical_channel_repository::fallback_dl_pending_bytes() const
+{
+  return pending_con_res_ce_bytes() + pending_bytes(LCID_SRB0) + pending_bytes(LCID_SRB1);
+}
+
+unsigned ue_logical_channel_repository::fallback_ul_pending_bytes() const
+{
+  return pending_bytes(uint_to_lcg_id(0U));
 }
 
 ue_logical_channel_repository::dl_transport_block_selection
@@ -1266,6 +1252,7 @@ void ue_logical_channel_repository::handle_sr_indication(slot_point uci_slot)
     // This is a transition from SR not pending to SR pending.
     parent->handle_sr_indication(ue_row_id, uci_slot);
     parent->ues_with_pending_sr.set(ue_index, true);
+    parent->refresh_fallback_pending_data(ue_row_id);
   }
 }
 
@@ -1323,6 +1310,7 @@ void ue_logical_channel_repository::reset_sr_indication()
     // This is a transition from SR pending to not pending.
     parent->reset_sr_indication(ue_row_id);
     parent->ues_with_pending_sr.set(ue_index, false);
+    parent->refresh_fallback_pending_data(ue_row_id);
   }
 }
 

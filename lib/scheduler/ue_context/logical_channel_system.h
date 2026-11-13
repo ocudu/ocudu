@@ -266,12 +266,10 @@ public:
   /// Creates a new UE logical channel repository.
   /// \param[in] ue_index DU UE index.
   /// \param[in] slot_ind_scs Subcarrier spacing associated with slot indications.
-  /// \param[in] starts_in_fallback Whether the UE starts in fallback mode (no DRB tx).
   /// \param[in] log_channels_configs List of logical channel configurations for this UE.
   /// \return Handle to the created UE logical channel repository.
   ue_logical_channel_repository create_ue(du_ue_index_t                   ue_index,
                                           subcarrier_spacing              slot_ind_scs,
-                                          bool                            starts_in_fallback,
                                           logical_channel_config_list_ptr log_channels_configs);
 
   /// Number of UEs managed by the system.
@@ -293,6 +291,18 @@ public:
   /// \param[in] slice_id RAN slice identifier.
   /// \return Bitset of UEs with pending data for the provided RAN slice.
   bounded_bitset<MAX_NOF_DU_UES> get_ues_with_ul_pending_data(ran_slice_id_t slice_id) const;
+
+  /// Bitset of UEs with pending ConRes CE, SRB0 or SRB1 newTx DL data, as served in fallback.
+  const bounded_bitset<MAX_NOF_DU_UES>& get_fallback_ues_with_dl_pending_data() const
+  {
+    return fallback_pending_dl_ues;
+  }
+
+  /// Bitset of UEs with pending SRB UL data or SR, as served in fallback.
+  const bounded_bitset<MAX_NOF_DU_UES>& get_fallback_ues_with_ul_pending_data() const
+  {
+    return fallback_pending_ul_ues;
+  }
 
 private:
   friend class ue_logical_channel_repository;
@@ -346,17 +356,12 @@ private:
   };
   /// UE context relative to its DL state.
   struct ue_context {
-    /// Whether the UE is in fallback (no DRB tx).
-    bool fallback_state : 1;
     /// Whether a CON RES CE needs to be sent.
     bool pending_con_res_id : 1;
     /// Cached sum of pending CE bytes for this UE, excluding CON RES CE.
     uint16_t pending_ce_bytes : 14;
 
-    explicit ue_context(bool fallback = false) :
-      fallback_state(fallback), pending_con_res_id(false), pending_ce_bytes(0)
-    {
-    }
+    ue_context() : pending_con_res_id(false), pending_ce_bytes(0) {}
   };
   /// Context relative to a UE DL slice state.
   struct ue_dl_slice_context {
@@ -396,6 +401,9 @@ private:
   /// Runs whenever a channel configuration or a slice mapping changes, so that a slice without a restricted
   /// channel resolves its grant without walking the channels.
   void refresh_restricted_slices(soa::row_id ue_rid);
+
+  /// Updates the bitsets of UEs with pending data, as served in fallback.
+  void refresh_fallback_pending_data(soa::row_id ue_rid);
 
   void
   handle_dl_buffer_status_indication(soa::row_id ue_row_id, lcid_t lcid, unsigned buffer_status, slot_point hol_toa);
@@ -458,6 +466,12 @@ private:
 
   /// Bitset of UEs with pending SRs.
   bounded_bitset<MAX_NOF_DU_UES> ues_with_pending_sr;
+
+  /// Bitset of UEs with pending ConRes CE, SRB0 or SRB1 newTx DL data, as served in fallback.
+  bounded_bitset<MAX_NOF_DU_UES> fallback_pending_dl_ues;
+
+  /// Bitset of UEs with pending SRB UL data or SR, as served in fallback.
+  bounded_bitset<MAX_NOF_DU_UES> fallback_pending_ul_ues;
 
   /// Table of Logical Channel fields.
   logical_channel_system_utils::logical_channel_mapper lc_mapper;
@@ -566,9 +580,6 @@ public:
   /// \brief Deactivate all bearers and drop all pending CEs.
   void deactivate();
 
-  /// Set UE fallback state.
-  void set_fallback_state(bool fallback_active);
-
   /// Assign a RAN slice to a logical channel.
   void set_lcid_ran_slice(lcid_t lcid, ran_slice_id_t slice_id);
 
@@ -619,17 +630,10 @@ public:
     return parent->lc_mapper.find_row_id(ue_index, lcgid).has_value();
   }
 
-  /// Check whether the UE is in fallback state.
-  [[nodiscard]] bool is_in_fallback_state() const { return get_ue_row().at<ue_context>().fallback_state; }
-
-  /// \brief Check whether the UE has pending DL data, given its current state.
+  /// \brief Check whether the UE has pending DL data, excluding SRB0.
   [[nodiscard]] bool has_dl_pending_bytes() const
   {
-    auto        u      = get_ue_row();
-    const auto& ue_ctx = u.at<ue_context>();
-    if (ue_ctx.fallback_state) {
-      return ue_ctx.pending_con_res_id or has_pending_bytes(LCID_SRB0) or has_pending_bytes(LCID_SRB1);
-    }
+    auto u = get_ue_row();
     if (has_pending_ces()) {
       return true;
     }
@@ -642,23 +646,29 @@ public:
     });
   }
 
-  /// \brief Check whether the UE has pending UL data (excluding SR), given its current state.
+  /// \brief Check whether the UE has pending DL data that can be served in fallback, i.e. ConRes CE, SRB0 or SRB1.
+  [[nodiscard]] bool has_fallback_dl_pending_bytes() const
+  {
+    return is_con_res_id_pending() or has_pending_bytes(LCID_SRB0) or has_pending_bytes(LCID_SRB1);
+  }
+
+  /// \brief Check whether the UE has pending UL data (excluding SR).
   [[nodiscard]] bool has_ul_pending_bytes() const
   {
-    auto        u      = get_ue_row();
-    const auto& ue_ctx = u.at<ue_context>();
-    if (ue_ctx.fallback_state) {
-      return has_pending_bytes(uint_to_lcg_id(0U));
-    }
+    auto        u       = get_ue_row();
     const auto& chs_ctx = u.at<ue_ul_channel_context>();
     return std::any_of(chs_ctx.lcgs.begin(), chs_ctx.lcgs.end(), [this](const auto& p) {
       return parent->lc_mapper.ul_buf_st(p.second).value() > 0;
     });
   }
 
+  /// \brief Check whether the UE has pending UL data that can be served in fallback, i.e. of the SRB LCG (excluding
+  /// SR).
+  [[nodiscard]] bool has_fallback_ul_pending_bytes() const { return has_pending_bytes(uint_to_lcg_id(0U)); }
+
   /// \brief Check whether the UE has pending data in the provided RAN slice.
-  /// \return Returns true if the UE is active, in non-fallback mode, it has pending bytes for the provided RAN slice
-  /// ID and the slice is configured. Returns false, otherwise.
+  /// \return Returns true if the UE has pending bytes for the provided RAN slice ID and the slice is configured.
+  /// Returns false, otherwise.
   [[nodiscard]] bool has_pending_dl_bytes(ran_slice_id_t slice_id) const
   {
     auto slice_bitset_it = parent->slices.find(slice_id);
@@ -679,8 +689,8 @@ public:
   }
 
   /// \brief Check whether the UE has pending UL data in the provided RAN slice.
-  /// \return Returns true if the UE is active, in non-fallback mode, it has pending bytes for the provided RAN slice
-  /// ID and the slice is configured. Returns false, otherwise.
+  /// \return Returns true if the UE has pending bytes for the provided RAN slice ID and the slice is configured.
+  /// Returns false, otherwise.
   [[nodiscard]] bool has_pending_ul_bytes(ran_slice_id_t slice_id) const
   {
     auto slice_bitset_it = parent->slices.find(slice_id);
@@ -741,24 +751,28 @@ public:
     return parent->ues_with_pending_ces.test(ue_index) or get_ue_row().at<ue_context>().pending_con_res_id;
   }
 
-  /// \brief Calculates total number of DL bytes, including MAC header overhead, and without taking into account
-  /// the UE state (same result if fallback or not fallback).
+  /// \brief Calculates total number of DL bytes, including MAC header overhead.
   unsigned total_dl_pending_bytes() const;
 
-  /// \brief Calculates number of DL pending bytes, including MAC header overhead, and taking UE state into account.
+  /// \brief Calculates number of DL pending bytes, including MAC header overhead, excluding SRB0.
   unsigned dl_pending_bytes() const;
 
-  /// \brief Calculates number of UL pending bytes, including MAC header overhead, and taking UE state into account.
+  /// \brief Calculates number of DL pending bytes that can be served in fallback, i.e. of ConRes CE, SRB0 and SRB1,
+  /// including MAC header overhead.
+  unsigned fallback_dl_pending_bytes() const;
+
+  /// \brief Calculates number of UL pending bytes, including MAC header overhead.
   unsigned ul_pending_bytes() const;
+
+  /// \brief Calculates number of UL pending bytes that can be served in fallback, i.e. of the SRB LCG, including MAC
+  /// header overhead.
+  unsigned fallback_ul_pending_bytes() const;
 
   /// Calculates the number of DL pending bytes, including MAC header overhead, for a RAN slice.
   unsigned dl_pending_bytes(ran_slice_id_t slice_id) const
   {
-    const auto  u      = get_ue_row();
-    const auto& ue_ctx = u.at<ue_context>();
-    if (ue_ctx.fallback_state) {
-      return 0;
-    }
+    const auto  u         = get_ue_row();
+    const auto& ue_ctx    = u.at<ue_context>();
     const auto& ue_dl_ctx = u.at<ue_dl_slice_context>();
     auto        slice_it  = ue_dl_ctx.pending_bytes_per_slice.find(slice_id);
     if (slice_it == ue_dl_ctx.pending_bytes_per_slice.end()) {
@@ -792,9 +806,6 @@ public:
   /// Calculates the number of UL pending bytes for a RAN slice.
   unsigned ul_pending_bytes(ran_slice_id_t slice_id) const
   {
-    if (get_ue_row().at<ue_context>().fallback_state) {
-      return 0;
-    }
     const auto& ue_ul_ctx = get_ue_row().at<ue_ul_slice_context>();
     auto        slice_it  = ue_ul_ctx.pending_bytes_per_slice.find(slice_id);
     if (slice_it == ue_ul_ctx.pending_bytes_per_slice.end()) {

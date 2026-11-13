@@ -163,23 +163,21 @@ public:
   auto find(du_ue_index_t ue_index) const { return ue_map.find(ue_index); }
   auto lower_bound(du_ue_index_t ue_index) const { return ue_map.lower_bound(ue_index); }
 
-  /// Retrieves UEs of this RAN slice with pending data for this RAN slice.
-  bounded_bitset<MAX_NOF_DU_UES> get_ues_with_pending_newtx_data(bool is_dl) const;
+  /// Retrieves UEs of this cell with pending data for this RAN slice.
+  bounded_bitset<MAX_NOF_DU_UES> get_ues_with_pending_newtx_data(bool is_dl) const
+  {
+    return ues.get_ues_with_pending_newtx_data(slice_id, cell_index, is_dl);
+  }
 
 private:
   /// Adds new UE to the RAN slice.
   bool add_ue(ue& u);
-
-  /// Removes existing UE from the RAN slice.
-  void erase_ue(du_ue_index_t ue_index);
 
   const ran_slice_id_t  slice_id;
   const du_cell_index_t cell_index;
   ue_repository&        ues;
 
   slotted_id_table<du_ue_index_t, slice_ue, MAX_NOF_DU_UES> ue_map;
-  /// UE indexes present in ue_map.
-  bounded_bitset<MAX_NOF_DU_UES> ue_members;
 };
 
 } // namespace ocudu

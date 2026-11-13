@@ -20,7 +20,7 @@ class base_ue_drx_controller_test
 {
 protected:
   base_ue_drx_controller_test(const std::optional<drx_config>& drx_cfg_) :
-    drx_cfg(drx_cfg_), ue_lc_chs(lc_ch_sys.create_ue(to_du_ue_index(0), scs, false, cfg_pool.create({})))
+    drx_cfg(drx_cfg_), ue_lc_chs(lc_ch_sys.create_ue(to_du_ue_index(0), scs, cfg_pool.create({})))
   {
     OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-6");
   }

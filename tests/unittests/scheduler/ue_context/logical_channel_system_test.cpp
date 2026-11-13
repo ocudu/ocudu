@@ -96,13 +96,11 @@ static void assert_ue_lch_valid(const ue_logical_channel_repository& u)
   EXPECT_EQ(total_lcid_bytes + ces, u.total_dl_pending_bytes())
       << "total_dl_pending_bytes() must be equal to the sum of all LCID pending bytes plus CE bytes, independently of "
          "UE state";
-  if (u.is_in_fallback_state()) {
-    ASSERT_EQ(u.dl_pending_bytes(),
-              u.pending_bytes(LCID_SRB0) + u.pending_bytes(LCID_SRB1) + u.pending_con_res_ce_bytes())
-        << "In fallback, only ConRes, SRB0 and SRB1 are considered";
-  } else {
-    ASSERT_EQ(u.dl_pending_bytes(), total_lcid_bytes + ces - u.pending_bytes(LCID_SRB0));
-  }
+  ASSERT_EQ(u.dl_pending_bytes(), total_lcid_bytes + ces - u.pending_bytes(LCID_SRB0));
+  ASSERT_EQ(u.fallback_dl_pending_bytes(),
+            u.pending_bytes(LCID_SRB0) + u.pending_bytes(LCID_SRB1) + u.pending_con_res_ce_bytes())
+      << "In fallback, only ConRes, SRB0 and SRB1 are considered";
+  EXPECT_EQ(u.has_fallback_dl_pending_bytes(), u.fallback_dl_pending_bytes() > 0);
   // > Consistency between dl_pending_bytes(slice_id) and pending_bytes(lcid).
   std::map<ran_slice_id_t, unsigned> slice_bytes;
   unsigned                           total_slice_bytes = 0;
@@ -113,16 +111,10 @@ static void assert_ue_lch_valid(const ue_logical_channel_repository& u)
       total_slice_bytes += u.pending_bytes(lcid);
     }
   }
-  if (not u.is_in_fallback_state()) {
-    ASSERT_LE(total_slice_bytes, u.total_dl_pending_bytes());
-    for (auto& [slice_id, bytes] : slice_bytes) {
-      EXPECT_GE(u.dl_pending_bytes(slice_id), bytes);
-      EXPECT_LE(u.dl_pending_bytes(slice_id), bytes + ces);
-    }
-  } else {
-    for (auto& [slice_id, bytes] : slice_bytes) {
-      EXPECT_EQ(u.dl_pending_bytes(slice_id), 0);
-    }
+  ASSERT_LE(total_slice_bytes, u.total_dl_pending_bytes());
+  for (auto& [slice_id, bytes] : slice_bytes) {
+    EXPECT_GE(u.dl_pending_bytes(slice_id), bytes);
+    EXPECT_LE(u.dl_pending_bytes(slice_id), bytes + ces);
   }
 
   // Test UL logical channel consistency.
@@ -143,17 +135,12 @@ static void assert_ue_lch_valid(const ue_logical_channel_repository& u)
       }
     }
   }
-  if (not u.is_in_fallback_state()) {
-    EXPECT_EQ(u.ul_pending_bytes(), total_lcg_bytes);
-    for (auto& [slice_id, bytes] : ul_slice_bytes) {
-      EXPECT_GE(u.ul_pending_bytes(slice_id), bytes);
-    }
-  } else {
-    EXPECT_EQ(u.ul_pending_bytes(), u.pending_bytes(uint_to_lcg_id(0U)));
-    for (auto& [slice_id, bytes] : slice_bytes) {
-      EXPECT_EQ(u.ul_pending_bytes(slice_id), 0);
-    }
+  EXPECT_EQ(u.ul_pending_bytes(), total_lcg_bytes);
+  for (auto& [slice_id, bytes] : ul_slice_bytes) {
+    EXPECT_GE(u.ul_pending_bytes(slice_id), bytes);
   }
+  EXPECT_EQ(u.fallback_ul_pending_bytes(), u.pending_bytes(uint_to_lcg_id(0U)));
+  EXPECT_EQ(u.has_fallback_ul_pending_bytes(), u.fallback_ul_pending_bytes() > 0);
 }
 
 class logical_channel_system_test
@@ -211,7 +198,7 @@ protected:
 
   std::vector<lcid_t>           lcids{LCID_SRB0, LCID_SRB1, LCID_MIN_DRB};
   ue_logical_channel_repository ue_lchs{
-      lch_system.create_ue(to_du_ue_index(0), subcarrier_spacing::kHz30, false, create_lcid_config(lcids))};
+      lch_system.create_ue(to_du_ue_index(0), subcarrier_spacing::kHz30, create_lcid_config(lcids))};
 };
 
 TEST_F(single_ue_dl_logical_channel_system_test, no_pending_data)
@@ -522,7 +509,6 @@ TEST_F(single_ue_dl_logical_channel_system_test, assign_leftover_bytes_to_sdu_if
 
 TEST_F(single_ue_dl_logical_channel_system_test, srb0_is_scheduled_when_remaining_bytes_exactly_fit_after_conres_ce)
 {
-  ue_lchs.set_fallback_state(true);
   ue_lchs.handle_mac_ce_indication({.ce_lcid = lcid_dl_sch_t::UE_CON_RES_ID});
   // 1-byte rrcReject; SRB0 uses RLC TM (no RLC header), so needs only 3 bytes (2-byte MAC subheader + 1 payload).
   ue_lchs.handle_dl_buffer_status_indication(LCID_SRB0, 1);
@@ -600,14 +586,6 @@ TEST_F(single_ue_dl_logical_channel_system_test,
   ASSERT_EQ(ue_lchs.dl_pending_bytes(ran_slice_id_t{1}), slice1_bytes);
   assert_ue_lch_valid(ue_lchs);
 
-  // Fallback disables pending data per slice.
-  ue_lchs.set_fallback_state(true);
-  ASSERT_FALSE(ue_lchs.has_pending_dl_bytes(ran_slice_id_t{0}));
-  ASSERT_FALSE(ue_lchs.has_pending_dl_bytes(ran_slice_id_t{1}));
-  ue_lchs.set_fallback_state(false);
-  ASSERT_EQ(ue_lchs.dl_pending_bytes(ran_slice_id_t{0}), slice0_bytes);
-  ASSERT_EQ(ue_lchs.dl_pending_bytes(ran_slice_id_t{1}), slice1_bytes);
-
   // Remove SRB1 from slice.
   ue_lchs.reset_lcid_ran_slice(LCID_SRB1);
   ASSERT_FALSE(ue_lchs.has_pending_dl_bytes(ran_slice_id_t{0}));
@@ -632,18 +610,6 @@ TEST_F(single_ue_dl_logical_channel_system_test, all_ues_with_pending_data_provi
   ASSERT_EQ(this->lch_system.get_ues_with_dl_pending_data(ran_slice_id_t{1}).count(), 0);
 
   ue_lchs.handle_dl_buffer_status_indication(LCID_MIN_DRB, 100);
-  ues_with_data = this->lch_system.get_ues_with_dl_pending_data(ran_slice_id_t{1});
-  ASSERT_EQ(ues_with_data.count(), 1);
-  ASSERT_TRUE(ues_with_data.test(0));
-  assert_ue_lch_valid(ue_lchs);
-
-  // Fallback disables pending data.
-  ue_lchs.set_fallback_state(true);
-  ASSERT_EQ(this->lch_system.get_ues_with_dl_pending_data(ran_slice_id_t{1}).count(), 0);
-  assert_ue_lch_valid(ue_lchs);
-
-  // Disable fallback enables pending data.
-  ue_lchs.set_fallback_state(false);
   ues_with_data = this->lch_system.get_ues_with_dl_pending_data(ran_slice_id_t{1});
   ASSERT_EQ(ues_with_data.count(), 1);
   ASSERT_TRUE(ues_with_data.test(0));
@@ -795,7 +761,7 @@ TEST_F(multi_ue_dl_logical_channel_system_test, multiple_ue_creation)
   std::vector<ue_logical_channel_repository> ues;
   for (unsigned i = 0; i != nof_ues; ++i) {
     ues.push_back(lch_system.create_ue(
-        to_du_ue_index(i), subcarrier_spacing::kHz30, false, create_lcid_config({LCID_SRB0, LCID_SRB1, LCID_MIN_DRB})));
+        to_du_ue_index(i), subcarrier_spacing::kHz30, create_lcid_config({LCID_SRB0, LCID_SRB1, LCID_MIN_DRB})));
   }
   ASSERT_EQ(lch_system.nof_ues(), nof_ues);
   ASSERT_EQ(lch_system.nof_logical_channels(), nof_ues * 3);
@@ -819,7 +785,7 @@ protected:
                                                  {LCID_SRB1, uint_to_lcg_id(1)},
                                                  {LCID_MIN_DRB, uint_to_lcg_id(2)}};
   ue_logical_channel_repository            ue_lchs{
-      lch_system.create_ue(to_du_ue_index(0), subcarrier_spacing::kHz30, false, create_lcid_config(lcids))};
+      lch_system.create_ue(to_du_ue_index(0), subcarrier_spacing::kHz30, create_lcid_config(lcids))};
 };
 
 TEST_F(single_ue_ul_logical_channel_system_test, no_pending_data)
@@ -849,7 +815,7 @@ TEST_F(single_ue_ul_logical_channel_system_test, when_bsr_is_zero_no_tx_data_is_
 TEST_F(single_ue_ul_logical_channel_system_test, bsr_has_no_effect_in_ue_with_no_logical_channels)
 {
   ue_lchs.reset();
-  ue_lchs = lch_system.create_ue(to_du_ue_index(0), subcarrier_spacing::kHz30, false, create_empty_config());
+  ue_lchs              = lch_system.create_ue(to_du_ue_index(0), subcarrier_spacing::kHz30, create_empty_config());
   const lcg_id_t lcgid = uint_to_lcg_id(test_rng::uniform_int<unsigned>(1U, MAX_LCG_ID));
   ue_lchs.handle_bsr_indication(make_sbsr(lcgid, test_rng::uniform_int<unsigned>(1, 1000)));
   ASSERT_EQ(ue_lchs.pending_bytes(lcgid), 0);
@@ -894,12 +860,11 @@ TEST_F(single_ue_ul_logical_channel_system_test, only_lcg0_reported_in_total_pen
   }
   ue_lchs.handle_bsr_indication(bsr);
 
-  ue_lchs.set_fallback_state(true);
-  ASSERT_TRUE(ue_lchs.has_ul_pending_bytes());
+  ASSERT_TRUE(ue_lchs.has_fallback_ul_pending_bytes());
   ASSERT_TRUE(ue_lchs.has_pending_bytes(uint_to_lcg_id(0)));
   ASSERT_EQ(ue_lchs.pending_bytes(uint_to_lcg_id(0)),
             add_ul_header_bytes(bsr.reported_lcgs[0].lcg_id, bsr.reported_lcgs[0].nof_bytes));
-  ASSERT_EQ(ue_lchs.ul_pending_bytes(), ue_lchs.pending_bytes(uint_to_lcg_id(0)));
+  ASSERT_EQ(ue_lchs.fallback_ul_pending_bytes(), ue_lchs.pending_bytes(uint_to_lcg_id(0)));
 }
 
 TEST_F(single_ue_ul_logical_channel_system_test, total_pending_bytes_equal_sum_of_logical_channel_pending_bytes)
@@ -1007,18 +972,6 @@ TEST_F(single_ue_ul_logical_channel_system_test, all_ues_with_pending_data_provi
   ASSERT_TRUE(ues_with_data.test(0));
   assert_ue_lch_valid(ue_lchs);
 
-  // Fallback disables pending data.
-  ue_lchs.set_fallback_state(true);
-  ASSERT_EQ(this->lch_system.get_ues_with_ul_pending_data(ran_slice_id_t{1}).count(), 0);
-  assert_ue_lch_valid(ue_lchs);
-
-  // Disable fallback enables pending data.
-  ue_lchs.set_fallback_state(false);
-  ues_with_data = this->lch_system.get_ues_with_ul_pending_data(ran_slice_id_t{1});
-  ASSERT_EQ(ues_with_data.count(), 1);
-  ASSERT_TRUE(ues_with_data.test(0));
-  assert_ue_lch_valid(ue_lchs);
-
   // Deregister slice removes pending data.
   ue_lchs.reset_lcg_ran_slice(uint_to_lcg_id(2));
   ASSERT_EQ(this->lch_system.get_ues_with_ul_pending_data(ran_slice_id_t{1}).count(), 0);
@@ -1047,8 +1000,7 @@ protected:
 
   void create_ue(std::optional<ul_harq_mode> srb_mode, std::optional<ul_harq_mode> drb_mode, bool one_slice = false)
   {
-    ue_lchs =
-        lch_system.create_ue(to_du_ue_index(0), subcarrier_spacing::kHz30, false, create_config(srb_mode, drb_mode));
+    ue_lchs = lch_system.create_ue(to_du_ue_index(0), subcarrier_spacing::kHz30, create_config(srb_mode, drb_mode));
     ue_lchs.set_lcg_ran_slice(srb_lcg, srb_slice);
     ue_lchs.set_lcg_ran_slice(drb_lcg, one_slice ? srb_slice : drb_slice);
   }
@@ -1063,7 +1015,7 @@ protected:
     configs.push_back(config_helpers::create_default_logical_channel_config(LCID_MIN_DRB));
     configs.back().lc_group          = drb_lcg;
     configs.back().allowed_harq_mode = second_mode;
-    ue_lchs = lch_system.create_ue(to_du_ue_index(0), subcarrier_spacing::kHz30, false, cfg_pool.create(configs));
+    ue_lchs = lch_system.create_ue(to_du_ue_index(0), subcarrier_spacing::kHz30, cfg_pool.create(configs));
     ue_lchs.set_lcg_ran_slice(drb_lcg, drb_slice);
   }
 
@@ -1095,8 +1047,8 @@ protected:
                  std::optional<dl_harq_feedback> drb_feedback,
                  bool                            one_slice = false)
   {
-    ue_lchs = lch_system.create_ue(
-        to_du_ue_index(0), subcarrier_spacing::kHz30, false, create_config(srb_feedback, drb_feedback));
+    ue_lchs =
+        lch_system.create_ue(to_du_ue_index(0), subcarrier_spacing::kHz30, create_config(srb_feedback, drb_feedback));
     ue_lchs.set_lcid_ran_slice(LCID_SRB1, srb_slice);
     ue_lchs.set_lcid_ran_slice(LCID_MIN_DRB, one_slice ? srb_slice : drb_slice);
   }

@@ -105,6 +105,12 @@ ue_cell& ue_cell_repository::add_ue(const ue_configuration& ue_cfg,
       ue_pool.get(ue_cfg.ue_index, ue_cfg.crnti, ue_cell_cfg, cell_harqs, shared_ctx, std::move(components), logger));
   auto res = rnti_to_ue_index_lookup.insert(std::make_pair(ue_cfg.crnti, ue_cfg.ue_index));
   ocudu_assert(res.second, "UE with duplicate RNTI being added to the cell UE repository");
+
+  // The UE masks cover the UE indexes of the cell.
+  if (slice_ue_mask.size() <= ue_cfg.ue_index) {
+    slice_ue_mask.resize(ue_cfg.ue_index + 1);
+    fallback_ue_mask.resize(ue_cfg.ue_index + 1);
+  }
   return *ues[ue_cfg.ue_index];
 }
 
@@ -127,4 +133,22 @@ void ue_cell_repository::rem_ue(du_ue_index_t ue_index)
 
   // Take the UE cell from the repository. This returns its components back to the pools.
   ues.erase(ue_idx);
+
+  slice_ue_mask.reset(ue_idx);
+  fallback_ue_mask.reset(ue_idx);
+  // Shrink the UE masks down to the highest UE index left in the cell.
+  size_t new_size = slice_ue_mask.size();
+  while (new_size > 0 and not ues.contains(to_du_ue_index(new_size - 1))) {
+    --new_size;
+  }
+  slice_ue_mask.resize(new_size);
+  fallback_ue_mask.resize(new_size);
+}
+
+void ue_cell_repository::update_ue_state(du_ue_index_t ue_index, bool ue_in_fallback)
+{
+  const ue_cell& ue_cc = *ues[ue_index];
+  // In fallback, the UE is served only by the fallback scheduler of its PCell.
+  slice_ue_mask.set(ue_index, ue_cc.is_active() and not ue_in_fallback);
+  fallback_ue_mask.set(ue_index, ue_cc.is_active() and ue_in_fallback and ue_cc.is_pcell());
 }

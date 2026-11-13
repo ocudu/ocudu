@@ -36,23 +36,9 @@ public:
                                  ra_ue_repository&     ra_ue_repo_,
                                  cell_metrics_handler& metrics_);
 
-  /// Handles DL buffer state reported by upper layers.
-  /// \param[in] ue_index UE's DU Index for which SRB0 message needs to be scheduled.
-  /// \param[in] is_srb0 Defines whether the DL Buffer State Indication is for SRB0/SRB1.
-  void handle_dl_buffer_state_indication(du_ue_index_t ue_index);
-
   /// Handle Contention Resolution indication sent by the MAC.
   /// \param[in] ue_index UE's DU Index for which Contention Resolution CE needs to be scheduled.
   void handle_conres_indication(du_ue_index_t ue_index);
-
-  /// Handles UL Buffer State Report indication reported by UE.
-  /// \param[in] ue_index UE's DU Index for which UL SRB1 message needs to be scheduled.
-  /// \param[in] bsr_ind Buffer State Report indication message.
-  void handle_ul_bsr_indication(du_ue_index_t ue_index, const ul_bsr_indication_message& bsr_ind);
-
-  /// Handles SR indication reported by UE.
-  /// \param[in] ue_index UE's DU Index for which UL SRB1 message needs to be scheduled.
-  void handle_sr_indication(du_ue_index_t ue_index);
 
   /// Schedule UE's SRB0 DL grants for a given slot and one or more cells.
   /// \param[in] res_alloc Resource Grid of the cell where the DL grant is going to be allocated.
@@ -68,11 +54,6 @@ private:
   static constexpr size_t FALLBACK_SCHED_RING_BUFFER_SIZE =
       get_allocator_ring_size_gt_min(SCHEDULER_MAX_K0 + SCHEDULER_MAX_K1 + NTN_CELL_SPECIFIC_KOFFSET_MAX);
 
-  /// Defines the information that is needed to track the DL UEs that are pending for new SRB0/SRB1/ConRes CE TX.
-  struct fallback_ue {
-    du_ue_index_t ue_index;
-  };
-
   /// Helper that schedules DL SRB0 and SRB1 retx. Returns false if the DL fallback schedule should stop the DL
   /// allocation, true otherwise.
   bool schedule_dl_retx(cell_resource_allocator& res_alloc);
@@ -83,11 +64,27 @@ private:
   /// Determine which type of DL allocation is required for a given UE candidate.
   static dl_new_tx_alloc_type get_dl_new_tx_alloc_type(const ue& u);
 
+  /// UE with a pending event to serve.
+  struct ue_candidate {
+    du_ue_index_t ue_index;
+    /// Rank of the pending event. Lower ranks are served first.
+    uint8_t event_rank;
+    /// Slot of the pending event. Invalid if unknown.
+    slot_point event_slot;
+  };
+
+  /// \brief Sorts candidates by event rank, then by age of the event, with unknown ages last, then by UE index
+  /// starting from \c rr_offset.
+  void sort_candidates(std::vector<ue_candidate>& candidates) const;
+
+  /// Fills the DL new tx candidates, sorted by ConRes CE, SRB0 and SRB1 events and by age of the event.
+  void fill_dl_new_tx_candidates();
+
   /// Helper that schedules pending DL new txs for ConRes CE, SRB0 or SRB1.
-  /// \param[in] selected_alloc_type Type of allocation to make. Options: any new tx carrying a ConRes CE, SRB0 and
-  /// SRB1 without ConRes CE.
+  /// \param[in] candidates UEs to schedule, in order of priority.
+  /// \param[in] conres_pass Whether to schedule only new txs carrying a ConRes CE or only new txs without it.
   /// \return false if the fallback scheduler should stop its operation for the given slot.
-  bool schedule_dl_new_tx(cell_resource_allocator& res_alloc, dl_new_tx_alloc_type selected_alloc_type);
+  bool schedule_dl_new_tx(cell_resource_allocator& res_alloc, span<const ue_candidate> candidates, bool conres_pass);
 
   /// Erase the UEs' HARQ processes that have been acked from the SRB scheduler cache.
   void slot_indication(slot_point sl);
@@ -238,11 +235,17 @@ private:
 
   ocudulog::basic_logger& logger;
 
-  /// List of UE's DU Indexes for which SRB0 and SRB1 messages needs to be scheduled.
-  std::vector<fallback_ue> pending_dl_ues_new_tx;
+  /// UEs with UL SRB HARQ processes that are not empty.
+  bounded_bitset<MAX_NOF_DU_UES> ues_with_ul_harqs;
 
-  /// List of UE's DU Indexes that are pending for new TX or RE-TX.
-  std::vector<du_ue_index_t> pending_ul_ues;
+  /// DL new tx candidates of the current slot, in order of priority.
+  std::vector<ue_candidate> dl_candidates;
+
+  /// UL candidates of the current slot, in order of priority.
+  std::vector<ue_candidate> ul_candidates;
+
+  /// UE index from which the candidates of equal priority are served in the current slot.
+  unsigned rr_offset = 0;
 };
 
 } // namespace ocudu

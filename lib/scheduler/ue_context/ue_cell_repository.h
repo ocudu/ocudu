@@ -6,6 +6,7 @@
 #pragma once
 
 #include "ue_cell.h"
+#include "ocudu/adt/bounded_bitset.h"
 #include "ocudu/adt/flat_map.h"
 #include "ocudu/ran/du_types.h"
 #include "ocudu/ran/serv_cell_index.h"
@@ -46,6 +47,12 @@ public:
     return it != rnti_to_ue_index_lookup.end() ? ues[it->second].get() : nullptr;
   }
 
+  /// Bitset of the active UEs of this cell that are served by the RAN slices.
+  const bounded_bitset<MAX_NOF_DU_UES>& get_slice_ue_mask() const { return slice_ue_mask; }
+
+  /// Bitset of the active UEs in fallback that have this cell as PCell.
+  const bounded_bitset<MAX_NOF_DU_UES>& get_fallback_ue_mask() const { return fallback_ue_mask; }
+
   /// Get HARQs managed by this cell.
   cell_harq_manager& get_cell_harqs() { return cell_harqs; }
 
@@ -65,6 +72,9 @@ private:
                   ue_shared_context       shared_ctx);
 
   void rem_ue(du_ue_index_t ue_index);
+
+  /// Updates the masks of the UE, given whether the UE is in fallback.
+  void update_ue_state(du_ue_index_t ue_index, bool ue_in_fallback);
 
   const du_cell_index_t   cell_idx;
   cell_metrics_handler*   metrics;
@@ -93,6 +103,12 @@ private:
 
   // List of UEs in the cell.
   ue_list ues;
+
+  // Active UEs of the cell served by the RAN slices.
+  bounded_bitset<MAX_NOF_DU_UES> slice_ue_mask;
+
+  // Active UEs in fallback that have this cell as PCell.
+  bounded_bitset<MAX_NOF_DU_UES> fallback_ue_mask;
 
   // Mapping of RNTIs to UE indexes.
   flat_map<rnti_t, du_ue_index_t> rnti_to_ue_index_lookup;

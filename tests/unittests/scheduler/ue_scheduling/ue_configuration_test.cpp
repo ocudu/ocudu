@@ -193,13 +193,13 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
   ASSERT_TRUE(u.get_pcell().get_pcell_state().config_st == ue_config_state::pending_reconf);
 
   // While in fallback, DL buffer status that are not for SRB0/SRB1, do not get represented in pending bytes.
-  ASSERT_FALSE(u.logical_channels().has_dl_pending_bytes());
+  ASSERT_FALSE(u.logical_channels().has_fallback_dl_pending_bytes());
   for (const auto& lc : *recfg.cfg.lc_config_list) {
     u.handle_dl_buffer_state_indication(lc.lcid, 10);
     if (lc.lcid <= LCID_SRB1) {
-      ASSERT_TRUE(u.logical_channels().has_dl_pending_bytes());
+      ASSERT_TRUE(u.logical_channels().has_fallback_dl_pending_bytes());
     } else {
-      ASSERT_FALSE(u.logical_channels().has_dl_pending_bytes());
+      ASSERT_FALSE(u.logical_channels().has_fallback_dl_pending_bytes());
     }
     u.handle_dl_buffer_state_indication(lc.lcid, 0);
   }
