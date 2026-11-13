@@ -6,3 +6,7 @@
 if (ENABLE_TRX_DRIVER)
     add_subdirectory(trx_ocudu)
 endif (ENABLE_TRX_DRIVER)
+
+if (ENABLE_TRX_DIFI_DRIVER)
+    add_subdirectory(trx_ocudu_difi)
+endif (ENABLE_TRX_DIFI_DRIVER)
