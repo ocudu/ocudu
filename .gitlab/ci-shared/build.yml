@@ -102,10 +102,6 @@ include:
             export ARMPL_DIR
         fi
       fi
-      # The parent shell also needs these paths for ctest.
-      source "${OCUDU_DIR}/docker/scripts/dependency_runtime_paths.sh"
-      setup_dependency_runtime_paths /opt/rohc "${UHD_VERSION:+/opt/uhd/${UHD_VERSION}}" \
-        "${DPDK_VERSION:+/opt/dpdk/${DPDK_VERSION}}" "${ARMPL_DIR:-}"
       if [ -n "${COMPILER}" ]; then
         BUILD_CMD="-c ${COMPILER} ${BUILD_CMD}"
       fi
@@ -156,6 +152,13 @@ include:
       }
     - |
       launch_tests_ocudu() {
+        # Deferred until here: OCUDU_DIR may be populated in script, after before_script.
+        if ! runtime_paths_helper="$(command -v dependency_runtime_paths.sh)"; then
+          runtime_paths_helper="${OCUDU_DIR}/docker/scripts/dependency_runtime_paths.sh"
+        fi
+        source "${runtime_paths_helper}"
+        setup_dependency_runtime_paths /opt/rohc "${UHD_VERSION:+/opt/uhd/${UHD_VERSION}}" \
+          "${DPDK_VERSION:+/opt/dpdk/${DPDK_VERSION}}" "${ARMPL_DIR:-}"
         cd ${OCUDU_DIR}/${OCUDU_BUILD_DIR}
         echo "Using LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
         if [ -n "${OCUDU_TEST_REQUIREMENT_REPORTS}" ]; then
