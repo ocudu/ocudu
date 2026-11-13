@@ -1479,18 +1479,19 @@ static bool calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
   return out.pdcch_cfg_present || out.pdsch_cfg_present || out.radio_link_monitoring_cfg_present;
 }
 
-static void make_asn1_rrc_pucch_formats_common_param(asn1::rrc_nr::pucch_format_cfg_s& out,
-                                                     const pucch_common_all_formats&   cfg)
+/// Fills the \c PUCCH-FormatConfig of the Format 2, 3 or 4 of a UE.
+static void make_asn1_rrc_pucch_format_cfg(asn1::rrc_nr::pucch_format_cfg_s& out,
+                                           max_pucch_code_rate               max_c_rate,
+                                           bool                              additional_dmrs,
+                                           bool                              pi_2_bpsk)
 {
-  out.interslot_freq_hop_present = cfg.interslot_freq_hop;
-  out.add_dmrs_present           = cfg.additional_dmrs;
-  out.pi2_bpsk_present           = cfg.pi_2_bpsk;
-  out.simul_harq_ack_csi_present = cfg.simultaneous_harq_ack_csi;
-  if (cfg.max_c_rate == max_pucch_code_rate::not_set) {
-    out.max_code_rate_present = false;
-  } else {
+  // The scheduler multiplexes HARQ-ACK and CSI on one PUCCH.
+  out.simul_harq_ack_csi_present = true;
+  out.add_dmrs_present           = additional_dmrs;
+  out.pi2_bpsk_present           = pi_2_bpsk;
+  if (max_c_rate != max_pucch_code_rate::not_set) {
     out.max_code_rate_present = true;
-    switch (cfg.max_c_rate) {
+    switch (max_c_rate) {
       case max_pucch_code_rate::dot_08:
         out.max_code_rate = pucch_max_code_rate_opts::zero_dot08;
         break;
@@ -1513,25 +1514,7 @@ static void make_asn1_rrc_pucch_formats_common_param(asn1::rrc_nr::pucch_format_
         out.max_code_rate = pucch_max_code_rate_opts::zero_dot80;
         break;
       default:
-        ocudu_assertion_failure("Invalid PUCCH Common Format 1 Max. Code Rate={}", fmt::underlying(cfg.max_c_rate));
-    }
-  }
-  if (cfg.nof_slots == pucch_common_all_formats::num_of_slots::not_set) {
-    out.nrof_slots_present = false;
-  } else {
-    out.nrof_slots_present = true;
-    switch (cfg.nof_slots) {
-      case pucch_common_all_formats::num_of_slots::n2:
-        out.nrof_slots = pucch_format_cfg_s::nrof_slots_opts::n2;
-        break;
-      case pucch_common_all_formats::num_of_slots::n4:
-        out.nrof_slots = pucch_format_cfg_s::nrof_slots_opts::n4;
-        break;
-      case pucch_common_all_formats::num_of_slots::n8:
-        out.nrof_slots = pucch_format_cfg_s::nrof_slots_opts::n8;
-        break;
-      default:
-        ocudu_assertion_failure("Invalid PUCCH Common Format 1 No. of slots={}", fmt::underlying(cfg.nof_slots));
+        ocudu_assertion_failure("Invalid PUCCH max code rate={}", fmt::underlying(max_c_rate));
     }
   }
 }
@@ -1612,16 +1595,21 @@ asn1::rrc_nr::pucch_res_s ocudu::odu::make_asn1_rrc_pucch_resource(const pucch_r
   return pucch_res;
 }
 
-asn1::rrc_nr::sched_request_res_cfg_s
-ocudu::odu::make_asn1_rrc_sr_resource(const scheduling_request_resource_config& cfg)
+/// \brief Makes the \c SchedulingRequestResourceConfig of a UE.
+/// \param[in] ue_pucch_res_id \c PUCCH-ResourceId of the SR resource, i.e. its position in the UE PUCCH resource list.
+static sched_request_res_cfg_s make_asn1_rrc_sr_resource(unsigned              sr_res_id,
+                                                         scheduling_request_id sr_id,
+                                                         sr_periodicity        period,
+                                                         unsigned              offset,
+                                                         unsigned              ue_pucch_res_id)
 {
   sched_request_res_cfg_s sr_res_cfg;
-  sr_res_cfg.sched_request_res_id           = cfg.sr_res_id;
-  sr_res_cfg.sched_request_id               = cfg.sr_id;
+  sr_res_cfg.sched_request_res_id           = sr_res_id;
+  sr_res_cfg.sched_request_id               = sr_id;
   sr_res_cfg.res_present                    = true;
-  sr_res_cfg.res                            = cfg.pucch_res_id;
+  sr_res_cfg.res                            = ue_pucch_res_id;
   sr_res_cfg.periodicity_and_offset_present = true;
-  switch (cfg.period) {
+  switch (period) {
     case sr_periodicity::sym_2:
       sr_res_cfg.periodicity_and_offset.set_sym2();
       break;
@@ -1633,54 +1621,54 @@ ocudu::odu::make_asn1_rrc_sr_resource(const scheduling_request_resource_config& 
       break;
     case sr_periodicity::sl_2: {
       auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl2();
-      period_and_offset       = cfg.offset;
+      period_and_offset       = offset;
     } break;
     case sr_periodicity::sl_4: {
       auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl4();
-      period_and_offset       = cfg.offset;
+      period_and_offset       = offset;
     } break;
     case sr_periodicity::sl_5: {
       auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl5();
-      period_and_offset       = cfg.offset;
+      period_and_offset       = offset;
     } break;
     case sr_periodicity::sl_8: {
       auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl8();
-      period_and_offset       = cfg.offset;
+      period_and_offset       = offset;
     } break;
     case sr_periodicity::sl_10: {
       auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl10();
-      period_and_offset       = cfg.offset;
+      period_and_offset       = offset;
     } break;
     case sr_periodicity::sl_16: {
       auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl16();
-      period_and_offset       = cfg.offset;
+      period_and_offset       = offset;
     } break;
     case sr_periodicity::sl_20: {
       auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl20();
-      period_and_offset       = cfg.offset;
+      period_and_offset       = offset;
     } break;
     case sr_periodicity::sl_40: {
       auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl40();
-      period_and_offset       = cfg.offset;
+      period_and_offset       = offset;
     } break;
     case sr_periodicity::sl_80: {
       auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl80();
-      period_and_offset       = cfg.offset;
+      period_and_offset       = offset;
     } break;
     case sr_periodicity::sl_160: {
       auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl160();
-      period_and_offset       = cfg.offset;
+      period_and_offset       = offset;
     } break;
     case sr_periodicity::sl_320: {
       auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl320();
-      period_and_offset       = cfg.offset;
+      period_and_offset       = offset;
     } break;
     case sr_periodicity::sl_640: {
       auto& period_and_offset = sr_res_cfg.periodicity_and_offset.set_sl640();
-      period_and_offset       = cfg.offset;
+      period_and_offset       = offset;
     } break;
     default:
-      ocudu_assertion_failure("Invalid SR periodicity={}", fmt::underlying(cfg.period));
+      ocudu_assertion_failure("Invalid SR periodicity={}", fmt::underlying(period));
   }
   return sr_res_cfg;
 }
@@ -1795,42 +1783,40 @@ static bool calculate_pucch_config_diff(asn1::rrc_nr::bwp_ul_ded_s&  out,
 
   // PUCCH formats. They are the same for all the UEs of the cell, so they are only sent in the initial setup.
   if (src == nullptr) {
-    const pucch_common_all_formats format_2{.max_c_rate                = cell_res.max_code_rate_234,
-                                            .simultaneous_harq_ack_csi = true};
-    pucch_common_all_formats       format_34 = format_2;
     // The Format 3 and 4 resources of a cell have the same DM-RS and modulation configuration.
+    bool f34_additional_dmrs = false;
+    bool f34_pi_2_bpsk       = false;
     for (const pucch_resource& res : cell_res.res.resources) {
       if (const auto* f3 = std::get_if<pucch_resource::f3_config>(&res.format_params)) {
-        format_34.additional_dmrs = f3->additional_dmrs;
-        format_34.pi_2_bpsk       = f3->pi_2_bpsk;
+        f34_additional_dmrs = f3->additional_dmrs;
+        f34_pi_2_bpsk       = f3->pi_2_bpsk;
         break;
       }
       if (const auto* f4 = std::get_if<pucch_resource::f4_config>(&res.format_params)) {
-        format_34.additional_dmrs = f4->additional_dmrs;
-        format_34.pi_2_bpsk       = f4->pi_2_bpsk;
+        f34_additional_dmrs = f4->additional_dmrs;
+        f34_pi_2_bpsk       = f4->pi_2_bpsk;
         break;
       }
     }
+    // Format 1 has no common parameters.
     out_pucch.format1_present = true;
-    make_asn1_rrc_pucch_formats_common_param(out_pucch.format1.set_setup(), pucch_common_all_formats{});
+    out_pucch.format1.set_setup();
     out_pucch.format2_present = true;
-    make_asn1_rrc_pucch_formats_common_param(out_pucch.format2.set_setup(), format_2);
+    make_asn1_rrc_pucch_format_cfg(out_pucch.format2.set_setup(), cell_res.max_code_rate_234, false, false);
     out_pucch.format3_present = true;
-    make_asn1_rrc_pucch_formats_common_param(out_pucch.format3.set_setup(), format_34);
+    make_asn1_rrc_pucch_format_cfg(
+        out_pucch.format3.set_setup(), cell_res.max_code_rate_234, f34_additional_dmrs, f34_pi_2_bpsk);
     out_pucch.format4_present = true;
-    make_asn1_rrc_pucch_formats_common_param(out_pucch.format4.set_setup(), format_34);
+    make_asn1_rrc_pucch_format_cfg(
+        out_pucch.format4.set_setup(), cell_res.max_code_rate_234, f34_additional_dmrs, f34_pi_2_bpsk);
   }
 
   // SR Resource. The UE has a single SR resource, which is never released.
   static constexpr unsigned ue_sr_res_id = 1;
   static constexpr unsigned ue_sr_id     = 0;
   if (sr_changed) {
-    out_pucch.sched_request_res_to_add_mod_list.push_back(
-        make_asn1_rrc_sr_resource(scheduling_request_resource_config{.sr_res_id    = ue_sr_res_id,
-                                                                     .sr_id        = uint_to_sched_req_id(ue_sr_id),
-                                                                     .period       = cell_res.sr_period,
-                                                                     .offset       = dest.pucch.sr_offset,
-                                                                     .pucch_res_id = dest_layout.sr_res_id}));
+    out_pucch.sched_request_res_to_add_mod_list.push_back(make_asn1_rrc_sr_resource(
+        ue_sr_res_id, uint_to_sched_req_id(ue_sr_id), cell_res.sr_period, dest.pucch.sr_offset, dest_layout.sr_res_id));
   }
 
   // dl-DataToUL-ACK.

@@ -5,16 +5,11 @@
 
 #pragma once
 
-#include "ocudu/ran/pucch/pucch_mapping.h"
 #include "ocudu/support/error_handling.h"
 #include <cstdint>
 #include <optional>
 
 namespace ocudu {
-
-/// Maximum number of SR resources per BWP in a cell.
-/// \remark See TS 38.331, "maxNrofSR-Resources".
-constexpr size_t MAX_NOF_SR_RESOURCES = 8;
 
 /// \c SchedulingRequestResourceId, as per TS 38.331.
 enum scheduling_request_id : uint8_t { SR_ID_MIN = 0, SR_ID_MAX = 7 };
@@ -147,27 +142,6 @@ struct scheduling_request_to_addmod {
     return sr_id == rhs.sr_id && prohibit_timer == rhs.prohibit_timer && max_tx == rhs.max_tx;
   }
   bool operator!=(const scheduling_request_to_addmod& rhs) const { return !(rhs == *this); }
-};
-
-/// SR Configuration, as per \c SchedulingRequestResourceConfig, TS 38.331.
-struct scheduling_request_resource_config {
-  bool operator==(const scheduling_request_resource_config& rhs) const
-  {
-    return sr_res_id == rhs.sr_res_id && sr_id == rhs.sr_id && period == rhs.period && offset == rhs.offset &&
-           pucch_res_id == rhs.pucch_res_id;
-  }
-  bool operator!=(const scheduling_request_resource_config& rhs) const { return !(rhs == *this); }
-
-  /// \c schedulingRequestResourceId, which identifies this SchedulingRequestResourceConfig.
-  unsigned sr_res_id;
-  /// \c schedulingRequest, which is the ID of \ref scheduling_request_to_addmod that uses this resource.
-  scheduling_request_id sr_id;
-  /// \c periodicityAndOffset is here represented separately as pediod and offset.
-  sr_periodicity period;
-  unsigned       offset;
-  /// \c resource, the \c PUCCH-ResourceId of the PUCCH resource used for this SR, i.e. its position in the UE's PUCCH
-  /// resource list.
-  unsigned pucch_res_id = 0;
 };
 
 } // namespace ocudu

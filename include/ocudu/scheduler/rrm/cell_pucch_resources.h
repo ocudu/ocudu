@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "ocudu/adt/static_vector.h"
 #include "ocudu/adt/strong_type.h"
 #include "ocudu/ran/pucch/pucch_configuration.h"
 #include "ocudu/support/ocudu_assert.h"

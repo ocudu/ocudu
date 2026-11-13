@@ -8,13 +8,11 @@
 
 #pragma once
 
-#include "ocudu/adt/bounded_integer.h"
-#include "ocudu/adt/static_vector.h"
 #include "ocudu/ran/pucch/pucch_mapping.h"
 #include "ocudu/ran/resource_allocation/ofdm_symbol_range.h"
 #include "ocudu/ran/resource_allocation/rb_interval.h"
-#include "ocudu/ran/sr_configuration.h"
 #include <cstdint>
+#include <optional>
 #include <variant>
 
 namespace ocudu {
@@ -59,28 +57,6 @@ inline float to_float(max_pucch_code_rate opt)
   }
   return 0;
 }
-
-/// \c PUCCH-FormatConfig, in \c PUCCH-Config, TS 38.331. It describes the parameters that are common for a given PUCCH
-/// format.
-struct pucch_common_all_formats {
-  enum class num_of_slots { not_set = 0, n2, n4, n8 };
-
-  // The false or not_set value indicates that the field is optional and not set.
-  bool                interslot_freq_hop{false};
-  bool                additional_dmrs{false};
-  max_pucch_code_rate max_c_rate{max_pucch_code_rate::not_set};
-  num_of_slots        nof_slots{num_of_slots::not_set};
-  bool                pi_2_bpsk{false};
-  bool                simultaneous_harq_ack_csi{false};
-
-  bool operator==(const pucch_common_all_formats& rhs) const
-  {
-    return interslot_freq_hop == rhs.interslot_freq_hop && additional_dmrs == rhs.additional_dmrs &&
-           max_c_rate == rhs.max_c_rate && nof_slots == rhs.nof_slots && pi_2_bpsk == rhs.pi_2_bpsk &&
-           simultaneous_harq_ack_csi == rhs.simultaneous_harq_ack_csi;
-  }
-  bool operator!=(const pucch_common_all_formats& rhs) const { return !(rhs == *this); }
-};
 
 /// PUCCH repetition factor (\c pucch-RepetitionNrofSlots, TS 38.331).
 enum class pucch_repetition_factor : uint8_t { n1 = 1, n2 = 2, n4 = 4, n8 = 8 };

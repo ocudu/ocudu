@@ -6,6 +6,7 @@
 #pragma once
 
 #include "ocudu/adt/circular_array.h"
+#include "ocudu/adt/static_vector.h"
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/ran/pucch/pucch_uci_bits.h"
 #include "ocudu/ran/rnti.h"

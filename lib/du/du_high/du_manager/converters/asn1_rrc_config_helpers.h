@@ -33,8 +33,6 @@ asn1::rrc_nr::bwp_ul_common_s make_asn1_rrc_initial_up_bwp(const ul_config_commo
 
 asn1::rrc_nr::tdd_ul_dl_cfg_common_s make_asn1_rrc_tdd_ul_dl_cfg_common(const tdd_ul_dl_config_common& tdd_cfg);
 
-asn1::rrc_nr::sched_request_res_cfg_s make_asn1_rrc_sr_resource(const scheduling_request_resource_config& cfg);
-
 /// Converts a PUCCH resource of the UE's PUCCH resource list, where \c ue_res_id is its position in the list.
 asn1::rrc_nr::pucch_res_s make_asn1_rrc_pucch_resource(const pucch_resource& cfg, unsigned ue_res_id);
 

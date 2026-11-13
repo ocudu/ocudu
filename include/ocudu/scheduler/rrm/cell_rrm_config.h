@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "ocudu/adt/static_vector.h"
 #include "ocudu/ran/pucch/pucch_configuration.h"
 #include "ocudu/ran/sr_configuration.h"
 #include "ocudu/scheduler/rrm/cell_pucch_resources.h"
