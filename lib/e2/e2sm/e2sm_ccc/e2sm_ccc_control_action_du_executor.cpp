@@ -238,26 +238,56 @@ e2sm_ccc_control_o_rrm_policy_ratio_executor::e2sm_ccc_control_o_rrm_policy_rati
 
 bool e2sm_ccc_control_o_rrm_policy_ratio_executor::ric_control_action_supported(const e2sm_ric_control_request& req)
 {
-  const auto& ctrl_hdr = std::get<ric_ctrl_hdr_s>(req.request_ctrl_hdr);
-  const auto& ctrl_msg = std::get<ric_ctrl_msg_s>(req.request_ctrl_msg);
+  // The request carries the header and the message of whichever service model unpacked it, so one that another model
+  // filled in is not one this executor reads.
+  const auto* ctrl_hdr = std::get_if<ric_ctrl_hdr_s>(&req.request_ctrl_hdr);
+  const auto* ctrl_msg = std::get_if<ric_ctrl_msg_s>(&req.request_ctrl_msg);
+  if (ctrl_hdr == nullptr or ctrl_msg == nullptr) {
+    return false;
+  }
 
-  int64_t ric_style_type = ctrl_hdr.ctrl_hdr_format.ctrl_hdr_format1().ric_style_type;
+  int64_t ric_style_type = ctrl_hdr->ctrl_hdr_format.ctrl_hdr_format1().ric_style_type;
   if (ric_style_type != 2) {
     return false;
   }
 
-  if (ctrl_msg.ctrl_msg_format.type() != ctrl_msg_format_c::types::ctrl_msg_format2) {
+  if (ctrl_msg->ctrl_msg_format.type() != ctrl_msg_format_c::types::ctrl_msg_format2) {
     return false;
   }
 
-  const auto& cell_ctrl      = ctrl_msg.ctrl_msg_format.ctrl_msg_format2().list_of_cells_ctrl[0];
-  const auto& ran_cfg_struct = cell_ctrl.list_of_cfg_structures[0];
-
-  if (ran_cfg_struct.ran_cfg_structure_name.to_string() != ran_cfg_structure_name) {
+  const auto& cell_ctrl_list = ctrl_msg->ctrl_msg_format.ctrl_msg_format2().list_of_cells_ctrl;
+  if (cell_ctrl_list.size() == 0) {
     return false;
   }
-  const auto& rrm_cfg = ran_cfg_struct.new_values_of_attributes.ran_cfg_structure.o_rrm_policy_ratio();
-  return !(rrm_cfg.res_type.value != res_type_opts::prb_dl and rrm_cfg.res_type.value != res_type_opts::prb_ul);
+  // execute_ric_control_action applies every structure of every cell, so every one of them that carries the name of
+  // this executor is checked here: one that the request holds further along is as able to configure the DU as the
+  // first, and a request is acted on whole or not at all.
+  bool names_this_executor = false;
+  for (const auto& cell_ctrl : cell_ctrl_list) {
+    if (cell_ctrl.list_of_cfg_structures.size() == 0) {
+      return false;
+    }
+    for (const auto& ran_cfg_struct : cell_ctrl.list_of_cfg_structures) {
+      if (ran_cfg_struct.ran_cfg_structure_name.to_string() != ran_cfg_structure_name) {
+        continue;
+      }
+      names_this_executor = true;
+      // The name of a structure and the alternative that its values hold are two things the RIC sends, and they do
+      // not have to agree, so the alternative is what says whether this executor can act on it.
+      const auto& ran_cfg = ran_cfg_struct.new_values_of_attributes.ran_cfg_structure;
+      if (ran_cfg.type() != e2sm_ccc_ran_cfg_structure_c::types::o_rrm_policy_ratio) {
+        return false;
+      }
+      const auto& rrm_cfg = ran_cfg.o_rrm_policy_ratio();
+      if (not rrm_cfg.res_type_present) {
+        return false;
+      }
+      if (rrm_cfg.res_type.value != res_type_opts::prb_dl and rrm_cfg.res_type.value != res_type_opts::prb_ul) {
+        return false;
+      }
+    }
+  }
+  return names_this_executor;
 }
 
 async_task<e2sm_ric_control_response>

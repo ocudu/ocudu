@@ -41,19 +41,29 @@ e2sm_ccc_control_service_style_2::e2sm_ccc_control_service_style_2() : e2sm_ccc_
 
 bool e2sm_ccc_control_service_style_2::control_request_supported(const e2sm_ric_control_request& req)
 {
-  const auto& ctrl_hdr = std::get<ric_ctrl_hdr_s>(req.request_ctrl_hdr);
-  const auto& ctrl_msg = std::get<ric_ctrl_msg_s>(req.request_ctrl_msg);
+  // The request carries the header and the message of whichever service model unpacked it, so one that another model
+  // filled in is not one this service reads.
+  const auto* ctrl_hdr = std::get_if<ric_ctrl_hdr_s>(&req.request_ctrl_hdr);
+  const auto* ctrl_msg = std::get_if<ric_ctrl_msg_s>(&req.request_ctrl_msg);
+  if (ctrl_hdr == nullptr or ctrl_msg == nullptr) {
+    return false;
+  }
 
-  int64_t ric_style_type = ctrl_hdr.ctrl_hdr_format.ctrl_hdr_format1().ric_style_type;
+  int64_t ric_style_type = ctrl_hdr->ctrl_hdr_format.ctrl_hdr_format1().ric_style_type;
   if (ric_style_type != 2) {
     return false;
   }
 
-  if (ctrl_msg.ctrl_msg_format.type() != ctrl_msg_format_c::types::ctrl_msg_format2) {
+  if (ctrl_msg->ctrl_msg_format.type() != ctrl_msg_format_c::types::ctrl_msg_format2) {
     return false;
   }
 
-  const auto& cell_ctrl_list = ctrl_msg.ctrl_msg_format.ctrl_msg_format2().list_of_cells_ctrl;
+  const auto& cell_ctrl_list = ctrl_msg->ctrl_msg_format.ctrl_msg_format2().list_of_cells_ctrl;
+  // The schema allows an empty list, and execute_control_request reads the first cell and its first structure, so a
+  // request that carries none of either is not one this service can act on.
+  if (cell_ctrl_list.size() == 0 or cell_ctrl_list[0].list_of_cfg_structures.size() == 0) {
+    return false;
+  }
   for (auto const& cell_ctrl : cell_ctrl_list) {
     // Check if requested cells are present.
     if (cell_ctrl.cell_global_id.type() != cell_global_id_c::types::nr_cgi) {
@@ -92,8 +102,10 @@ e2sm_ccc_control_service_style_2::execute_control_request(const e2sm_ric_control
     return launch_async([](coro_context<async_task<e2sm_ric_control_response>>& ctx) {
       CORO_BEGIN(ctx);
       e2sm_ric_control_response ctrl_response;
-      ctrl_response.success                 = false;
-      ctrl_response.cause.set_ric_request() = cause_ric_request_e::options::action_not_supported;
+      ctrl_response.success = false;
+      // The procedure asks whether the request is supported before it runs this, and fails it with ctrl_msg_invalid,
+      // so a request that gets here and is not supported fails for the same reason.
+      ctrl_response.cause.set_ric_request() = cause_ric_request_e::options::ctrl_msg_invalid;
       CORO_RETURN(ctrl_response);
     });
   }
@@ -102,5 +114,7 @@ e2sm_ccc_control_service_style_2::execute_control_request(const e2sm_ric_control
   const auto& ran_cfg_struct =
       ctrl_msg.ctrl_msg_format.ctrl_msg_format2().list_of_cells_ctrl[0].list_of_cfg_structures[0];
   std::string ran_cfg_struct_name = ran_cfg_struct.ran_cfg_structure_name.to_string();
-  return config_req_executors[ran_cfg_struct_name]->execute_ric_control_action(req);
+  // control_request_supported() found an executor of this name, and at() says so rather than inserting an empty
+  // one to call through.
+  return config_req_executors.at(ran_cfg_struct_name)->execute_ric_control_action(req);
 }
