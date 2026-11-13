@@ -289,7 +289,8 @@ bool byte_buffer::append(const byte_buffer& other)
   for (node_t* seg = other.ctrl_blk_ptr->segments.head; seg != nullptr; seg = seg->next) {
     auto* other_it = seg->begin();
     while (other_it != seg->end()) {
-      if (ctrl_blk_ptr->segments.tail->tailroom() == 0 and not append_segment(0, seg->length())) {
+      if ((ctrl_blk_ptr->segments.empty() or ctrl_blk_ptr->segments.tail->tailroom() == 0) and
+          not append_segment(0, seg->length())) {
         return false;
       }
       auto to_append =
@@ -393,7 +394,8 @@ bool byte_buffer::append(span<const uint8_t> bytes, byte_buffer_memory_resource&
 
   // segment-wise copy.
   for (size_t offset = 0; offset < bytes.size();) {
-    if (ctrl_blk_ptr->segments.tail->tailroom() == 0 and not append_segment(0, bytes.size() - offset)) {
+    if ((ctrl_blk_ptr->segments.empty() or ctrl_blk_ptr->segments.tail->tailroom() == 0) and
+        not append_segment(0, bytes.size() - offset)) {
       return false;
     }
     size_t              to_write = std::min(ctrl_blk_ptr->segments.tail->tailroom(), bytes.size() - offset);
@@ -626,10 +628,9 @@ void byte_buffer::trim_head(size_t nof_bytes)
     ctrl_blk_ptr->pkt_len -= to_trim;
     trimmed += to_trim;
     if (ctrl_blk_ptr->segments.head->length() == 0) {
-      // Head segment is empty.
-      // Remove the first segment.
-      node_t* prev_head           = ctrl_blk_ptr->segments.head;
-      ctrl_blk_ptr->segments.head = ctrl_blk_ptr->segments.head->next;
+      // Head segment is empty. Remove it via pop_front, which also clears the tail when it was the last segment.
+      node_t* prev_head = ctrl_blk_ptr->segments.head;
+      ctrl_blk_ptr->segments.pop_front();
       ctrl_blk_ptr->destroy_node(prev_head);
     }
   }
@@ -701,7 +702,7 @@ bool byte_buffer::resize(size_t new_sz)
   }
   if (new_sz > prev_len) {
     for (size_t to_add = new_sz - prev_len; to_add > 0;) {
-      if (not has_ctrl_block() or ctrl_blk_ptr->segments.tail->tailroom() == 0) {
+      if (not has_ctrl_block() or ctrl_blk_ptr->segments.empty() or ctrl_blk_ptr->segments.tail->tailroom() == 0) {
         if (not append_segment(0, to_add)) {
           return false;
         }

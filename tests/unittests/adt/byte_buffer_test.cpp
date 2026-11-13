@@ -503,6 +503,23 @@ TEST_F(byte_buffer_tester, prepend_multi_segment_byte_buffer_keeps_byte_order)
   ASSERT_EQ(pdu, concat_vec(concat_vec(bytes2, bytes1), bytes3));
 }
 
+TEST_F(byte_buffer_tester, trim_head_all_bytes_then_append)
+{
+  // Multi-segment, so that the tail is not the segment that shares memory with the control block.
+  for (size_t init_sz : {small_vec_size, large_vec_size + 1}) {
+    byte_buffer pdu = byte_buffer::create(test_rng::vector_of_uniform_ints<uint8_t>(init_sz)).value();
+    pdu.trim_head(pdu.length());
+    ASSERT_TRUE(pdu.empty());
+    ASSERT_EQ(pdu.begin(), pdu.end());
+
+    std::vector<uint8_t> bytes = test_rng::vector_of_uniform_ints<uint8_t>(small_vec_size);
+    ASSERT_TRUE(pdu.append(bytes));
+    ASSERT_EQ_LEN(pdu, bytes.size());
+    ASSERT_EQ(pdu, bytes);
+    ASSERT_EQ(std::vector<uint8_t>(pdu.begin(), pdu.end()), bytes);
+  }
+}
+
 TEST_P(three_vector_size_param_test, shallow_copy_prepend_and_append_keeps_validity)
 {
   // When a byte_buffer::prepend causes the byte_buffer head segment to move, any previously existing shallow copies
