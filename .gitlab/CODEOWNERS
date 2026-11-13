@@ -12,7 +12,7 @@
 [General][1] @ismael.gomez1 @andrepuschmann
 /README.md
 
-[CI][1] @asaezper @falkenberg
+[CI][1] @asaezper @Falkenber9
 /.gitlab-ci.yml
 /.github/
 /.gitlab/
@@ -119,7 +119,7 @@
 /tests/*/ntn/
 /tests/integrationtests/du_high/ntn/
 
-[CU-UP][1] @palvarez @falkenberg @fabian.eckermann
+[CU-UP][1] @palvarez @Falkenber9 @fabian.eckermann
 /lib/cu_up/
 /include/ocudu/cu_up/
 /tests/*/cu_up/
@@ -145,7 +145,7 @@
 /include/ocudu/rlc/
 /tests/*/rlc/
 
-[CU-CP][1] @palvarez @falkenberg @fabian.eckermann
+[CU-CP][1] @palvarez @Falkenber9 @fabian.eckermann
 /lib/cu_cp/
 /include/ocudu/cu_cp/
 /tests/*/cu_cp/
