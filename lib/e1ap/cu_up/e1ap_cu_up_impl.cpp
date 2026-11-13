@@ -217,10 +217,12 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const bearer_context_s
   e1ap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
   e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->gnb_cu_cp_ue_e1ap_id =
       msg->gnb_cu_cp_ue_e1ap_id;
-  e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->cause.set_protocol();
+  auto& fail_cause = e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->cause;
+  fail_cause.set_protocol();
 
   // Do basic syntax/semantic checks on the validity of the received message.
   if (!check_e1ap_bearer_context_setup_request_valid(msg, logger)) {
+    fail_cause.set_protocol() = cause_protocol_opts::semantic_error;
     logger.log_debug("Sending BearerContextSetupFailure. Cause: Received invalid BearerContextSetupRequest");
     pdu_notifier->on_new_message(e1ap_msg);
     return;
@@ -246,6 +248,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const bearer_context_s
   e1ap_bearer_context_setup_request bearer_context_setup = {};
   bearer_context_setup.e1_index                          = e1ap_cfg.e1_index;
   if (!fill_e1ap_bearer_context_setup_request(bearer_context_setup, msg)) {
+    fail_cause.set_protocol() = cause_protocol_opts::semantic_error;
     logger.log_error("Sending BearerContextSetupFailure. Cause: Invalid BearerContextSetupRequest");
     // Send response.
     pdu_notifier->on_new_message(e1ap_msg);
