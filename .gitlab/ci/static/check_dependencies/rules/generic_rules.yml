@@ -42,7 +42,6 @@ rules:
       - include/ocudu/asn1/asn1_openapi_codec.h
       - include/ocudu/support/json_utils.h
       - lib/e2/e2sm/e2sm_ccc/**
-      - tests/integrationtests/du_high/ntn/**
       - tests/test_doubles/du_high/*
       - tests/unittests/apps/**
     to: external/nlohmann/**
