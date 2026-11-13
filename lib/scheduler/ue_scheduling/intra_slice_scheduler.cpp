@@ -121,7 +121,8 @@ void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_candidate_group(
                                                              : parent->create_newtx_ul_candidate(slice_ues[ue_idx]);
       if (ue_candidate.has_value()) {
         candidates.push_back(ue_candidate.value());
-        last_candidate_count = (static_cast<unsigned>(next) + sz - start) % sz;
+        // Count the accepted UE, so that the next UE group starts after it.
+        last_candidate_count = (static_cast<unsigned>(next) + sz - start) % sz + 1;
         if (candidates.size() >= group_size) {
           return false;
         }

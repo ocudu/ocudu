@@ -392,6 +392,75 @@ TEST_P(scheduler_policy_test, scheduler_allocates_pdsch_even_when_only_pending_c
             lcid_dl_sch_t::TA_CMD);
 }
 
+class scheduler_policy_ue_group_test : public base_scheduler_policy_test,
+                                       public ::testing::TestWithParam<policy_scheduler_type>
+{
+protected:
+  scheduler_policy_ue_group_test() :
+    base_scheduler_policy_test(test_params{.policy = GetParam(), .sched_cfg = []() {
+                                             auto cfg = config_helpers::make_default_scheduler_expert_config();
+                                             cfg.ue.pre_policy_rr_ue_group_size = 1;
+                                             return cfg;
+                                           }()})
+  {
+  }
+};
+
+TEST_P(scheduler_policy_ue_group_test, ues_are_visited_in_turns_across_ue_groups)
+{
+  // Two UEs with UE indexes apart, so that the group offset has to skip over the gap between them.
+  const lcg_id_t      lcg_id = uint_to_lcg_id(2);
+  const lcid_t        lcid   = uint_to_lcid(5);
+  const du_ue_index_t ue_a   = to_du_ue_index(0);
+  const du_ue_index_t ue_b   = to_du_ue_index(5);
+  for (du_ue_index_t ue_idx : {ue_a, ue_b}) {
+    add_ue(make_ue_create_req(ue_idx, to_rnti(0x4601 + (unsigned)ue_idx), {lcid}, lcg_id));
+    push_dl_bs(ue_idx, lcid, 100000000);
+  }
+
+  // With a UE group of one UE, a single UE is a DL candidate in each SFN.
+  std::map<du_ue_index_t, unsigned> nof_sfns_served;
+  const unsigned                    nof_sfns = 40;
+  for (unsigned sfn_count = 0; sfn_count != nof_sfns;) {
+    // Keep both UEs with UL data, so that they are also UL candidates.
+    for (du_ue_index_t ue_idx : {ue_a, ue_b}) {
+      notify_ul_bsr(ue_idx, lcg_id, 100000);
+    }
+    const unsigned   sfn   = next_slot.sfn();
+    const slot_point sl_tx = next_slot;
+    run_slot();
+    for (const dl_msg_alloc& grant : res_grid[0].result_reader().dl().ue_grants()) {
+      ++nof_sfns_served[grant.context.ue_index];
+    }
+    // ACK the DL HARQs whose UCI is due and the UL HARQs whose PUSCH is due, so that the UEs always have free HARQs.
+    for (du_ue_index_t ue_idx : {ue_a, ue_b}) {
+      auto& harqs = ues[ue_idx].get_pcell().harqs;
+      for (unsigned h_id = 0, e = harqs.nof_dl_harqs(); h_id != e; ++h_id) {
+        std::optional<dl_harq_process_handle> h_dl = harqs.dl_harq(to_harq_id(h_id));
+        if (h_dl.has_value() and h_dl->is_waiting_ack() and h_dl->uci_slot() <= sl_tx) {
+          ASSERT_TRUE(h_dl->dl_ack_info(mac_harq_ack_report_status::ack, std::nullopt));
+        }
+      }
+      for (unsigned h_id = 0, e = harqs.nof_ul_harqs(); h_id != e; ++h_id) {
+        std::optional<ul_harq_process_handle> h_ul = harqs.ul_harq(to_harq_id(h_id));
+        if (h_ul.has_value() and h_ul->is_waiting_ack() and h_ul->pusch_slot() <= sl_tx) {
+          ASSERT_TRUE(h_ul->ul_crc_info(true).has_value());
+        }
+      }
+    }
+    if (next_slot.sfn() != sfn) {
+      ++sfn_count;
+    }
+  }
+
+  // Both UEs get as many turns.
+  ASSERT_EQ(nof_sfns_served.size(), 2);
+  const unsigned count_a = nof_sfns_served[ue_a];
+  const unsigned count_b = nof_sfns_served[ue_b];
+  ASSERT_LE(std::max(count_a, count_b), std::min(count_a, count_b) * 11 / 10)
+      << fmt::format("DL grants: ue={}: {}, ue={}: {}", ue_a, count_a, ue_b, count_b);
+}
+
 class scheduler_policy_partial_slot_tdd_test : public base_scheduler_policy_test,
                                                public ::testing::TestWithParam<policy_scheduler_type>
 {
@@ -882,3 +951,6 @@ INSTANTIATE_TEST_SUITE_P(scheduler_policy,
                          scheduler_policy_alloc_bounds_test,
                          testing::Values(policy_scheduler_type::time_rr, policy_scheduler_type::time_qos));
 INSTANTIATE_TEST_SUITE_P(scheduler_policy, scheduler_pf_qos_test, testing::Values(128000, 256000));
+INSTANTIATE_TEST_SUITE_P(scheduler_policy,
+                         scheduler_policy_ue_group_test,
+                         testing::Values(policy_scheduler_type::time_rr, policy_scheduler_type::time_qos));
