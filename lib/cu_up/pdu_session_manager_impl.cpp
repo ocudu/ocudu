@@ -280,11 +280,16 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
     return drb_result;
   }
 
-  // Reject a DRB if ID already exists in this PDU session.
-  if (new_session.drbs.count(drb_to_setup.drb_id) != 0) {
-    logger.log_error("Cannot create {} for {}: DRB ID already exists in PDU session",
-                     drb_to_setup.drb_id,
-                     new_session.pdu_session_id);
+  // Reject if the DRB ID is already in use in this or any other PDU session of this UE.
+  bool drb_id_in_use = new_session.drbs.count(drb_to_setup.drb_id) != 0;
+  for (const auto& [psi, session] : pdu_sessions) {
+    if (!drb_id_in_use && session.get() != &new_session) {
+      drb_id_in_use = session->drbs.count(drb_to_setup.drb_id) != 0;
+    }
+  }
+  if (drb_id_in_use) {
+    logger.log_error(
+        "Cannot create {} for {}: DRB ID already in use in this UE", drb_to_setup.drb_id, new_session.pdu_session_id);
     drb_result.cause = e1ap_cause_radio_network_t::multiple_drb_id_instances;
     return drb_result;
   }
@@ -314,10 +319,15 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
       auto& new_qos_flow                       = new_drb->qos_flows[qos_flow.qos_flow_id];
       logger.log_debug("Created QoS flow with {} and {}", new_qos_flow->qos_flow_id, new_qos_flow->five_qi);
       sdap_config sdap_cfg = {make_sdap_drb_config(drb_to_setup.sdap_cfg)};
-      new_session.sdap->add_mapping(
-          qos_flow.qos_flow_id, drb_to_setup.drb_id, sdap_cfg, new_qos_flow->sdap_to_pdcp_adapter);
-      flow_result.success = true;
-      nof_flow_success++;
+      if (new_session.sdap->add_mapping(
+              qos_flow.qos_flow_id, drb_to_setup.drb_id, sdap_cfg, new_qos_flow->sdap_to_pdcp_adapter)) {
+        flow_result.success = true;
+        nof_flow_success++;
+      } else {
+        new_drb->qos_flows.erase(qos_flow.qos_flow_id);
+        flow_result.cause = e1ap_cause_radio_network_t::unspecified;
+        logger.log_error("Failed to add SDAP mapping for {}", qos_flow.qos_flow_id);
+      }
     } else {
       // fail if mapping already exists
       flow_result.success = false;

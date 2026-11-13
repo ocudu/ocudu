@@ -46,18 +46,18 @@ public:
 
   bool is_mapped(qos_flow_id_t qfi) final { return tx_map.find(qfi) != tx_map.end(); }
 
-  void
+  bool
   add_mapping(qos_flow_id_t qfi, drb_id_t drb_id, sdap_config sdap_cfg, sdap_tx_pdu_notifier& tx_pdu_notifier) final
   {
     logger.log_info("Mapping {} {} {}", qfi, drb_id, sdap_cfg);
     // check preconditions
     if (is_mapped(qfi)) {
       logger.log_error("Cannot overwrite existing DL mapping for {}", qfi);
-      return;
+      return false;
     }
     if (rx_map.find(drb_id) != rx_map.end()) {
       logger.log_error("Cannot overwrite existing UL mapping for {}", drb_id);
-      return;
+      return false;
     }
 
     // create TX mapping
@@ -69,6 +69,8 @@ public:
     std::unique_ptr<sdap_entity_rx_impl> rx =
         std::make_unique<sdap_entity_rx_impl>(ue_index, psi, qfi, drb_id, rx_sdu_notifier);
     rx_map.insert({drb_id, std::move(rx)});
+
+    return true;
   }
 
   void remove_mapping(drb_id_t drb_id) final
