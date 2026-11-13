@@ -724,18 +724,8 @@ bool byte_buffer::resize(size_t new_sz)
       to_add -= added;
     }
   } else {
-    size_t count = 0;
-    for (node_t* seg = ctrl_blk_ptr->segments.head; count < new_sz; seg = seg->next) {
-      size_t new_seg_len = std::min(seg->length(), new_sz - count);
-      if (new_seg_len != seg->length()) {
-        seg->resize(new_seg_len);
-      }
-      count += new_seg_len;
-      if (count == new_sz) {
-        seg->next                   = nullptr;
-        ctrl_blk_ptr->segments.tail = seg;
-      }
-    }
+    trim_tail(prev_len - new_sz);
+    return true;
   }
   ctrl_blk_ptr->pkt_len = new_sz;
   return true;

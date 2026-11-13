@@ -557,6 +557,38 @@ TEST_F(byte_buffer_tester, move_prepend_byte_buffer_with_prepended_segments)
   ASSERT_EQ(pdu, concat_vec(concat_vec(bytes2, bytes1), bytes3));
 }
 
+TEST_F(byte_buffer_tester, resize_shrink_returns_segments_to_pool)
+{
+  auto&  pool                = detail::get_default_byte_buffer_segment_pool();
+  auto   nof_free_blocks     = [&pool]() { return pool.get_local_cache_size() + pool.get_central_cache_approx_size(); };
+  size_t free_blocks_before  = nof_free_blocks();
+  std::vector<uint8_t> bytes = test_rng::vector_of_uniform_ints<uint8_t>(large_vec_size);
+  {
+    byte_buffer pdu = byte_buffer::create(bytes).value();
+    ASSERT_FALSE(pdu.is_contiguous());
+    ASSERT_TRUE(pdu.resize(small_vec_size));
+    ASSERT_TRUE(pdu.is_contiguous());
+    ASSERT_EQ(pdu, span<const uint8_t>{bytes}.first(small_vec_size));
+  }
+  ASSERT_EQ(nof_free_blocks(), free_blocks_before);
+}
+
+TEST_F(byte_buffer_tester, resize_to_zero_then_append)
+{
+  for (size_t init_sz : {small_vec_size, large_vec_size}) {
+    byte_buffer pdu = byte_buffer::create(test_rng::vector_of_uniform_ints<uint8_t>(init_sz)).value();
+    ASSERT_TRUE(pdu.resize(0));
+    ASSERT_TRUE(pdu.empty());
+    ASSERT_EQ(pdu.begin(), pdu.end());
+    ASSERT_EQ(pdu.segments().begin(), pdu.segments().end());
+
+    std::vector<uint8_t> bytes = test_rng::vector_of_uniform_ints<uint8_t>(small_vec_size);
+    ASSERT_TRUE(pdu.append(bytes));
+    ASSERT_EQ(pdu, bytes);
+    ASSERT_EQ(std::vector<uint8_t>(pdu.begin(), pdu.end()), bytes);
+  }
+}
+
 TEST_P(three_vector_size_param_test, shallow_copy_prepend_and_append_keeps_validity)
 {
   // When a byte_buffer::prepend causes the byte_buffer head segment to move, any previously existing shallow copies
