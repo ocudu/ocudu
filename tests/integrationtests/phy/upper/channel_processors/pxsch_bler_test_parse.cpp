@@ -167,6 +167,8 @@ expected<pxsch_bler_test_configuration, int> parse_configuration(int argc, char*
       ->check(CLI::IsMember({0, 1, 2, 3, 4}))
       ->default_val(0);
 
+  app.add_option("--eal-args", cfg.eal_arguments, "EAL arguments for the hardware-accelerated PxSCH implementations");
+
   app.add_flag("-v,--stats", cfg.show_stats, "Show preliminary stats");
 
   app.add_option("-l,--log-level", cfg.log_level, "Log level: none, error, warning, info, debug")

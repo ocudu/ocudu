@@ -36,6 +36,7 @@ struct pxsch_bler_test_configuration {
   sch_mcs_index                                    mcs_index                        = 20;
   bool                                             enable_dc_position               = false;
   std::string                                      pxsch_type                       = "auto";
+  std::string                                      eal_arguments;
   port_channel_estimator_td_interpolation_strategy td_interpolation_strategy =
       port_channel_estimator_td_interpolation_strategy::average;
   port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy =

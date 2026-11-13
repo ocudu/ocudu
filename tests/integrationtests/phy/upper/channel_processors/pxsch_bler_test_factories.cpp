@@ -37,7 +37,6 @@ static void create_hwacc_pxsch_factories(const std::string& eal_arguments)
 
     // Pointer to a dpdk-based hardware-accelerator interface.
     if (!dpdk_interface) {
-      // :TODO: Enable passing EAL arguments.
       dpdk_interface = dpdk::create_dpdk_eal(eal_arguments, logger);
       if (!dpdk_interface) {
         return;
@@ -208,11 +207,12 @@ ocudu::create_sw_pusch_processor_factory(task_executor&                         
   if (pxsch_type.find("acc100") != std::string::npos) {
     // Set the hardware-accelerated PUSCH decoder configuration.
     pusch_decoder_factory_hw_configuration decoder_hw_factory_config;
-    decoder_hw_factory_config.segmenter_factory  = segmenter_rx_factory;
-    decoder_hw_factory_config.crc_factory        = crc_calc_factory;
-    decoder_hw_factory_config.hw_decoder_factory = hwacc_pusch_dec_factory;
-    decoder_hw_factory_config.executor           = &executor;
-    pusch_dec_factory                            = create_pusch_decoder_factory_hw(decoder_hw_factory_config);
+    decoder_hw_factory_config.segmenter_factory         = segmenter_rx_factory;
+    decoder_hw_factory_config.crc_factory               = crc_calc_factory;
+    decoder_hw_factory_config.hw_decoder_factory        = hwacc_pusch_dec_factory;
+    decoder_hw_factory_config.nof_pusch_decoder_threads = max_nof_threads;
+    decoder_hw_factory_config.executor                  = &executor;
+    pusch_dec_factory                                   = create_pusch_decoder_factory_hw(decoder_hw_factory_config);
   } else {
 #endif // HWACC_PDSCH_ENABLED && HWACC_PUSCH_ENABLED
     pusch_decoder_factory_sw_configuration pusch_decoder_factory_sw_config;

@@ -161,8 +161,8 @@ private:
         rb_allocation::make_type1(freq_allocation.start(), freq_allocation.length(), std::nullopt);
 
     // Create PDSCH processor factory.
-    std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory =
-        create_sw_pdsch_processor_factory(*executor, cfg.max_nof_threads + 1, "pxsch_bler_test", cfg.pxsch_type);
+    std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory = create_sw_pdsch_processor_factory(
+        *executor, cfg.max_nof_threads + 1, fmt::format("pxsch_bler_test {}", cfg.eal_arguments), cfg.pxsch_type);
     report_fatal_error_if_not(pdsch_proc_factory, "Failed to create PDSCH processor factory.");
 
     // Create a PDSCH processor pool factory - creates a PDSCH processor for each retransmission.

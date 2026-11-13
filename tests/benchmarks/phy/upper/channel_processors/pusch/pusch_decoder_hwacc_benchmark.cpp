@@ -303,7 +303,7 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
       unsigned bits_per_symbol = get_bits_per_symbol(mcs.modulation);
       unsigned nof_llr         = config.nof_ch_symbols * bits_per_symbol;
 
-      test_case_set.emplace_back(config, tbs.value(), nof_llr, nof_prb);
+      test_case_set.emplace_back(config, tbs.to_bits().value(), nof_llr, nof_prb);
     }
   }
   return test_case_set;

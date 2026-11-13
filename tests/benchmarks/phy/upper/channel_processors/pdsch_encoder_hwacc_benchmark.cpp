@@ -270,7 +270,7 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
       unsigned cw_length       = config.nof_ch_symbols * bits_per_symbol * profile.nof_tx_layers;
 
       test_case_set.emplace_back(std::tuple<pdsch_encoder::configuration, unsigned, unsigned, unsigned>(
-          config, tbs.value(), cw_length, nof_prb));
+          config, tbs.to_bits().value(), cw_length, nof_prb));
     }
   }
   return test_case_set;
