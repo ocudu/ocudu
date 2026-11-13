@@ -429,7 +429,7 @@ static void usage(const char* prog)
 #ifdef HWACC_PDSCH_ENABLED
   fmt::print("\t-w       Force shared hardware-queue use [Default {}]\n",
              dedicated_queue ? "dedicated_queue" : "shared_queue");
-  fmt::print("\t-x       Force TB mode [Default {}]\n", cb_mode ? "cb_mode" : "tb_mode");
+  fmt::print("\t-x       Force CB mode [Default {}]\n", cb_mode ? "cb_mode" : "tb_mode");
   fmt::print("\t-y       Force logging output written to a file [Default {}]\n", std_out_sink ? "std_out" : "file");
   fmt::print("\t-z       Set logging level for the HAL [Default {}]\n", fmt::underlying(hal_log_level));
   fmt::print("\teal_args EAL arguments\n");
@@ -975,6 +975,20 @@ int main(int argc, char** argv)
 
   // Pseudo-random generator.
   std::mt19937 rgen(0);
+
+  // The ACC100 only supports modulation orders up to 256-QAM, so 1024-QAM test cases are skipped.
+  if (ldpc_encoder_type == "acc100") {
+    std::vector<sch_mcs_description>& mcs_set = selected_profile.mcs_set;
+    auto it_qam1024 = std::remove_if(mcs_set.begin(), mcs_set.end(), [](const sch_mcs_description& mcs) {
+      return mcs.modulation == modulation_scheme::QAM1024;
+    });
+    if (it_qam1024 != mcs_set.end()) {
+      fmt::print("Skipping 1024-QAM test cases: not supported by the ACC100.\n");
+      mcs_set.erase(it_qam1024, mcs_set.end());
+    }
+    report_fatal_error_if_not(
+        !mcs_set.empty(), "Profile {} has no test case supported by the ACC100.", selected_profile.name);
+  }
 
   // Generate the test cases.
   std::vector<test_case_type> test_case_set = generate_test_cases(selected_profile);

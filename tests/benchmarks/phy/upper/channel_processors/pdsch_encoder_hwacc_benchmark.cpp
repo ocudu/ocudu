@@ -71,7 +71,7 @@ static void usage(const char* prog)
 #ifdef DPDK_FOUND
   fmt::print("\t-w       Force shared hardware-queue use [Default {}]\n",
              dedicated_queue ? "dedicated_queue" : "shared_queue");
-  fmt::print("\t-x       Force TB mode [Default {}]\n", cb_mode ? "cb_mode" : "tb_mode");
+  fmt::print("\t-x       Force CB mode [Default {}]\n", cb_mode ? "cb_mode" : "tb_mode");
   fmt::print("\t-y       Force logging output written to a file [Default {}]\n", std_out_sink ? "std_out" : "file");
   fmt::print("\t-z       Set logging level for the HAL [Default {}]\n", fmt::underlying(hal_log_level));
   fmt::print("\teal_args EAL arguments\n");
@@ -333,6 +333,7 @@ int main(int argc, char** argv)
 
   fmt::print("Launching benchmark comparing generic and {} PDSCH encoder implementations\n\n", hwacc_encoder_type);
 
+  unsigned nof_mismatches = 0;
   for (const test_case_type& test_case : test_case_set) {
     // Get the PDSCH encoder configuration.
     const pdsch_encoder::configuration cfg = std::get<0>(test_case);
@@ -347,15 +348,16 @@ int main(int argc, char** argv)
     std::vector<uint8_t> data(tbs / 8);
     std::generate(data.begin(), data.end(), [&rgen]() { return static_cast<uint8_t>(rgen() & 0xff); });
 
-    // Prepare codeword buffer.
-    std::vector<uint8_t> codeword(cw_length);
+    // Prepare codeword buffers.
+    std::vector<uint8_t> hwacc_codeword(cw_length);
+    std::vector<uint8_t> gen_codeword(cw_length);
 
     // Call the hardware-accelerator PDSCH encoder function.
     uint64_t total_hwacc_time = 0;
 
     // Encode the TB.
     uint64_t hwacc_start_time = get_current_time();
-    hwacc_encoder->encode(codeword, data, cfg);
+    hwacc_encoder->encode(hwacc_codeword, data, cfg);
     uint64_t hwacc_op_time = get_current_time() - hwacc_start_time;
     total_hwacc_time += hwacc_op_time;
 
@@ -366,7 +368,7 @@ int main(int argc, char** argv)
 
     // Encode the TB.
     uint64_t gen_start_time = get_current_time();
-    gen_encoder->encode(codeword, data, cfg);
+    gen_encoder->encode(gen_codeword, data, cfg);
     uint64_t gen_op_time = get_current_time() - gen_start_time;
     total_gen_time += gen_op_time;
 
@@ -382,6 +384,18 @@ int main(int argc, char** argv)
         gen_lat,
         hwacc_encoder_type,
         hwacc_lat);
+
+    // Both encoders must produce the same codeword.
+    if (hwacc_codeword != gen_codeword) {
+      fmt::print("PDSCH RB={:<3} Mod={:<2} tbs={:<8}: codeword mismatch between generic and {}\n",
+                 nof_prb,
+                 fmt::underlying(cfg.mod),
+                 tbs,
+                 hwacc_encoder_type);
+      ++nof_mismatches;
+    }
   }
+
+  return (nof_mismatches == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 /// \endcond

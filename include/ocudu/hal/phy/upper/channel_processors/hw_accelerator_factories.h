@@ -23,9 +23,9 @@ struct bbdev_hwacc_pdsch_enc_factory_configuration {
   bool cb_mode = false;
   /// Defines the maximum supported TB size in bytes (CB mode will be forced for larger TBs).
   /// Only used in TB mode.
-  unsigned max_tb_size;
+  unsigned max_tb_size = RTE_BBDEV_LDPC_E_MAX_MBUF;
   /// Indicates if the accelerated function uses a dedicated hardware queue or needs to reserve one for each operation.
-  bool dedicated_queue;
+  bool dedicated_queue = true;
 };
 
 /// \brief Creates a bbdev-based PDSCH encoder hardware accelerator factory.
