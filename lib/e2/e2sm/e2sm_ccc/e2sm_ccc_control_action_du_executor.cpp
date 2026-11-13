@@ -38,6 +38,9 @@ ran_function_definition_ctrl_action_item_s e2sm_ccc_control_action_du_executor_b
   return {};
 }
 
+/// Highest value of an RRM policy ratio, which the schema carries as a percentage of the resources of the cell.
+static constexpr int64_t max_rrm_policy_ratio = 100;
+
 static async_task<e2sm_ric_control_response> return_ctrl_failure(const e2sm_ric_control_request& req)
 {
   return launch_async([](coro_context<async_task<e2sm_ric_control_response>>& ctx) {
@@ -105,17 +108,23 @@ static odu::du_param_config_request convert_to_du_config_request(const e2sm_ric_
             }
           }
         }
-        // Convert Min Ratio.
-        if (ran_cfg_structure.o_rrm_policy_ratio().rrm_policy_min_ratio_present) {
-          rrm_policy.minimum_ratio = ran_cfg_structure.o_rrm_policy_ratio().rrm_policy_min_ratio;
+        // Convert Min Ratio. The destination holds a ratio unsigned, so one that the schema leaves unbounded and the
+        // RIC sends outside its percentage is left absent, which fails the request rather than wrapping into a quota
+        // the RIC never asked for.
+        const auto& rrm_ratio = ran_cfg_structure.o_rrm_policy_ratio();
+        if (rrm_ratio.rrm_policy_min_ratio_present and rrm_ratio.rrm_policy_min_ratio >= 0 and
+            rrm_ratio.rrm_policy_min_ratio <= max_rrm_policy_ratio) {
+          rrm_policy.minimum_ratio = rrm_ratio.rrm_policy_min_ratio;
         }
         // Convert Max Ratio.
-        if (ran_cfg_structure.o_rrm_policy_ratio().rrm_policy_max_ratio_present) {
-          rrm_policy.maximum_ratio = ran_cfg_structure.o_rrm_policy_ratio().rrm_policy_max_ratio;
+        if (rrm_ratio.rrm_policy_max_ratio_present and rrm_ratio.rrm_policy_max_ratio >= 0 and
+            rrm_ratio.rrm_policy_max_ratio <= max_rrm_policy_ratio) {
+          rrm_policy.maximum_ratio = rrm_ratio.rrm_policy_max_ratio;
         }
         // Convert Dedicated Ratio.
-        if (ran_cfg_structure.o_rrm_policy_ratio().rrm_policy_ded_ratio) {
-          rrm_policy.dedicated_ratio = ran_cfg_structure.o_rrm_policy_ratio().rrm_policy_ded_ratio;
+        if (rrm_ratio.rrm_policy_ded_ratio_present and rrm_ratio.rrm_policy_ded_ratio >= 0 and
+            rrm_ratio.rrm_policy_ded_ratio <= max_rrm_policy_ratio) {
+          rrm_policy.dedicated_ratio = rrm_ratio.rrm_policy_ded_ratio;
         }
       }
       cell_cfg.rrm_policy_ratio_list.emplace_back(rrm_policy);

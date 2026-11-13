@@ -118,3 +118,9 @@ target_link_libraries(asn1_e2sm_ccc_test ocudulog ocudu_e2 e2ap_asn1 ocudu_pcap 
 )
 target_include_directories(asn1_e2sm_ccc_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(asn1_e2sm_ccc_test)
+
+add_executable(e2sm_ccc_control_executor_test e2sm_ccc_control_executor_test.cpp)
+target_link_libraries(e2sm_ccc_control_executor_test ocudulog ocudu_e2 e2ap_asn1 ocudu_pcap ocudu_support e2_test_helpers GTest::gtest GTest::gtest_main
+)
+target_include_directories(e2sm_ccc_control_executor_test PRIVATE ${CMAKE_SOURCE_DIR})
+gtest_discover_tests(e2sm_ccc_control_executor_test)
