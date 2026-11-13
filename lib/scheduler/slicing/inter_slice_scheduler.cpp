@@ -271,9 +271,22 @@ void inter_slice_scheduler::add_ue(du_ue_index_t ue_idx)
 
 void inter_slice_scheduler::reconf_ue(du_ue_index_t ue_idx)
 {
-  // When the UE is reconfigured, it enters fallback mode and only leaves it when config_applied is called.
-  // For this reason, we remove the UE from its slices.
-  rem_ue(ue_idx);
+  ue* u = fetch_ue_to_update(ue_idx);
+  if (u == nullptr) {
+    // The UE entered fallback, so it leaves its slices until its config is applied.
+    rem_ue(ue_idx);
+    return;
+  }
+
+  // Outside fallback, the slices follow the new logical channel config right away.
+  add_impl(*u);
+  for (auto& slice : slices) {
+    if (slice.inst.get_ues().contains(ue_idx) and not u->logical_channels().has_slice(slice.inst.id)) {
+      // No bearer of the UE is left in this slice.
+      get_policy(slice.inst.id).rem_ue(ue_idx);
+      slice.inst.get_ues().rem_ue(ue_idx);
+    }
+  }
 }
 
 void inter_slice_scheduler::rem_ue(du_ue_index_t ue_idx)

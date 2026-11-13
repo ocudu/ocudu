@@ -192,6 +192,31 @@ TEST_F(default_slice_scheduler_test, when_candidate_instance_goes_out_of_scope_t
   ASSERT_EQ(next_dl_slice->id(), SRB_RAN_SLICE_ID);
 }
 
+TEST_F(default_slice_scheduler_test, when_ue_is_reconfigured_outside_an_rrc_procedure_then_it_stays_in_its_slices)
+{
+  const du_ue_index_t ue_idx = to_du_ue_index(0);
+  ASSERT_NE(this->add_ue(ue_idx), nullptr);
+
+  // Reconfiguration that does not move the UE to fallback.
+  auto req                       = test_cfg.get_default_ue_config_request();
+  req.cfg.cause                  = sched_ue_config_request::causes::not_rrc_proc;
+  const ue_configuration* ue_cfg = test_cfg.update_ue(
+      sched_ue_reconfiguration_message{.ue_index = ue_idx, .crnti = to_rnti(0x4601), .cfg = req.cfg});
+  ASSERT_NE(ue_cfg, nullptr);
+  ues.reconfigure_ue(*ue_cfg, req.cfg.cause);
+  slice_sched.reconf_ue(ue_idx);
+  ASSERT_FALSE(ues[ue_idx].get_pcell().is_in_fallback_mode());
+
+  // Without waiting for config_applied, the UE is still a candidate of its slices.
+  std::optional<dl_ran_slice_candidate> next_dl_slice;
+  for (unsigned count = 0; count != 10 and not next_dl_slice.has_value(); ++count) {
+    run_slot();
+    next_dl_slice = slice_sched.get_next_dl_candidate();
+  }
+  ASSERT_TRUE(next_dl_slice.has_value());
+  ASSERT_TRUE(next_dl_slice->is_candidate(ue_idx, lcid_t::LCID_SRB1));
+}
+
 TEST_F(default_slice_scheduler_test, when_deactivated_ue_gets_config_applied_then_no_channels_are_re_added_to_slices)
 {
   // Regression for issue #573: a stale config-applied on a UE that was already deactivated (bearers cleared) but not
@@ -203,7 +228,7 @@ TEST_F(default_slice_scheduler_test, when_deactivated_ue_gets_config_applied_the
 
   // Deactivation clears the UE bearers in the logical channel system while leaving the UE (and its dedicated config)
   // in the repository.
-  this->ues[ue_idx].deactivate();
+  this->ues.deactivate_ue(ue_idx);
   ASSERT_TRUE(this->ues[ue_idx].logical_channels().cfg().logical_channels().empty());
 
   // Re-driving the slice add path must be a no-op instead of asserting on an unconfigured LCID.
@@ -349,6 +374,46 @@ protected:
     return this->add_ue(ue_idx, lc_chs);
   }
 };
+
+TEST_F(rb_ratio_slice_scheduler_test,
+       when_ue_is_reconfigured_outside_an_rrc_procedure_then_its_slices_follow_new_config)
+{
+  const du_ue_index_t ue_idx = to_du_ue_index(0);
+  const lcid_t        drb1   = uint_to_lcid(LCID_MIN_DRB);
+  const lcid_t        drb2   = uint_to_lcid(LCID_MIN_DRB + 1);
+  ASSERT_NE(this->add_two_drb_ue(ue_idx), nullptr);
+
+  // DRB1 moves to the slice of DRB2, and DRB2 is removed.
+  auto req                = test_cfg.get_default_ue_config_request();
+  *req.cfg.lc_config_list = std::initializer_list<logical_channel_config>{
+      create_logical_channel_config(LCID_SRB0),
+      create_logical_channel_config(LCID_SRB1),
+      create_logical_channel_config(drb1, {.s_nssai = {slice_service_type{2}}})};
+  req.cfg.cause                  = sched_ue_config_request::causes::not_rrc_proc;
+  const ue_configuration* ue_cfg = test_cfg.update_ue(
+      sched_ue_reconfiguration_message{.ue_index = ue_idx, .crnti = to_rnti(0x4601), .cfg = req.cfg});
+  ASSERT_NE(ue_cfg, nullptr);
+  ues.reconfigure_ue(*ue_cfg, req.cfg.cause);
+  slice_sched.reconf_ue(ue_idx);
+
+  // Without waiting for config_applied, each slice holds the UE bearers of the new config.
+  std::map<ran_slice_id_t, std::array<bool, 3>> membership;
+  for (unsigned count = 0; count != 10 and membership.empty(); ++count) {
+    run_slot();
+    for (auto candidate = slice_sched.get_next_dl_candidate(); candidate.has_value();
+         candidate      = slice_sched.get_next_dl_candidate()) {
+      membership[candidate->id()] = {candidate->is_candidate(ue_idx, LCID_SRB1),
+                                     candidate->is_candidate(ue_idx, drb1),
+                                     candidate->is_candidate(ue_idx, drb2)};
+    }
+  }
+  ASSERT_EQ(membership.count(SRB_RAN_SLICE_ID), 1);
+  ASSERT_EQ(membership.count(drb2_slice_id), 1);
+  ASSERT_EQ(membership.at(SRB_RAN_SLICE_ID), (std::array<bool, 3>{true, false, false}));
+  // The slice of DRB1 has no UE left, so it is not a candidate.
+  ASSERT_EQ(membership.count(drb1_slice_id), 0);
+  ASSERT_EQ(membership.at(drb2_slice_id), (std::array<bool, 3>{false, true, false}));
+}
 
 TEST_F(rb_ratio_slice_scheduler_test, when_slice_with_min_rb_has_ues_it_is_prioritized_over_empty_slice_with_no_ded_rb)
 {
