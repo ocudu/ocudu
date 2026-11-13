@@ -534,14 +534,21 @@ bool byte_buffer::prepend(const byte_buffer& other)
     // the byte buffer is empty. Prepending is the same as appending.
     return append(other);
   }
+  // Each new segment is linked after the previously inserted one, so that the segment order of "other" is preserved.
+  node_t* prev = nullptr;
   for (span<const uint8_t> seg : other.segments()) {
     node_t* node = create_segment(0, seg.size());
     if (node == nullptr) {
       return false;
     }
     node->append(seg);
-    node->next                  = ctrl_blk_ptr->segments.head;
-    ctrl_blk_ptr->segments.head = node;
+    if (prev == nullptr) {
+      ctrl_blk_ptr->segments.push_front(*node);
+    } else {
+      node->next = prev->next;
+      prev->next = node;
+    }
+    prev = node;
     ctrl_blk_ptr->pkt_len += seg.size();
   }
   return true;

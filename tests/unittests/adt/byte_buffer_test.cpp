@@ -485,6 +485,24 @@ TEST_F(byte_buffer_tester, prepend_and_trim_tail)
   ASSERT_EQ_LEN(sdu, pdu_len - trim_len);
 }
 
+TEST_F(byte_buffer_tester, prepend_multi_segment_byte_buffer_keeps_byte_order)
+{
+  std::vector<uint8_t> bytes1 = test_rng::vector_of_uniform_ints<uint8_t>(small_vec_size);
+  std::vector<uint8_t> bytes2 = test_rng::vector_of_uniform_ints<uint8_t>(large_vec_size);
+  byte_buffer          pdu    = byte_buffer::create(bytes1).value();
+  byte_buffer          other  = byte_buffer::create(bytes2).value();
+  ASSERT_FALSE(other.is_contiguous());
+
+  ASSERT_TRUE(pdu.prepend(other));
+  ASSERT_EQ_LEN(pdu, bytes1.size() + bytes2.size());
+  ASSERT_EQ(pdu, concat_vec(bytes2, bytes1));
+
+  // Appending after the prepend must still land at the end.
+  std::vector<uint8_t> bytes3 = test_rng::vector_of_uniform_ints<uint8_t>(small_vec_size);
+  ASSERT_TRUE(pdu.append(bytes3));
+  ASSERT_EQ(pdu, concat_vec(concat_vec(bytes2, bytes1), bytes3));
+}
+
 TEST_P(three_vector_size_param_test, shallow_copy_prepend_and_append_keeps_validity)
 {
   // When a byte_buffer::prepend causes the byte_buffer head segment to move, any previously existing shallow copies
