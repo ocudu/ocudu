@@ -357,6 +357,42 @@ TEST_F(pdu_session_manager_test, drb_create_with_one_qfi_which_is_already_mapped
   EXPECT_EQ(f1u_gw->removed_ul_teid_list.size(), 0);
 }
 
+/// Attempt to set up a DRB whose ID already exists in the PDU session via a modification request.
+TEST_F(pdu_session_manager_test, when_duplicate_drb_id_in_modify_request_then_drb_is_rejected)
+{
+  pdu_session_id_t psi    = uint_to_pdu_session_id(1);
+  drb_id_t         drb_id = uint_to_drb_id(1);
+  qos_flow_id_t    qfi    = uint_to_qos_flow_id(8);
+
+  // Set up PDU session with DRB 1.
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
+      generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
+  pdu_session_setup_result setup_result =
+      pdu_session_mng->setup_pdu_session(pdu_session_setup_item, direct_forwarding_path);
+  ASSERT_TRUE(setup_result.success);
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
+  ngu_gtpu_rx_demux->created_teid_list.pop_front();
+  f1u_gw->created_ul_teid_list.pop_front();
+
+  // Attempt to set up the same DRB ID again via a modification request.
+  e1ap_pdu_session_res_to_modify_item pdu_session_modify_item =
+      generate_pdu_session_res_to_modify_item_to_setup_drb(psi, drb_id, {qfi}, uint_to_five_qi(9));
+  pdu_session_modification_result mod_result = pdu_session_mng->modify_pdu_session(pdu_session_modify_item, false);
+
+  // Modification overall succeeds, but the duplicate DRB is rejected.
+  EXPECT_TRUE(mod_result.success);
+  ASSERT_EQ(mod_result.drb_setup_results.size(), 1);
+  EXPECT_FALSE(mod_result.drb_setup_results[0].success);
+  EXPECT_EQ(mod_result.drb_setup_results[0].drb_id, drb_id);
+  EXPECT_EQ(mod_result.drb_setup_results[0].cause, e1ap_cause_t{e1ap_cause_radio_network_t::multiple_drb_id_instances});
+
+  // The live DRB must not have been torn down.
+  EXPECT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
+  EXPECT_TRUE(ngu_gtpu_rx_demux->removed_teid_list.empty());
+  EXPECT_TRUE(f1u_gw->removed_ul_teid_list.empty());
+  EXPECT_TRUE(f1u_gw->created_ul_teid_list.empty());
+}
+
 /// Create a DRB with only one QFI, but the QFI is already mapped
 TEST_F(pdu_session_manager_test, drb_create_with_unknown_five_qi)
 {

@@ -280,6 +280,15 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
     return drb_result;
   }
 
+  // Reject a DRB if ID already exists in this PDU session.
+  if (new_session.drbs.count(drb_to_setup.drb_id) != 0) {
+    logger.log_error("Cannot create {} for {}: DRB ID already exists in PDU session",
+                     drb_to_setup.drb_id,
+                     new_session.pdu_session_id);
+    drb_result.cause = e1ap_cause_radio_network_t::multiple_drb_id_instances;
+    return drb_result;
+  }
+
   // get DRB from list and create context
   new_session.drbs.emplace(
       drb_to_setup.drb_id,
@@ -326,6 +335,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   if (nof_flow_success == 0) {
     logger.log_error(
         "Failed to create {} for {}: Could not map any QoS flow", drb_to_setup.drb_id, new_session.pdu_session_id);
+    new_session.sdap->remove_mapping(drb_to_setup.drb_id);
     new_session.drbs.erase(drb_to_setup.drb_id);
     drb_result.cause   = e1ap_cause_radio_network_t::unspecified;
     drb_result.success = false;
@@ -336,6 +346,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   if (qos_cfg.find(five_qi) == qos_cfg.end()) {
     logger.log_error(
         "Failed to create {} for {}: Could not find 5QI. {}", drb_to_setup.drb_id, new_session.pdu_session_id, five_qi);
+    new_session.sdap->remove_mapping(drb_to_setup.drb_id);
     new_session.drbs.erase(drb_to_setup.drb_id);
     drb_result.cause   = e1ap_cause_radio_network_t::not_supported_5qi_value;
     drb_result.success = false;
