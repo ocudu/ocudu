@@ -307,6 +307,10 @@ private:
 
   [[nodiscard]] bool prepend_segment(size_t headroom_suggestion, size_t sz_hint);
 
+  /// \brief Detaches all segments of "other" into the list [first, last] and releases its control block.
+  /// \return false if the segment copy allocation failed, in which case "other" is left unchanged.
+  [[nodiscard]] bool take_segments(byte_buffer& other, node_t*& first, node_t*& last);
+
   /// \brief Removes last segment of the byte_buffer.
   /// Note: This operation is O(N), as it requires recomputing the tail.
   void pop_last_segment();

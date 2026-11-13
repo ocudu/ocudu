@@ -303,6 +303,47 @@ bool byte_buffer::append(const byte_buffer& other)
   return true;
 }
 
+bool byte_buffer::take_segments(byte_buffer& other, node_t*& first, node_t*& last)
+{
+  control_block& other_cb = *other.ctrl_blk_ptr;
+  node_t*        cb_seg   = other_cb.segment_in_cb_memory_block;
+
+  // The segment sharing memory with the control block may be anywhere in the list, or absent if it was trimmed.
+  node_t* prev = nullptr;
+  node_t* seg  = other_cb.segments.head;
+  for (; seg != nullptr and seg != cb_seg; seg = seg->next) {
+    prev = seg;
+  }
+  if (seg != nullptr) {
+    // Its memory is released with the control block of "other", so its bytes must be copied to a new segment.
+    node_t* node = create_segment(0, cb_seg->length());
+    if (node == nullptr) {
+      return false;
+    }
+    node->append(span<uint8_t>{cb_seg->data(), cb_seg->length()});
+    node->next = cb_seg->next;
+    if (prev == nullptr) {
+      other_cb.segments.head = node;
+    } else {
+      prev->next = node;
+    }
+    if (other_cb.segments.tail == cb_seg) {
+      other_cb.segments.tail = node;
+    }
+  }
+  first = other_cb.segments.head;
+  last  = other_cb.segments.tail;
+
+  // Leave "other" with only the segment that shares memory with its control block, if still alive.
+  other_cb.segments.head = seg;
+  other_cb.segments.tail = seg;
+  if (seg != nullptr) {
+    seg->next = nullptr;
+  }
+  other.ctrl_blk_ptr.reset();
+  return true;
+}
+
 bool byte_buffer::append(byte_buffer&& other)
 {
   ocudu_assert(&other != this, "Self-append not supported");
@@ -322,31 +363,16 @@ bool byte_buffer::append(byte_buffer&& other)
     return append(other);
   }
 
-  // This is the last reference to "after". Shallow copy, except control segment.
-  node_t* node = create_segment(0, other.ctrl_blk_ptr->segment_in_cb_memory_block->length());
-  if (node == nullptr) {
+  // This is the last reference to "other". Shallow copy, except control segment.
+  size_t  other_len = other.length();
+  node_t* first     = nullptr;
+  node_t* last      = nullptr;
+  if (not take_segments(other, first, last)) {
     return false;
   }
-  node->append(span<uint8_t>{other.ctrl_blk_ptr->segment_in_cb_memory_block->data(),
-                             other.ctrl_blk_ptr->segment_in_cb_memory_block->length()});
-  ctrl_blk_ptr->pkt_len += other.ctrl_blk_ptr->pkt_len;
-  node_t* last_tail           = ctrl_blk_ptr->segments.tail;
-  last_tail->next             = other.ctrl_blk_ptr->segments.head;
-  ctrl_blk_ptr->segments.tail = other.ctrl_blk_ptr->segments.tail;
-  node->next                  = other.ctrl_blk_ptr->segment_in_cb_memory_block->next;
-  if (other.ctrl_blk_ptr->segment_in_cb_memory_block == other.ctrl_blk_ptr->segments.tail) {
-    ctrl_blk_ptr->segments.tail = node;
-  }
-  for (node_t* seg = last_tail; seg->next != nullptr; seg = seg->next) {
-    if (seg->next == other.ctrl_blk_ptr->segment_in_cb_memory_block) {
-      seg->next = node;
-      break;
-    }
-  }
-  other.ctrl_blk_ptr->segments.head       = other.ctrl_blk_ptr->segment_in_cb_memory_block;
-  other.ctrl_blk_ptr->segments.tail       = other.ctrl_blk_ptr->segment_in_cb_memory_block;
-  other.ctrl_blk_ptr->segments.head->next = nullptr;
-  other.ctrl_blk_ptr.reset();
+  ctrl_blk_ptr->segments.tail->next = first;
+  ctrl_blk_ptr->segments.tail       = last;
+  ctrl_blk_ptr->pkt_len += other_len;
   return true;
 }
 
@@ -576,29 +602,15 @@ bool byte_buffer::prepend(byte_buffer&& other)
   }
 
   // This is the last reference to "other". Shallow copy, except control segment.
-  node_t* node = create_segment(0, other.ctrl_blk_ptr->segment_in_cb_memory_block->length());
-  if (node == nullptr) {
+  size_t  other_len = other.length();
+  node_t* first     = nullptr;
+  node_t* last      = nullptr;
+  if (not take_segments(other, first, last)) {
     return false;
   }
-  node->append(span<uint8_t>{other.ctrl_blk_ptr->segment_in_cb_memory_block->data(),
-                             other.ctrl_blk_ptr->segment_in_cb_memory_block->length()});
-  ctrl_blk_ptr->pkt_len += other.ctrl_blk_ptr->pkt_len;
-  other.ctrl_blk_ptr->segments.tail->next = ctrl_blk_ptr->segments.head;
-  node->next                              = other.ctrl_blk_ptr->segment_in_cb_memory_block->next;
-  if (other.ctrl_blk_ptr->segment_in_cb_memory_block == other.ctrl_blk_ptr->segments.head) {
-    ctrl_blk_ptr->segments.head = node;
-  } else {
-    for (node_t* seg = other.ctrl_blk_ptr->segments.head; seg->next != nullptr; seg = seg->next) {
-      if (seg->next == other.ctrl_blk_ptr->segment_in_cb_memory_block) {
-        seg->next = node;
-        break;
-      }
-    }
-  }
-  other.ctrl_blk_ptr->segments.head       = other.ctrl_blk_ptr->segment_in_cb_memory_block;
-  other.ctrl_blk_ptr->segments.tail       = other.ctrl_blk_ptr->segment_in_cb_memory_block;
-  other.ctrl_blk_ptr->segments.head->next = nullptr;
-  other.ctrl_blk_ptr.reset();
+  last->next                  = ctrl_blk_ptr->segments.head;
+  ctrl_blk_ptr->segments.head = first;
+  ctrl_blk_ptr->pkt_len += other_len;
   return true;
 }
 

@@ -520,6 +520,43 @@ TEST_F(byte_buffer_tester, trim_head_all_bytes_then_append)
   }
 }
 
+TEST_F(byte_buffer_tester, trim_head_across_segment_sharing_memory_with_control_block)
+{
+  std::vector<uint8_t> bytes  = test_rng::vector_of_uniform_ints<uint8_t>(large_vec_size + 1);
+  std::vector<uint8_t> bytes2 = test_rng::vector_of_uniform_ints<uint8_t>(small_vec_size);
+  for (bool do_append : {true, false}) {
+    byte_buffer pdu           = byte_buffer::create(bytes).value();
+    size_t      first_seg_len = (*pdu.segments().begin()).size();
+    pdu.trim_head(first_seg_len + 1);
+    span<const uint8_t> remaining = span<const uint8_t>{bytes}.last(bytes.size() - first_seg_len - 1);
+    ASSERT_EQ(pdu, remaining);
+
+    byte_buffer other = byte_buffer::create(bytes2).value();
+    if (do_append) {
+      ASSERT_TRUE(other.append(std::move(pdu)));
+      ASSERT_EQ(other, concat_vec(bytes2, remaining));
+    } else {
+      ASSERT_TRUE(other.prepend(std::move(pdu)));
+      ASSERT_EQ(other, concat_vec(remaining, bytes2));
+    }
+  }
+}
+
+TEST_F(byte_buffer_tester, move_prepend_byte_buffer_with_prepended_segments)
+{
+  std::vector<uint8_t> bytes1 = test_rng::vector_of_uniform_ints<uint8_t>(small_vec_size);
+  std::vector<uint8_t> bytes2 = test_rng::vector_of_uniform_ints<uint8_t>(memory_block_size);
+  std::vector<uint8_t> bytes3 = test_rng::vector_of_uniform_ints<uint8_t>(small_vec_size);
+  // Prepending more than the headroom places a new segment before the one sharing memory with the control block.
+  byte_buffer other = byte_buffer::create(bytes1).value();
+  ASSERT_TRUE(other.prepend(bytes2));
+  ASSERT_FALSE(other.is_contiguous());
+
+  byte_buffer pdu = byte_buffer::create(bytes3).value();
+  ASSERT_TRUE(pdu.prepend(std::move(other)));
+  ASSERT_EQ(pdu, concat_vec(concat_vec(bytes2, bytes1), bytes3));
+}
+
 TEST_P(three_vector_size_param_test, shallow_copy_prepend_and_append_keeps_validity)
 {
   // When a byte_buffer::prepend causes the byte_buffer head segment to move, any previously existing shallow copies
