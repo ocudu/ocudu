@@ -16,6 +16,8 @@
 #include "ocudu/support/executors/manual_task_worker.h"
 #include "ocudu/support/test_utils.h"
 #include <gtest/gtest.h>
+#include <map>
+#include <set>
 
 using namespace ocudu;
 
@@ -780,6 +782,89 @@ std::string make_ctrl_msg_json_without_structures()
   return j.dump();
 }
 
+/// Builds a RIC action to be set up, whose definition is the JSON encoding of \c definition_json.
+asn1::e2ap::ric_action_to_be_setup_item_s make_ccc_action(const std::string&                     definition_json,
+                                                          asn1::e2ap::ric_action_type_e::options type)
+{
+  asn1::e2ap::ric_action_to_be_setup_item_s action;
+  action.ric_action_id         = 1;
+  action.ric_action_type       = type;
+  action.ric_action_definition = byte_buffer{
+      byte_buffer::fallback_allocation_tag{},
+      span<const uint8_t>(reinterpret_cast<const uint8_t*>(definition_json.data()), definition_json.size())};
+  return action;
+}
+
+asn1::e2sm_ccc::ran_cfg_structure_for_adf_s make_ran_cfg_structure()
+{
+  asn1::e2sm_ccc::ran_cfg_structure_for_adf_s structure;
+  structure.report_type.value = asn1::e2sm_ccc::ran_cfg_structure_for_adf_s::report_type_opts::all;
+  structure.ran_cfg_structure_name.from_string("O-RRMPolicyRatio");
+  structure.list_of_attributes.resize(1);
+  structure.list_of_attributes[0].attribute_name.from_string("rRMPolicyMaxRatio");
+  return structure;
+}
+
+std::string to_json_string(const asn1::e2sm_ccc::ric_action_definition_s& definition)
+{
+  nlohmann::ordered_json j;
+  EXPECT_TRUE(asn1::openapi::to_json(j, definition));
+  return j.dump();
+}
+
+/// Action definition in format 1, with one RAN configuration structure.
+std::string make_format1_definition_json()
+{
+  asn1::e2sm_ccc::ric_action_definition_s definition;
+  definition.ric_style_type = 1;
+  auto& format1             = definition.action_definition_format.set_action_definition_format1();
+  format1.list_of_node_level_ran_cfg_structures_for_adf.resize(1);
+  format1.list_of_node_level_ran_cfg_structures_for_adf[0] = make_ran_cfg_structure();
+  return to_json_string(definition);
+}
+
+/// Action definition in format 2, with one cell identified by an NR or an E-UTRA CGI.
+std::string make_format2_definition_json(bool nr_cgi)
+{
+  asn1::e2sm_ccc::ric_action_definition_s definition;
+  definition.ric_style_type = 2;
+  auto& format2             = definition.action_definition_format.set_action_definition_format2();
+  format2.list_of_cell_cfgs_to_be_reported_for_adf.resize(1);
+  auto& cell                  = format2.list_of_cell_cfgs_to_be_reported_for_adf[0];
+  cell.cell_global_id_present = true;
+  asn1::e2sm_ccc::plmn_id_s& plmn =
+      nr_cgi ? cell.cell_global_id.set_nr_cgi().plmn_id : cell.cell_global_id.set_eutra_cgi().plmn_id;
+  plmn.mcc_present = true;
+  plmn.mcc.from_string("001");
+  plmn.mnc_present = true;
+  plmn.mnc.from_string("01");
+  if (nr_cgi) {
+    cell.cell_global_id.nr_cgi().nr_cell_id.from_number(1);
+  } else {
+    cell.cell_global_id.eutra_cgi().eutra_cell_id.from_number(1);
+  }
+  cell.list_of_cell_level_ran_cfg_structures_for_adf.resize(1);
+  cell.list_of_cell_level_ran_cfg_structures_for_adf[0] = make_ran_cfg_structure();
+  return to_json_string(definition);
+}
+
+/// Appends a JSON pointer to every member of \c j, at any depth.
+void collect_member_pointers(const nlohmann::ordered_json&                      j,
+                             const nlohmann::ordered_json::json_pointer&        pointer,
+                             std::vector<nlohmann::ordered_json::json_pointer>& pointers)
+{
+  if (j.is_object()) {
+    for (auto it = j.begin(); it != j.end(); ++it) {
+      pointers.push_back(pointer / it.key());
+      collect_member_pointers(it.value(), pointer / it.key(), pointers);
+    }
+  } else if (j.is_array()) {
+    for (size_t i = 0; i != j.size(); ++i) {
+      collect_member_pointers(j[i], pointer / i, pointers);
+    }
+  }
+}
+
 } // namespace
 
 TEST_F(e2sm_ccc_ric_control_procedure_test, sound_request_is_applied_and_acknowledged)
@@ -815,4 +900,123 @@ TEST_F(e2sm_ccc_ric_control_procedure_test, request_whose_header_or_message_does
     ASSERT_TRUE(is_ric_control_failure(sent_msg)) << request_hdr << " / " << request_msg;
     ASSERT_TRUE(du_configurator.applied.empty()) << request_hdr << " / " << request_msg;
   }
+}
+
+TEST(e2sm_ccc_subscription_test, report_action_with_a_decodable_definition_is_supported_and_the_rest_are_not)
+{
+  e2sm_ccc_asn1_packer packer;
+  e2sm_ccc_impl        e2sm_ccc(ocudulog::fetch_basic_logger("TEST"), packer);
+
+  const std::string definition_json = make_format1_definition_json();
+
+  ASSERT_TRUE(e2sm_ccc.action_supported(make_ccc_action(definition_json, asn1::e2ap::ric_action_type_e::report)));
+  ASSERT_TRUE(e2sm_ccc.action_supported(
+      make_ccc_action(make_format2_definition_json(true), asn1::e2ap::ric_action_type_e::report)));
+  // Only the REPORT service is defined for a subscription.
+  ASSERT_FALSE(e2sm_ccc.action_supported(make_ccc_action(definition_json, asn1::e2ap::ric_action_type_e::insert)));
+  // A definition that is not JSON, lacks a field, has an empty format, has no structure in format 1 or has an unknown
+  // report type is not decodable.
+  for (
+      const char* definition :
+      {"not json",
+       "{}",
+       R"({"ricStyleType":1,"actionDefinitionFormat":{}})",
+       R"({"ricStyleType":1,"actionDefinitionFormat":{"listOfNodeLevelRANConfigurationStructuresForADF":[]}})",
+       R"({"ricStyleType":1,"actionDefinitionFormat":{"listOfNodeLevelRANConfigurationStructuresForADF":null}})",
+       R"({"ricStyleType":1,"actionDefinitionFormat":{"listOfNodeLevelRANConfigurationStructuresForADF":[{}]}})",
+       R"({"ricStyleType":1,"actionDefinitionFormat":{"listOfNodeLevelRANConfigurationStructuresForADF":[{"reportType":"invalid","ranConfigurationStructureName":"O-RRMPolicyRatio"}]}})",
+       R"({"ricStyleType":1,"actionDefinitionFormat":{"listOfNodeLevelRANConfigurationStructuresForADF":[{"reportType":1,"ranConfigurationStructureName":"O-RRMPolicyRatio"}]}})"}) {
+    ASSERT_FALSE(e2sm_ccc.action_supported(make_ccc_action(definition, asn1::e2ap::ric_action_type_e::report)))
+        << definition;
+  }
+}
+
+// A definition that lacks a required member is refused. The members are taken from the encoding of every shape of
+// definition, so that a member added by a newer release has to be classified here.
+TEST(e2sm_ccc_subscription_test, definition_without_a_required_member_is_refused_and_without_an_optional_one_is_not)
+{
+  e2sm_ccc_asn1_packer packer;
+  e2sm_ccc_impl        e2sm_ccc(ocudulog::fetch_basic_logger("TEST"), packer);
+
+  const std::set<std::string> required = {"ricStyleType",
+                                          "actionDefinitionFormat",
+                                          "listOfNodeLevelRANConfigurationStructuresForADF",
+                                          "listOfCellConfigurationsToBeReportedForADF",
+                                          "reportType",
+                                          "ranConfigurationStructureName",
+                                          "attributeName",
+                                          "plmnIdentity",
+                                          "nRCellIdentity",
+                                          "eUTRACellIdentity"};
+  const std::set<std::string> optional = {
+      "listOfAttributes", "cellGlobalId", "listOfCellLevelRANConfigurationStructuresForADF", "mcc", "mnc"};
+
+  for (const std::string& definition_json :
+       {make_format1_definition_json(), make_format2_definition_json(true), make_format2_definition_json(false)}) {
+    const auto definition = nlohmann::ordered_json::parse(definition_json);
+    ASSERT_TRUE(e2sm_ccc.action_supported(make_ccc_action(definition_json, asn1::e2ap::ric_action_type_e::report)))
+        << definition_json;
+
+    std::vector<nlohmann::ordered_json::json_pointer> members;
+    collect_member_pointers(definition, nlohmann::ordered_json::json_pointer{}, members);
+    ASSERT_FALSE(members.empty());
+    for (const auto& member : members) {
+      const std::string name = member.back();
+      ASSERT_TRUE(required.count(name) or optional.count(name)) << "Unclassified member " << name;
+
+      nlohmann::ordered_json without_member = definition;
+      without_member.at(member.parent_pointer()).erase(name);
+      ASSERT_EQ(
+          e2sm_ccc.action_supported(make_ccc_action(without_member.dump(), asn1::e2ap::ric_action_type_e::report)),
+          optional.count(name) > 0)
+          << "Without " << member.to_string() << " in " << definition_json;
+    }
+  }
+}
+
+// A definition with a value that does not fit its IE is refused. The values are the ones of the JSON schema of E2SM-CCC
+// (clause 9.4).
+TEST(e2sm_ccc_subscription_test, definition_with_an_invalid_value_is_refused_and_with_a_valid_one_is_not)
+{
+  e2sm_ccc_asn1_packer packer;
+  e2sm_ccc_impl        e2sm_ccc(ocudulog::fetch_basic_logger("TEST"), packer);
+
+  using values                                                             = std::vector<nlohmann::ordered_json>;
+  const std::map<std::string, std::pair<values, values>> valid_and_invalid = {
+      {"reportType", {{"all", "change"}, {"", "invalid", "All", 1, nullptr}}},
+      {"mcc", {{"001", "999"}, {"", "01", "0001", "0a1", 1, nullptr}}},
+      {"mnc", {{"01", "001"}, {"", "1", "0001", "ab", 1, nullptr}}},
+      {"plmnIdentity", {{{{"mcc", "001"}}, nlohmann::ordered_json::object()}, {"", "001", 1, nullptr}}},
+      {"nRCellIdentity",
+       {{"000000001", "abcdef012", "ABCDEF012"}, {"", "00000001", "0000000001", "00000000G", " 00000001", 1, nullptr}}},
+      {"eUTRACellIdentity",
+       {{std::string(28, '0'), std::string(28, '1')},
+        {"", std::string(27, '0'), std::string(29, '0'), std::string(27, '0') + "2", 1, nullptr}}}};
+
+  size_t nof_checked = 0;
+  for (const std::string& definition_json :
+       {make_format1_definition_json(), make_format2_definition_json(true), make_format2_definition_json(false)}) {
+    const auto definition = nlohmann::ordered_json::parse(definition_json);
+
+    std::vector<nlohmann::ordered_json::json_pointer> members;
+    collect_member_pointers(definition, nlohmann::ordered_json::json_pointer{}, members);
+    for (const auto& member : members) {
+      auto it = valid_and_invalid.find(member.back());
+      if (it == valid_and_invalid.end()) {
+        continue;
+      }
+      for (bool valid : {true, false}) {
+        for (const auto& value : valid ? it->second.first : it->second.second) {
+          nlohmann::ordered_json with_value = definition;
+          with_value[member]                = value;
+          ASSERT_EQ(
+              e2sm_ccc.action_supported(make_ccc_action(with_value.dump(), asn1::e2ap::ric_action_type_e::report)),
+              valid)
+              << member.to_string() << " = " << value.dump() << " in " << definition_json;
+          ++nof_checked;
+        }
+      }
+    }
+  }
+  ASSERT_GT(nof_checked, 0);
 }

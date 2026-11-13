@@ -26,8 +26,11 @@ struct e2sm_event_trigger_definition {
 };
 
 struct e2sm_action_definition {
-  e2sm_service_model_t                                                                            service_model;
-  std::variant<asn1::e2sm::e2sm_kpm_action_definition_s, asn1::e2sm::e2sm_rc_action_definition_s> action_definition;
+  e2sm_service_model_t service_model;
+  std::variant<asn1::e2sm::e2sm_kpm_action_definition_s,
+               asn1::e2sm::e2sm_rc_action_definition_s,
+               asn1::e2sm_ccc::ric_action_definition_s>
+      action_definition;
 };
 
 struct e2sm_ric_control_request {

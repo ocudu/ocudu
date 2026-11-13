@@ -19,8 +19,22 @@ e2sm_ccc_impl::e2sm_ccc_impl(ocudulog::basic_logger& logger_, e2sm_handler& e2sm
 
 bool e2sm_ccc_impl::action_supported(const ric_action_to_be_setup_item_s& ric_action)
 {
-  logger.debug("No action supported.");
-  return false;
+  if (ric_action.ric_action_type != ric_action_type_e::report) {
+    logger.debug("Only REPORT actions are supported, action {} is not", ric_action.ric_action_id);
+    return false;
+  }
+  e2sm_action_definition action_def =
+      e2sm_packer.handle_packed_e2sm_action_definition(ric_action.ric_action_definition);
+  if (action_def.service_model != e2sm_service_model_t::CCC) {
+    logger.debug("Failed to decode the action definition of action {}", ric_action.ric_action_id);
+    return false;
+  }
+  const auto& definition = std::get<ric_action_definition_s>(action_def.action_definition);
+  if (definition.action_definition_format.type() == action_definition_format_c::types::nulltype) {
+    logger.debug("Action {} has no action definition format", ric_action.ric_action_id);
+    return false;
+  }
+  return true;
 }
 
 e2sm_handler& e2sm_ccc_impl::get_e2sm_packer()

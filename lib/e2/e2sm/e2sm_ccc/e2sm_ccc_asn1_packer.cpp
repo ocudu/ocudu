@@ -6,6 +6,8 @@
 #include "e2sm_ccc_asn1_packer.h"
 #include "ocudu/asn1/asn1_openapi_codec.h"
 #include "ocudu/asn1/e2sm_ccc/e2sm_ccc.h"
+#include <algorithm>
+#include <cctype>
 
 using namespace asn1::e2ap;
 using namespace asn1::e2sm_ccc;
@@ -61,12 +63,82 @@ e2sm_ccc_asn1_packer::handle_packed_event_trigger_definition(const ocudu::byte_b
   return {};
 }
 
+namespace {
+
+bool is_digits(const std::string& str)
+{
+  return std::all_of(str.begin(), str.end(), [](unsigned char c) { return std::isdigit(c) != 0; });
+}
+
+// The codec bounds the length of an MCC and an MNC, but not their characters, which the schema limits to digits.
+bool is_valid_plmn_id(const plmn_id_s& plmn)
+{
+  return (not plmn.mcc_present or is_digits(plmn.mcc.to_string())) and
+         (not plmn.mnc_present or is_digits(plmn.mnc.to_string()));
+}
+
+bool is_valid_cell_cfg(const cell_cfg_to_be_reported_for_adf_s& cell)
+{
+  if (not cell.cell_global_id_present) {
+    return true;
+  }
+  switch (cell.cell_global_id.type()) {
+    case cell_global_id_c::types::nr_cgi:
+      return is_valid_plmn_id(cell.cell_global_id.nr_cgi().plmn_id);
+    case cell_global_id_c::types::eutra_cgi:
+      return is_valid_plmn_id(cell.cell_global_id.eutra_cgi().plmn_id);
+    default:
+      return false;
+  }
+}
+
+// The schema leaves the list of both formats optional, so {} reads as a format that asks for nothing, while the lists
+// hold at least one item.
+bool is_valid_action_definition(const ric_action_definition_s& definition)
+{
+  const action_definition_format_c& format = definition.action_definition_format;
+  switch (format.type()) {
+    case action_definition_format_c::types::action_definition_format1:
+      return format.action_definition_format1().list_of_node_level_ran_cfg_structures_for_adf.size() != 0;
+    case action_definition_format_c::types::action_definition_format2: {
+      const auto& cells = format.action_definition_format2().list_of_cell_cfgs_to_be_reported_for_adf;
+      return cells.size() != 0 and std::all_of(cells.begin(), cells.end(), is_valid_cell_cfg);
+    }
+    default:
+      return false;
+  }
+}
+
+} // namespace
+
 e2sm_action_definition
 e2sm_ccc_asn1_packer::handle_packed_e2sm_action_definition(const ocudu::byte_buffer& action_definition)
 {
-  // TODO: add support for RIC subscriptions.
-  logger.error("Action definition handling not supported in E2SM-CCC.");
-  return {};
+  e2sm_action_definition action_def;
+  action_def.service_model = e2sm_service_model_t::UNKNOWN_SM;
+
+  std::string json_str(action_definition.begin(), action_definition.end());
+  auto        j = nlohmann::ordered_json::parse(json_str, nullptr, false);
+  if (j.is_discarded()) {
+    logger.error("Failed to unpack E2SM-CCC Action Definition: not a JSON document");
+    return action_def;
+  }
+
+  ric_action_definition_s     definition;
+  asn1::openapi::read_context ctx;
+  // A key the definition does not carry is something the RIC asked to report that the gNB cannot, so it is refused.
+  ctx.reject_unknown_keys = true;
+  if (not asn1::openapi::from_json(j, definition, ctx)) {
+    logger.error("Failed to unpack E2SM-CCC Action Definition at '{}'", ctx.path);
+    return action_def;
+  }
+  if (not is_valid_action_definition(definition)) {
+    logger.error("Failed to unpack E2SM-CCC Action Definition: nothing to report or invalid PLMN");
+    return action_def;
+  }
+  action_def.action_definition = definition;
+  action_def.service_model     = e2sm_service_model_t::CCC;
+  return action_def;
 }
 
 e2sm_ric_control_request
