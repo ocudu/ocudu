@@ -45,4 +45,3 @@ target_link_libraries(mac_test_mode_adapter_test ocudu_du_high gtest ocudu_gtest
 target_include_directories(mac_test_mode_adapter_test PRIVATE ${CMAKE_SOURCE_DIR})
 add_test(mac_test_mode_adapter_test mac_test_mode_adapter_test)
 
-add_subdirectory(ntn)

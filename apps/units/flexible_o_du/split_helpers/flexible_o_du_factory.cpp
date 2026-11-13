@@ -5,12 +5,12 @@
 
 #include "flexible_o_du_factory.h"
 #include "apps/helpers/e2/e2_metric_connector_manager.h"
+#include "apps/helpers/ntn/ntn_config_update_remote_command.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_o_du/flexible_o_du_commands.h"
 #include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config_translators.h"
 #include "apps/units/flexible_o_du/o_du_high/o_du_high_unit_factory.h"
 #include "apps/units/flexible_o_du/o_du_low/o_du_low_unit_factory.h"
-#include "commands/ntn_config_update_remote_command.h"
 #include "flexible_o_du_impl.h"
 #include "metrics/flexible_o_du_metrics_builder.h"
 #include "ocudu/adt/format.h"

@@ -17,3 +17,4 @@ gtest_discover_tests(f1_gateway_helpers_test)
 
 add_subdirectory(config)
 add_subdirectory(metrics)
+add_subdirectory(ntn)

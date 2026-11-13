@@ -7,7 +7,8 @@
 set(SOURCES
         ntn_config_cli11_schema.cpp
         ntn_config_translators.cpp
-        ntn_config_yaml_writer.cpp)
+        ntn_config_yaml_writer.cpp
+        ntn_config_update_remote_command.cpp)
 
 add_library(ocudu_ntn_app_helpers STATIC ${SOURCES})
 target_include_directories(ocudu_ntn_app_helpers PRIVATE ${CMAKE_SOURCE_DIR})

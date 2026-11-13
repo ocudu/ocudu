@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-#include "apps/units/flexible_o_du/split_helpers/commands/ntn_config_update_remote_command.h"
+#include "apps/helpers/ntn/ntn_config_update_remote_command.h"
 #include "nlohmann/json.hpp"
 #include "tests/ocudu_test_requirements.h"
 #include "ocudu/ntn/ntn_configuration_manager.h"
