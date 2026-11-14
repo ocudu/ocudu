@@ -22,6 +22,8 @@ services:
     command: 5gc -c open5gs-5gc.yml
     volumes:
       - ./open5gs/subscriber_db.csv:/open5gs/subscriber_db.csv:ro
+      # Keep the subscriber database when the container is recreated
+      - open5gs-db:/data/db
     healthcheck:
       test: ["CMD-SHELL", "nc -z 127.0.0.20 7777"]
       interval: 3s
@@ -93,6 +95,7 @@ configs:
 
 volumes:
   gnb-storage:
+  open5gs-db:
 
 networks:
   ran:

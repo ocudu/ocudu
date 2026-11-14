@@ -67,8 +67,8 @@ You can overwrite open5gs version by adding `--build-arg OPEN5GS_VERSION=v2.6.6`
 Then run the docker container with:
 
 ```bash
-docker run --net open5gsnet --ip 10.53.1.2 --env-file open5gs.env --privileged --publish 9999:9999 open5gs-docker \
-    ./build/tests/app/5gc -c open5gs-5gc.yml
+docker run --name open5gs_5gc --net open5gsnet --ip 10.53.1.2 --env-file open5gs.env --privileged \
+    --publish 9999:9999 -v open5gs-db:/data/db open5gs-docker ./build/tests/app/5gc -c open5gs-5gc.yml
 ```
 
 To use this container with ocudu, the `addrs` option under `amf` section in gnb configuration must be set to OPEN5GS_IP
@@ -83,3 +83,15 @@ To ping a connected UE setup the necessary route to the UE_IP_BASE + ".0/24" (he
 ## Note
 
 The Open5GS WebUI to manually add/change UEs to the mongodb can be accessed at [localhost:9999](localhost:9999).
+
+The mongodb is stored in the `open5gs-db` docker volume, so the subscribers, including the ones added with the WebUI,
+are kept when the container is recreated. At every start the subscribers of `SUBSCRIBER_DB` are added or updated, but
+the ones removed from it are not deleted. To start from an empty database, remove the container and then the volume:
+`docker compose down` followed by `docker volume rm docker_open5gs-db` (`docker_` is the name of the compose project),
+or `docker rm -f open5gs_5gc` followed by `docker volume rm open5gs-db` if the container was started with `docker run`.
+A volume cannot be removed while a container, even a stopped one, uses it. Do not use `docker compose down --volumes`
+for this, as it also removes `gnb-storage`. This resets the local mongodb only, not a remote one set with `MONGODB_IP`.
+
+The volume starts empty, so the subscribers that only exist in the database of a container created before it was added
+are not kept the first time the container is recreated. Note their details from the WebUI before recreating it, then add
+them again with the WebUI or in `SUBSCRIBER_DB`.
