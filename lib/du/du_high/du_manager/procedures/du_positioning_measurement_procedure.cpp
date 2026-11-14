@@ -180,9 +180,9 @@ du_positioning_meas_response positioning_measurement_procedure::prepare_f1ap_res
     // requested).
     meas_res.results.reserve((rtoa_report ? 1U : 0U) + (rsrp_report ? 1U : 0U) + (aoa_report ? 1U : 0U));
     if (rtoa_report) {
-      ocudu_assert(rtoa_quant->granularity_factor.has_value(),
-                   "No granularity factor provided for UL-RTOA measurement.");
-      const uint8_t granularity = rtoa_quant->granularity_factor.value();
+      // The gNB selects k and the granularity factor is only a recommendation, as per TS 38.133, Section 13.1.1.
+      // Without it, the DU reports with k0.
+      const uint8_t granularity = rtoa_quant->granularity_factor.value_or(0);
       meas_res.results.push_back(
           pos_meas_result_ul_rtoa{.granularity = granularity, .ul_rtoa = mac_meas.ul_rtoa->to_ul_rtoa(granularity)});
     }

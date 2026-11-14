@@ -79,6 +79,15 @@ protected:
     return req;
   }
 
+  /// Programs the MAC to report a UL-RTOA on the next measurement request.
+  void mac_reports_rtoa(phy_time_unit ul_rtoa)
+  {
+    auto& mac_resp = mac.next_positioning_meas_response;
+    mac_resp.cell_results.resize(1);
+    mac_resp.cell_results[0].ul_srs_pos_meass.resize(1);
+    mac_resp.cell_results[0].ul_srs_pos_meass[0].ul_rtoa = ul_rtoa;
+  }
+
   /// Programs the MAC to report an angle of arrival on the next measurement request.
   void mac_reports_aoa(std::optional<float> azimuth_deg, std::optional<float> zenith_deg)
   {
@@ -147,6 +156,23 @@ TEST_F(du_positioning_measurement_procedure_test, when_mac_reports_no_measuremen
   du_positioning_meas_response resp = run_procedure(make_request());
 
   ASSERT_TRUE(resp.pos_meas_list.empty());
+}
+
+/// The granularity factor is optional in the request. Without it, the DU reports the UL-RTOA with k0.
+TEST_F(du_positioning_measurement_procedure_test, when_ul_rtoa_has_no_granularity_factor_then_k0_is_reported)
+{
+  mac_reports_rtoa(phy_time_unit::from_units_of_Tc(1));
+
+  // The default request has no granularity factor.
+  du_positioning_meas_response resp = run_procedure(make_request());
+
+  ASSERT_EQ(resp.pos_meas_list.size(), 1);
+  ASSERT_EQ(resp.pos_meas_list[0].results.size(), 1);
+  const auto* rtoa = std::get_if<pos_meas_result_ul_rtoa>(&resp.pos_meas_list[0].results[0]);
+  ASSERT_NE(rtoa, nullptr);
+  ASSERT_EQ(rtoa->granularity, 0);
+  // UL_RTOA_985025 covers 0 < UL_RTOA <= 1 Tc, as per TS 38.133, Table 13.1.1-1.
+  ASSERT_EQ(rtoa->ul_rtoa, 985025);
 }
 
 TEST_F(du_positioning_measurement_procedure_test, when_request_is_sent_then_the_mac_timeout_follows_the_srs_period)
