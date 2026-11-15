@@ -95,15 +95,16 @@ public:
   unsigned estimate_max_ul_tbs(const ue_cell& ue_cc) const;
 
 private:
-  static constexpr size_t MAX_NOF_LAYERS = 4;
+  static constexpr size_t MAX_NOF_LAYERS  = 4;
+  static constexpr size_t NOF_MCS_INDEXES = sch_mcs_index::max() + 1;
 
-  /// Cached reference to TBS calculator configuration.
-  const tbs_calculator_configuration dl_tbs_cfg_ref;
-  const tbs_calculator_configuration ul_tbs_cfg_ref;
+  /// Maximum TBS in bytes, indexed by number of layers minus one and MCS index.
+  using max_tbs_table = std::array<std::array<unsigned, NOF_MCS_INDEXES>, MAX_NOF_LAYERS>;
 
-  /// Number of DMRS resource blocks per number of layers.
-  static_vector<uint8_t, MAX_NOF_LAYERS> dl_dmrs_rbs_per_nof_layers;
-  static_vector<uint8_t, MAX_NOF_LAYERS> ul_dmrs_rbs_per_nof_layers;
+  /// Maximum DL TBS per number of layers and MCS of the reference MCS table.
+  max_tbs_table dl_max_tbs{};
+  /// Maximum UL TBS per number of layers and MCS of the reference MCS table.
+  max_tbs_table ul_max_tbs{};
 };
 
 /// Time-domain QoS-aware scheduler policy.
