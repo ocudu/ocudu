@@ -15,6 +15,7 @@ stages:
   - ci
   - dependencies
   - publish
+  - verify
   - alt registries
   - manifest
 
@@ -777,3 +778,30 @@ image-build-publish [fedora, 44, amd64]:
     - fedora-uhd-builder avx2
     - fedora-dpdk-builder avx512
     - fedora-rohc-builder avx2
+
+check fedora rohc:
+  stage: verify
+  image:
+    name: ${CI_REGISTRY_IMAGE}/builder-fedora-44:${DOCKER_BUILDER_VERSION}
+    pull_policy: always
+  tags:
+    - ${OCUDU_RUNNER_TAG}-amd64
+  rules:
+    - if: $ON_MR
+  variables:
+    GIT_STRATEGY: fetch
+    ROHC_DIR: /opt/rohc
+  needs:
+    - job: image-build-publish [fedora, 44, amd64]
+      artifacts: false
+  script:
+    - |
+      export PKG_CONFIG_PATH="${ROHC_DIR}/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+      pkg-config --print-errors --atleast-version=2.3.1 rohc
+      mkdir -p /tmp/rohc-check
+      printf '%s\n' \
+        'cmake_minimum_required(VERSION 3.14)' \
+        'project(rohc_check NONE)' \
+        'find_package(ROHC REQUIRED)' > /tmp/rohc-check/CMakeLists.txt
+      cmake -S /tmp/rohc-check -B /tmp/rohc-check/build \
+        -DCMAKE_MODULE_PATH="${CI_PROJECT_DIR}/cmake/modules"
