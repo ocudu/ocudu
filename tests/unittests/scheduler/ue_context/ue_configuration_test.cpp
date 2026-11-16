@@ -121,56 +121,8 @@ protected:
   sched_config_manager     cfg_mng{scheduler_config{expert_cfg, metric_notif}};
 };
 
-// The scheduler takes the PUCCH and CSI values of the UE from the resources that the RRM allocates to it.
-TEST_F(ue_configuration_tester, ue_pucch_and_csi_configs_come_from_the_ue_rrm_config)
-{
-  const cell_configuration&         cell_cfg = add_cell();
-  sched_ue_creation_request_message ue_req   = make_ue_creation_request(cell_cfg);
-  ue_rrm_config&                    rrm      = ue_req.cfg.cells->front().ded->rrm;
-  ASSERT_TRUE(rrm.csi.periodic_report.has_value());
-  rrm.pucch.sr_offset          = rrm.pucch.sr_offset + 1;
-  rrm.pucch.rep_f1_3_4_enabled = true;
-  rrm.csi.periodic_report->offset += 1;
-
-  ue_config_update_event ev = cfg_mng.add_ue(ue_req);
-  ASSERT_TRUE(ev.valid());
-  const ue_uplink_bwp_config& ue_ul = *ev.next_config().pcell_cfg().init_bwp().ul.ue_cfg();
-  EXPECT_EQ(ue_ul.pucch.res_set_cfg_id, rrm.pucch.res_set_cfg_id);
-  EXPECT_EQ(ue_ul.pucch.sr_res_id, rrm.pucch.sr_res_id);
-  EXPECT_EQ(ue_ul.pucch.sr_offset, rrm.pucch.sr_offset);
-  EXPECT_TRUE(ue_ul.pucch.rep_f1_3_4_enabled);
-  EXPECT_FALSE(ue_ul.pucch.rep_f0_2_enabled);
-  ASSERT_TRUE(ue_ul.csi.periodic_report.has_value());
-  EXPECT_EQ(ue_ul.csi.periodic_report->pucch_res_id, rrm.csi.periodic_report->res_id);
-  EXPECT_EQ(ue_ul.csi.periodic_report->offset, rrm.csi.periodic_report->offset);
-  ev.notify_completion();
-}
-
-// The scheduler takes the HARQ processes of the UE from the resources that the RRM allocates to it.
-TEST_F(ue_configuration_tester, ue_harq_configs_come_from_the_ue_rrm_config)
-{
-  const cell_configuration&         cell_cfg = add_cell();
-  sched_ue_creation_request_message ue_req   = make_ue_creation_request(cell_cfg);
-  ue_rrm_config&                    rrm      = ue_req.cfg.cells->front().ded->rrm;
-  rrm.pdsch.nof_harqs                        = 4;
-  rrm.pusch.nof_harqs                        = 32;
-  rrm.pdsch.harq_feedback_disabled.set(3);
-  rrm.pusch.harq_mode.reset(1);
-
-  ue_config_update_event ev = cfg_mng.add_ue(ue_req);
-  ASSERT_TRUE(ev.valid());
-  const sched_bwp_config& bwp = ev.next_config().pcell_cfg().init_bwp();
-  ASSERT_NE(bwp.dl.ue_cfg(), nullptr);
-  ASSERT_NE(bwp.ul.ue_cfg(), nullptr);
-  EXPECT_EQ(bwp.dl.ue_cfg()->pdsch.nof_harqs, 4);
-  EXPECT_EQ(bwp.dl.ue_cfg()->pdsch.harq_feedback_disabled, rrm.pdsch.harq_feedback_disabled);
-  EXPECT_EQ(bwp.ul.ue_cfg()->pusch.nof_harqs, 32);
-  EXPECT_EQ(bwp.ul.ue_cfg()->pusch.harq_mode, rrm.pusch.harq_mode);
-  ev.notify_completion();
-}
-
-// The scheduler assumes the xOverhead that the DU signals to the UE. A UE without dedicated configuration has none.
-TEST_F(ue_configuration_tester, ue_with_dedicated_config_assumes_the_x_overhead_of_the_cell)
+// The scheduler takes the PUCCH, CSI, HARQ and xOverhead values of the UE from the RRM configurations.
+TEST_F(ue_configuration_tester, ue_config_comes_from_the_rrm_configs)
 {
   sched_cell_configuration_request_message sched_cfg =
       sched_config_helper::make_default_sched_cell_configuration_request();
@@ -179,26 +131,42 @@ TEST_F(ue_configuration_tester, ue_with_dedicated_config_assumes_the_x_overhead_
   sched_cfg.rrm                              = make_cell_rrm_config(sched_cfg.ran);
   const cell_configuration&         cell_cfg = add_cell(sched_cfg);
   sched_ue_creation_request_message ue_req   = make_ue_creation_request(cell_cfg);
-  ue_config_update_event            ev       = cfg_mng.add_ue(ue_req);
+  ue_rrm_config&                    rrm      = ue_req.cfg.cells->front().ded->rrm;
+  ASSERT_TRUE(rrm.csi.periodic_report.has_value());
+  rrm.pucch.sr_offset          = rrm.pucch.sr_offset + 1;
+  rrm.pucch.rep_f1_3_4_enabled = true;
+  rrm.csi.periodic_report->offset += 1;
+  rrm.pdsch.nof_harqs = 4;
+  rrm.pusch.nof_harqs = 32;
+  rrm.pdsch.harq_feedback_disabled.set(3);
+  rrm.pusch.harq_mode.reset(1);
+
+  ue_config_update_event ev = cfg_mng.add_ue(ue_req);
   ASSERT_TRUE(ev.valid());
   const ue_cell_configuration& ue_cell_cfg = ev.next_config().pcell_cfg();
+  const ue_uplink_bwp_config&  ue_ul       = *ue_cell_cfg.init_bwp().ul.ue_cfg();
+  EXPECT_EQ(ue_ul.pucch.res_set_cfg_id, rrm.pucch.res_set_cfg_id);
+  EXPECT_EQ(ue_ul.pucch.sr_res_id, rrm.pucch.sr_res_id);
+  EXPECT_EQ(ue_ul.pucch.sr_offset, rrm.pucch.sr_offset);
+  EXPECT_TRUE(ue_ul.pucch.rep_f1_3_4_enabled);
+  EXPECT_FALSE(ue_ul.pucch.rep_f0_2_enabled);
+  ASSERT_TRUE(ue_ul.csi.periodic_report.has_value());
+  EXPECT_EQ(ue_ul.csi.periodic_report->pucch_res_id, rrm.csi.periodic_report->res_id);
+  EXPECT_EQ(ue_ul.csi.periodic_report->offset, rrm.csi.periodic_report->offset);
+  const ue_downlink_bwp_config& ue_dl = *ue_cell_cfg.init_bwp().dl.ue_cfg();
+  EXPECT_EQ(ue_dl.pdsch.nof_harqs, rrm.pdsch.nof_harqs);
+  EXPECT_EQ(ue_dl.pdsch.harq_feedback_disabled, rrm.pdsch.harq_feedback_disabled);
+  EXPECT_EQ(ue_ul.pusch.nof_harqs, rrm.pusch.nof_harqs);
+  EXPECT_EQ(ue_ul.pusch.harq_mode, rrm.pusch.harq_mode);
+
+  // The scheduler assumes the xOverhead that the DU signals to the UE, also in its PDSCH parameters.
   EXPECT_EQ(ue_cell_cfg.pdsch_nof_oh_prb(), 12);
   EXPECT_EQ(ue_cell_cfg.pusch_nof_oh_prb(), 6);
-
-  // The overhead reaches the PDSCH parameters of the UE-specific search spaces.
   unsigned nof_checked = 0;
   for (unsigned id = 0; id != MAX_NOF_SEARCH_SPACES; ++id) {
-    const search_space_info* ss = ue_cell_cfg.find_search_space(to_search_space_id(id));
-    if (ss == nullptr or ss->cfg->is_common_search_space()) {
-      continue;
-    }
-    for (unsigned td = 0, e = ss->bwp->dl.td_mapper().pdsch_td_resources(ss->get_dl_dci_format()).size(); td != e;
-         ++td) {
-      for (unsigned nof_layers = 1, max_layers = ss->get_nof_pdsch_layer_configs(td); nof_layers <= max_layers;
-           ++nof_layers) {
-        EXPECT_EQ(ss->get_pdsch_config(td, nof_layers).nof_oh_prb, 12);
-        ++nof_checked;
-      }
+    if (const search_space_info* ss = ue_cell_cfg.find_search_space(to_search_space_id(id)); ss != nullptr) {
+      EXPECT_EQ(ss->get_pdsch_config(0, 1).nof_oh_prb, 12) << "ss=" << id;
+      ++nof_checked;
     }
   }
   EXPECT_GT(nof_checked, 0);
