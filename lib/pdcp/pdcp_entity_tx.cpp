@@ -275,6 +275,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf, std::optional<uint32_t> forward
     st.tx_trans_crypto = *forward_sn;
     st.tx_reord_crypto = *forward_sn;
     fwd_state_updated  = true;
+    logger.log_debug("Updated PDCP from forwarded SDU. st=[{}]", st);
   }
 
   trace_point                           tx_tp           = up_tracer.now();
@@ -344,10 +345,10 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf, std::optional<uint32_t> forward
       return;
     }
     pdu_count = fwd_count.value();
+    logger.log_debug("Forwarding SDU with estimated count={}", pdu_count);
   } else {
     pdu_count = st.tx_next;
   }
-  logger.log_debug("pdu_count={}", pdu_count);
 
   // Wrap SDU with meta information.
   pdcp_tx_window_sdu_info sdu_info = {
@@ -416,7 +417,10 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf, std::optional<uint32_t> forward
 
   // Increment TX_NEXT. We do this before passing the SDU+Header
   // to the crypto executor, so that the reordering function has the updated state.
-  st.tx_next++;
+  // This only done for regular SDUs, not forwarded SDUs.
+  if (not forward_sn.has_value()) {
+    st.tx_next++;
+  }
 
   // Apply security in crypto executor
   auto fn = [this, buf_info = std::move(buf_info)]() mutable { apply_security(std::move(buf_info)); };
@@ -1657,4 +1661,26 @@ expected<uint32_t> pdcp_entity_tx::estimate_forwareded_sdu_count(uint32_t sn)
   }
   return rcvd_count;
   return rcvd_count;
+}
+
+pdcp_count_info pdcp_entity_tx::get_count() const
+{
+  pdcp_count_info count_info;
+  uint32_t        count = st.tx_next;
+  count_info.sn         = SN(count);
+  count_info.hfn        = HFN(count);
+  logger.log_info("Getting PDCP COUNT info. hfn={} sn={}", count_info.hfn, count_info.sn);
+  return count_info;
+}
+
+/// \brief Set the TX count for status transfer
+void pdcp_entity_tx::set_count(pdcp_count_info count_info)
+{
+  uint32_t count = COUNT(count_info.hfn, count_info.sn);
+  if (st.tx_next != 0 || st.tx_trans_crypto != 0 || st.tx_reord_crypto != 0 || st.tx_trans != 0 ||
+      st.tx_next_ack != 0) {
+    logger.log_warning("Status transfer applied to bearer with non-zero state. st={} count={}", st, count);
+  }
+  st = {count, count, count, count, count};
+  logger.log_info("Setted PDCP TX state. {}", st);
 }

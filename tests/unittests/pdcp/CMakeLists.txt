@@ -61,6 +61,11 @@ target_link_libraries(pdcp_rx_suspend_test ocudu_pdcp ocudu_security ocudu_suppo
 target_include_directories(pdcp_rx_suspend_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(pdcp_rx_suspend_test PROPERTIES LABELS "tsan")
 
+add_executable(pdcp_tx_forward_test pdcp_tx_forward_test.cpp)
+target_link_libraries(pdcp_tx_forward_test ocudu_pdcp ocudu_security ocudu_support ocudulog GTest::gtest GTest::gtest_main)
+target_include_directories(pdcp_tx_forward_test PRIVATE ${CMAKE_SOURCE_DIR})
+gtest_discover_tests(pdcp_tx_forward_test PROPERTIES LABELS "tsan")
+
 add_executable(pdcp_rx_stop_test pdcp_rx_stop_test.cpp)
 target_link_libraries(pdcp_rx_stop_test ocudu_pdcp ocudu_security ocudu_support ocudulog GTest::gtest GTest::gtest_main)
 target_include_directories(pdcp_rx_stop_test PRIVATE ${CMAKE_SOURCE_DIR})

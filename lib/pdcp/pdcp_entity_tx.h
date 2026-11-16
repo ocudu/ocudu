@@ -151,27 +151,10 @@ public:
   pdcp_sn_size get_sn_size() const override { return cfg.sn_size; }
 
   /// \brief Get the TX count for status transfer.
-  pdcp_count_info get_count() const override
-  {
-    pdcp_count_info count_info;
-    uint32_t        count = st.tx_next;
-    count_info.sn         = SN(count);
-    count_info.hfn        = HFN(count);
-    logger.log_info("Getting PDCP COUNT info. hfn={} sn={}", count_info.hfn, count_info.sn);
-    return count_info;
-  }
+  pdcp_count_info get_count() const override;
 
   /// \brief Set the TX count for status transfer
-  void set_count(pdcp_count_info count_info) override
-  {
-    uint32_t count = COUNT(count_info.hfn, count_info.sn);
-    if (st.tx_next != 0 || st.tx_trans_crypto != 0 || st.tx_reord_crypto != 0 || st.tx_trans != 0 ||
-        st.tx_next_ack != 0) {
-      logger.log_warning("Status transfer applied to bearer with non-zero state. st={} count={}", st, count);
-    }
-    st = {count, count, count, count, count};
-    logger.log_info("Setted PDCP TX state. {}", st);
-  }
+  void set_count(pdcp_count_info count_info) override;
 
   void reset_count() override;
 
