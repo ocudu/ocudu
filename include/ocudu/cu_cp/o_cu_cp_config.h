@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "ocudu/cu_cp/cu_cp_configuration.h"
 #include "ocudu/e2/e2ap_config.h"
 
 namespace ocudu {

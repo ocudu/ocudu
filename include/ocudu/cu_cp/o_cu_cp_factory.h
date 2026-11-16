@@ -13,6 +13,6 @@ namespace ocudu::ocucp {
 struct o_cu_cp_config;
 struct o_cu_cp_dependencies;
 
-std::unique_ptr<o_cu_cp> create_o_cu_cp(const o_cu_cp_config& config, const o_cu_cp_dependencies& dependencies);
+std::unique_ptr<o_cu_cp> create_o_cu_cp(const o_cu_cp_config& config, o_cu_cp_dependencies& dependencies);
 
 } // namespace ocudu::ocucp

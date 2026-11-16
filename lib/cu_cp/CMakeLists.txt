@@ -108,5 +108,8 @@ target_link_libraries(ocudu_cu_cp
         ${CMAKE_DL_LIBS}
 )
 
-add_library(ocudu_o_cu_cp o_cu_cp_factory.cpp o_cu_cp_impl.cpp)
+add_library(ocudu_o_cu_cp
+            o_cu_cp_factory.cpp
+            o_cu_cp_impl.cpp
+            )
 target_link_libraries(ocudu_o_cu_cp PRIVATE ocudu_cu_cp)
