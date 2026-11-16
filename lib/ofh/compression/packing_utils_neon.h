@@ -15,6 +15,7 @@
 #include <arm_neon.h>
 #include <array>
 #include <cstdint>
+#include <cstring>
 
 namespace ocudu {
 namespace ofh {
@@ -279,13 +280,16 @@ OCUDU_FORCE_INLINE void store_bytes(uint8_t* out, uint8x16_t bytes_u8)
     vst1q_u8(out, bytes_u8);
     return;
   }
+  // The output has no alignment, so the wider lanes are stored through memcpy, which compiles to a lane store.
   vst1_u8(out, vget_low_u8(bytes_u8));
   if constexpr ((NOF_BYTES & 4) != 0) {
-    vst1q_lane_u32(reinterpret_cast<uint32_t*>(out + 8), vreinterpretq_u32_u8(bytes_u8), 2);
+    uint32_t lane = vgetq_lane_u32(vreinterpretq_u32_u8(bytes_u8), 2);
+    std::memcpy(out + 8, &lane, sizeof(lane));
   }
   if constexpr ((NOF_BYTES & 2) != 0) {
     static constexpr unsigned OFFSET = 8 + (NOF_BYTES & 4);
-    vst1q_lane_u16(reinterpret_cast<uint16_t*>(out + OFFSET), vreinterpretq_u16_u8(bytes_u8), OFFSET / 2);
+    uint16_t                  lane   = vgetq_lane_u16(vreinterpretq_u16_u8(bytes_u8), OFFSET / 2);
+    std::memcpy(out + OFFSET, &lane, sizeof(lane));
   }
   if constexpr ((NOF_BYTES & 1) != 0) {
     static constexpr unsigned OFFSET = 8 + (NOF_BYTES & 6);
