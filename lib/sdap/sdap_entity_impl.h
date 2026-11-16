@@ -55,20 +55,17 @@ public:
       logger.log_error("Cannot overwrite existing DL mapping for {}", qfi);
       return false;
     }
-    if (rx_map.find(drb_id) != rx_map.end()) {
-      logger.log_error("Cannot overwrite existing UL mapping for {}", drb_id);
-      return false;
-    }
-
-    // create TX mapping
+    // create TX mapping (one entry per QFI)
     std::unique_ptr<sdap_entity_tx_impl> tx =
         std::make_unique<sdap_entity_tx_impl>(ue_index, psi, qfi, drb_id, tx_pdu_notifier);
     tx_map.insert({qfi, std::move(tx)});
 
-    // create RX mapping
-    std::unique_ptr<sdap_entity_rx_impl> rx =
-        std::make_unique<sdap_entity_rx_impl>(ue_index, psi, qfi, drb_id, rx_sdu_notifier);
-    rx_map.insert({drb_id, std::move(rx)});
+    // create RX mapping (one entry per DRB, shared across all QFIs on that DRB)
+    if (rx_map.find(drb_id) == rx_map.end()) {
+      std::unique_ptr<sdap_entity_rx_impl> rx =
+          std::make_unique<sdap_entity_rx_impl>(ue_index, psi, qfi, drb_id, rx_sdu_notifier);
+      rx_map.insert({drb_id, std::move(rx)});
+    }
 
     return true;
   }

@@ -108,6 +108,38 @@ TEST_F(sdap_test, test_tx_removed_mapping)
   EXPECT_TRUE(dl_sink2->pdu_queue.empty());
 }
 
+/// \brief Test TX with two distinct QFIs mapped to the same DRB
+TEST_F(sdap_test, test_tx_two_qfi_same_drb)
+{
+  const std::array<uint8_t, 4> sdu_buf1 = {0x00, 0x01, 0x02, 0x03};
+  byte_buffer                  sdu1     = byte_buffer::create(sdu_buf1).value();
+  const std::array<uint8_t, 4> sdu_buf2 = {0x04, 0x05, 0x06, 0x07};
+  byte_buffer                  sdu2     = byte_buffer::create(sdu_buf2).value();
+
+  sdap_config sdap_cfg = {};
+
+  ASSERT_TRUE(sdap->add_mapping(qos_flow_id_t::min, drb_id_t::drb1, sdap_cfg, *dl_sink1));
+  ASSERT_TRUE(sdap->add_mapping(qos_flow_id_t::max, drb_id_t::drb1, sdap_cfg, *dl_sink2));
+
+  sdap->handle_sdu(sdu1.deep_copy().value(), qos_flow_id_t::min);
+  sdap->handle_sdu(sdu2.deep_copy().value(), qos_flow_id_t::max);
+
+  ASSERT_FALSE(dl_sink1->pdu_queue.empty());
+  EXPECT_EQ(dl_sink1->pdu_queue.front(), sdu1);
+  dl_sink1->pdu_queue.pop();
+
+  ASSERT_FALSE(dl_sink2->pdu_queue.empty());
+  EXPECT_EQ(dl_sink2->pdu_queue.front(), sdu2);
+  dl_sink2->pdu_queue.pop();
+
+  // RX handler for the shared DRB must still be reachable
+  const std::array<uint8_t, 4> pdu_buf = {0x08, 0x09, 0x0a, 0x0b};
+  byte_buffer                  pdu     = byte_buffer::create(pdu_buf).value();
+  sdap->get_sdap_rx_pdu_handler(drb_id_t::drb1).handle_pdu(pdu.deep_copy().value());
+  ASSERT_FALSE(ul_sink->sdu_queue.empty());
+  ul_sink->sdu_queue.pop();
+}
+
 #ifdef ASSERTS_ENABLED
 /// \brief Test RX without any mapping
 TEST_F(sdap_test, test_rx_no_mapping)
