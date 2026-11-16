@@ -15,14 +15,17 @@ rules:
     kind: allowed-edge
     from:
       - include/ocudu/f1ap/**
+      - lib/f1ap/**
     allow:
       - include/ocudu/adt/**
+      - include/ocudu/asn1/*.h
       - include/ocudu/asn1/f1ap/**
       - include/ocudu/f1ap/**
       - include/ocudu/gateways/**
       - include/ocudu/ocudulog/**
       - include/ocudu/ran/**
       - include/ocudu/support/**
+      - lib/f1ap/**
     reason: Module F1AP may only depend on the modules listed in allow; anything else breaks its layering boundary.
   - id: f1ap-cu-cp-forbidden-includes
     kind: forbidden-edge

@@ -22,6 +22,7 @@ rules:
       - include/ocudu/asn1/**
       - include/ocudu/ocudulog/**
       - include/ocudu/support/**
+      - lib/asn1/**
     reason: Module asn1 may only depend on the modules listed in allow; anything else breaks its layering boundary.
   - id: asn1-public-submodules-are-isolated
     kind: peer-isolation
@@ -35,45 +36,63 @@ rules:
   - id: asn1-e1ap-allowed-includes
     kind: allowed-edge
     from: lib/asn1/e1ap/**
-    allow: include/ocudu/asn1/e1ap/**
+    allow:
+      - include/ocudu/asn1/*.h
+      - include/ocudu/asn1/e1ap/**
     reason: An ASN.1 E1AP sub-module may only include its own protocol's headers.
   - id: asn1-e2ap-allowed-includes
     kind: allowed-edge
     from: lib/asn1/e2ap/**
-    allow: include/ocudu/asn1/e2ap/**
+    allow:
+      - include/ocudu/asn1/*.h
+      - include/ocudu/asn1/e2ap/**
     reason: An ASN.1 E2AP sub-module may only include its own protocol's headers.
   - id: asn1-e2sm-allowed-includes
     kind: allowed-edge
     from: lib/asn1/e2sm/**
-    allow: include/ocudu/asn1/e2sm/**
+    allow:
+      - include/ocudu/asn1/*.h
+      - include/ocudu/asn1/e2sm/**
     reason: An ASN.1 E2SM sub-module may only include its own protocol's headers.
   - id: asn1-f1ap-allowed-includes
     kind: allowed-edge
     from: lib/asn1/f1ap/**
-    allow: include/ocudu/asn1/f1ap/**
+    allow:
+      - include/ocudu/asn1/*.h
+      - include/ocudu/asn1/f1ap/**
     reason: An ASN.1 F1AP sub-module may only include its own protocol's headers.
   - id: asn1-lpp-allowed-includes
     kind: allowed-edge
     from: lib/asn1/lpp/**
-    allow: include/ocudu/asn1/lpp/**
+    allow:
+      - include/ocudu/asn1/*.h
+      - include/ocudu/asn1/lpp/**
     reason: An ASN.1 LPP sub-module may only include its own protocol's headers.
   - id: asn1-ngap-allowed-includes
     kind: allowed-edge
     from: lib/asn1/ngap/**
-    allow: include/ocudu/asn1/ngap/**
+    allow:
+      - include/ocudu/asn1/*.h
+      - include/ocudu/asn1/ngap/**
     reason: An ASN.1 NGAP sub-module may only include its own protocol's headers.
   - id: asn1-nrppa-allowed-includes
     kind: allowed-edge
     from: lib/asn1/nrppa/**
-    allow: include/ocudu/asn1/nrppa/**
+    allow:
+      - include/ocudu/asn1/*.h
+      - include/ocudu/asn1/nrppa/**
     reason: An ASN.1 NRPPA sub-module may only include its own protocol's headers.
   - id: asn1-rrc_nr-allowed-includes
     kind: allowed-edge
     from: lib/asn1/rrc_nr/**
-    allow: include/ocudu/asn1/rrc_nr/**
+    allow:
+      - include/ocudu/asn1/*.h
+      - include/ocudu/asn1/rrc_nr/**
     reason: An ASN.1 RRC sub-module may only include its own protocol's headers.
   - id: asn1-xnap-allowed-includes
     kind: allowed-edge
     from: lib/asn1/xnap/**
-    allow: include/ocudu/asn1/xnap/**
+    allow:
+      - include/ocudu/asn1/*.h
+      - include/ocudu/asn1/xnap/**
     reason: An ASN.1 XNAP sub-module may only include its own protocol's headers.
