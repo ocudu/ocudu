@@ -48,14 +48,36 @@ struct cell_bwp_csi_config {
   }
 };
 
+/// PDSCH parameters that are the same for all the UEs of a BWP.
+struct cell_pdsch_res_config {
+  /// Overhead that the PDSCH scheduling assumes for the UEs with a dedicated configuration, as per TS 38.214,
+  /// Section 5.1.3.2 (\c xOverhead).
+  x_overhead x_ov_head = x_overhead::not_set;
+
+  bool operator==(const cell_pdsch_res_config& other) const { return x_ov_head == other.x_ov_head; }
+};
+
+/// PUSCH parameters that are the same for all the UEs of a BWP.
+struct cell_pusch_res_config {
+  /// Overhead that the PUSCH scheduling assumes for the UEs with a dedicated configuration, as per TS 38.214,
+  /// Section 6.1.4.2 (\c xOverhead).
+  x_overhead x_ov_head = x_overhead::not_set;
+
+  bool operator==(const cell_pusch_res_config& other) const { return x_ov_head == other.x_ov_head; }
+};
+
 /// This structure defines all the UE dedicated DL resources available in a given BWP.
 struct cell_dl_bwp_res_config {
   /// List of possible UE-dedicated PDCCH configs.
   std::vector<pdcch_config> ded_pdcchs;
   /// CSI parameters. Present only if the cell configures CSI.
   std::optional<cell_bwp_csi_config> csi;
+  cell_pdsch_res_config              pdsch;
 
-  bool operator==(const cell_dl_bwp_res_config& other) const { return ded_pdcchs == other.ded_pdcchs; }
+  bool operator==(const cell_dl_bwp_res_config& other) const
+  {
+    return ded_pdcchs == other.ded_pdcchs and pdsch == other.pdsch;
+  }
 };
 
 /// This structure defines all the PUCCH resources available in a given BWP.
@@ -84,13 +106,9 @@ struct cell_pucch_res_config {
 /// \brief Cell-wide UL resources available in a given BWP.
 struct cell_ul_bwp_res_config {
   cell_pucch_res_config pucch;
-  /// Overhead that the PUSCH scheduling assumes, as per TS 38.214, Section 6.1.4.2 (\c xOverhead).
-  x_overhead pusch_x_ov_head = x_overhead::not_set;
+  cell_pusch_res_config pusch;
 
-  bool operator==(const cell_ul_bwp_res_config& other) const
-  {
-    return pucch == other.pucch and pusch_x_ov_head == other.pusch_x_ov_head;
-  }
+  bool operator==(const cell_ul_bwp_res_config& other) const { return pucch == other.pucch and pusch == other.pusch; }
 };
 
 /// \brief List of all configured RAN resources associated with a given cell and BWP.

@@ -99,7 +99,8 @@ pusch_config_params ocudu::get_pusch_config_f0_0_c_rnti(const cell_configuration
 
   // According to TS 38.214, Section 6.1.4.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.
-  pusch.nof_oh_prb = cell_cfg.pusch_nof_oh_prb();
+  pusch.nof_oh_prb =
+      ue_cell_cfg != nullptr ? ue_cell_cfg->pusch_nof_oh_prb() : static_cast<unsigned>(x_overhead::not_set);
 
   // TODO: verify if this needs to be set depending on some configuration.
   pusch.nof_harq_ack_bits = nof_harq_ack_bits;
@@ -155,7 +156,7 @@ pusch_config_params ocudu::get_pusch_config_f0_1_c_rnti(const ue_cell_configurat
 
   // According to TS 38.214, Section 6.1.4.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.
-  pusch.nof_oh_prb = ue_cell_cfg.cell_cfg_common.pusch_nof_oh_prb();
+  pusch.nof_oh_prb = ue_cell_cfg.pusch_nof_oh_prb();
 
   // TODO: verify if this needs to be set depending on some configuration.
   pusch.nof_harq_ack_bits = nof_harq_ack_bits;

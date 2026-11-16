@@ -960,6 +960,10 @@ TEST(serving_cell_config_converter_test, test_initial_pdsch_serving_cell_cfg_con
   ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().max_mimo_layers_present);
   ASSERT_FALSE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().nrof_harq_processes_for_pdsch_present)
       << "For 8 HARQs, this flag can be avoided";
+  ASSERT_FALSE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().xoverhead_present)
+      << "The UE is not given xOverhead by default";
+  ASSERT_FALSE(rrc_sp_cell_cfg_ded.ul_cfg.pusch_serving_cell_cfg.setup().xoverhead_present)
+      << "The UE is not given xOverhead by default";
 }
 
 TEST(serving_cell_config_converter_test, max_mimo_layers_is_only_encoded_when_configured)
@@ -1035,9 +1039,11 @@ TEST(serving_cell_config_converter_test, test_pusch_serving_cell_cfg_conversion)
   auto&                      dest_pcell = dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX);
   dest_pcell.rrm.pusch.nof_harqs        = 32;
   dest_pcell.rrm.pusch.harq_mode.reset(5);
+  cell_rrm_config cell_rrm = default_cell_rrm();
+  cell_rrm.pusch.x_ov_head = x_overhead::xoh6;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, default_cell_rrm());
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, cell_rrm);
 
   ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg_present);
   const auto& rrc_ul_cfg = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg;
@@ -1048,6 +1054,9 @@ TEST(serving_cell_config_converter_test, test_pusch_serving_cell_cfg_conversion)
   ASSERT_TRUE(rrc_ul_cfg.pusch_serving_cell_cfg.setup().ul_harq_mode_r17->is_setup());
   EXPECT_EQ(rrc_ul_cfg.pusch_serving_cell_cfg.setup().ul_harq_mode_r17->setup().to_number(),
             dest_pcell.rrm.pusch.harq_mode.to_uint64());
+  ASSERT_TRUE(rrc_ul_cfg.pusch_serving_cell_cfg.setup().xoverhead_present);
+  EXPECT_EQ(rrc_ul_cfg.pusch_serving_cell_cfg.setup().xoverhead.value,
+            asn1::rrc_nr::pusch_serving_cell_cfg_s::xoverhead_opts::xoh6);
 }
 
 TEST(serving_cell_config_converter_test, test_custom_pdsch_serving_cell_cfg_conversion)
@@ -1059,9 +1068,11 @@ TEST(serving_cell_config_converter_test, test_custom_pdsch_serving_cell_cfg_conv
   // Change the configuration. Need not be valid configuration.
   dest_pcell.rrm.pdsch.nof_harqs = 12;
   dest_pcell.rrm.pdsch.harq_feedback_disabled.set(3);
+  cell_rrm_config cell_rrm = default_cell_rrm();
+  cell_rrm.pdsch.x_ov_head = x_overhead::xoh12;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, default_cell_rrm());
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, cell_rrm);
 
   ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg_present);
   ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded_present);
@@ -1074,6 +1085,9 @@ TEST(serving_cell_config_converter_test, test_custom_pdsch_serving_cell_cfg_conv
   ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().max_mimo_layers_present);
   ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().nrof_harq_processes_for_pdsch_present);
   ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().dl_harq_feedback_disabled_r17.is_present());
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().xoverhead_present);
+  ASSERT_EQ(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().xoverhead.value,
+            asn1::rrc_nr::pdsch_serving_cell_cfg_s::xoverhead_opts::xoh12);
 }
 
 static csi_meas_config make_test_csi_meas_cfg()

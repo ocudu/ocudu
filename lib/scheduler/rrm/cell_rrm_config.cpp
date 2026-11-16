@@ -29,5 +29,7 @@ static cell_pucch_rrm_config make_cell_pucch_rrm_config(const ran_cell_config& c
 
 cell_rrm_config ocudu::make_cell_rrm_config(const ran_cell_config& cell_cfg)
 {
-  return cell_rrm_config{.pucch = make_cell_pucch_rrm_config(cell_cfg)};
+  return cell_rrm_config{.pucch = make_cell_pucch_rrm_config(cell_cfg),
+                         .pdsch = {.x_ov_head = cell_cfg.init_bwp.pdsch.x_ov_head},
+                         .pusch = {.x_ov_head = cell_cfg.init_bwp.pusch.x_ov_head}};
 }

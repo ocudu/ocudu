@@ -13,6 +13,14 @@
 
 namespace ocudu {
 
+/// \c xOverhead options, as per TS 38.331. Used in \c PDSCH-ServingCellConfig and \c PUSCH-ServingCellConfig.
+enum class x_overhead {
+  not_set = 0,
+  xoh6    = 6,
+  xoh12   = 12,
+  xoh18   = 18,
+};
+
 /// \brief Collection of parameters required to calculate the TBS for a shared channel transmission.
 ///
 /// The configuration applies to the determination of the transport block size (TBS) for both PDSCH, as described in

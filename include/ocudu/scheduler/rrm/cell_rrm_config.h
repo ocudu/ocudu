@@ -7,6 +7,7 @@
 
 #include "ocudu/adt/static_vector.h"
 #include "ocudu/ran/pucch/pucch_configuration.h"
+#include "ocudu/ran/sch/tbs_calculator.h"
 #include "ocudu/ran/sr_configuration.h"
 #include "ocudu/scheduler/rrm/cell_pucch_resources.h"
 
@@ -26,9 +27,23 @@ struct cell_pucch_rrm_config {
   static_vector<uint8_t, 8> dl_data_to_ul_ack;
 };
 
+/// PDSCH parameters of the UEs of a cell.
+struct cell_pdsch_rrm_config {
+  /// \c xOverhead of the \c PDSCH-ServingCellConfig of the UEs.
+  x_overhead x_ov_head = x_overhead::not_set;
+};
+
+/// PUSCH parameters of the UEs of a cell.
+struct cell_pusch_rrm_config {
+  /// \c xOverhead of the \c PUSCH-ServingCellConfig of the UEs.
+  x_overhead x_ov_head = x_overhead::not_set;
+};
+
 /// Cell resources that the RRM allocates to the UEs of a cell.
 struct cell_rrm_config {
   cell_pucch_rrm_config pucch;
+  cell_pdsch_rrm_config pdsch;
+  cell_pusch_rrm_config pusch;
 };
 
 /// Generates the cell resources that the RRM allocates to the UEs of a cell.

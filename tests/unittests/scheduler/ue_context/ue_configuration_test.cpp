@@ -98,19 +98,35 @@ TEST(ue_configuration_test, pdsch_config_precompute_is_bounded_by_layers_not_por
   EXPECT_EQ(precomputed_pdsch_layer_configs(8), pdsch_constants::MAX_NOF_LAYERS_PER_CODEWORD);
 }
 
-// The scheduler takes the PUCCH and CSI values of the UE from the resources that the RRM allocates to it.
-TEST(ue_configuration_test, ue_pucch_and_csi_configs_come_from_the_ue_rrm_config)
+/// Test fixture with a scheduler configuration manager.
+class ue_configuration_tester : public ::testing::Test
 {
+protected:
+  /// Adds a cell to the configuration manager.
+  const cell_configuration& add_cell(const sched_cell_configuration_request_message& req =
+                                         sched_config_helper::make_default_sched_cell_configuration_request())
+  {
+    return *cfg_mng.add_cell(req);
+  }
+
+  /// Creates a UE creation request for the cell, with the default configuration of the UE.
+  static sched_ue_creation_request_message make_ue_creation_request(const cell_configuration& cell_cfg)
+  {
+    return sched_config_helper::create_default_sched_ue_creation_request(
+        cell_cfg.params, std::array<lcid_t, 3>{lcid_t::LCID_SRB1, lcid_t::LCID_SRB2, lcid_t::LCID_MIN_DRB});
+  }
+
   scheduler_expert_config  expert_cfg = config_helpers::make_default_scheduler_expert_config();
   sched_cfg_dummy_notifier metric_notif;
-  sched_config_manager     cfg_mng(scheduler_config{expert_cfg, metric_notif});
+  sched_config_manager     cfg_mng{scheduler_config{expert_cfg, metric_notif}};
+};
 
-  const cell_configuration& cell_cfg =
-      *cfg_mng.add_cell(sched_config_helper::make_default_sched_cell_configuration_request());
-
-  sched_ue_creation_request_message ue_req = sched_config_helper::create_default_sched_ue_creation_request(
-      cell_cfg.params, std::array<lcid_t, 3>{lcid_t::LCID_SRB1, lcid_t::LCID_SRB2, lcid_t::LCID_MIN_DRB});
-  ue_rrm_config& rrm = ue_req.cfg.cells->front().ded->rrm;
+// The scheduler takes the PUCCH and CSI values of the UE from the resources that the RRM allocates to it.
+TEST_F(ue_configuration_tester, ue_pucch_and_csi_configs_come_from_the_ue_rrm_config)
+{
+  const cell_configuration&         cell_cfg = add_cell();
+  sched_ue_creation_request_message ue_req   = make_ue_creation_request(cell_cfg);
+  ue_rrm_config&                    rrm      = ue_req.cfg.cells->front().ded->rrm;
   ASSERT_TRUE(rrm.csi.periodic_report.has_value());
   rrm.pucch.sr_offset          = rrm.pucch.sr_offset + 1;
   rrm.pucch.rep_f1_3_4_enabled = true;
@@ -131,20 +147,13 @@ TEST(ue_configuration_test, ue_pucch_and_csi_configs_come_from_the_ue_rrm_config
 }
 
 // The scheduler takes the HARQ processes of the UE from the resources that the RRM allocates to it.
-TEST(ue_configuration_test, ue_harq_configs_come_from_the_ue_rrm_config)
+TEST_F(ue_configuration_tester, ue_harq_configs_come_from_the_ue_rrm_config)
 {
-  scheduler_expert_config  expert_cfg = config_helpers::make_default_scheduler_expert_config();
-  sched_cfg_dummy_notifier metric_notif;
-  sched_config_manager     cfg_mng(scheduler_config{expert_cfg, metric_notif});
-
-  const cell_configuration& cell_cfg =
-      *cfg_mng.add_cell(sched_config_helper::make_default_sched_cell_configuration_request());
-
-  sched_ue_creation_request_message ue_req = sched_config_helper::create_default_sched_ue_creation_request(
-      cell_cfg.params, std::array<lcid_t, 3>{lcid_t::LCID_SRB1, lcid_t::LCID_SRB2, lcid_t::LCID_MIN_DRB});
-  ue_rrm_config& rrm  = ue_req.cfg.cells->front().ded->rrm;
-  rrm.pdsch.nof_harqs = 4;
-  rrm.pusch.nof_harqs = 32;
+  const cell_configuration&         cell_cfg = add_cell();
+  sched_ue_creation_request_message ue_req   = make_ue_creation_request(cell_cfg);
+  ue_rrm_config&                    rrm      = ue_req.cfg.cells->front().ded->rrm;
+  rrm.pdsch.nof_harqs                        = 4;
+  rrm.pusch.nof_harqs                        = 32;
   rrm.pdsch.harq_feedback_disabled.set(3);
   rrm.pusch.harq_mode.reset(1);
 
@@ -158,4 +167,51 @@ TEST(ue_configuration_test, ue_harq_configs_come_from_the_ue_rrm_config)
   EXPECT_EQ(bwp.ul.ue_cfg()->pusch.nof_harqs, 32);
   EXPECT_EQ(bwp.ul.ue_cfg()->pusch.harq_mode, rrm.pusch.harq_mode);
   ev.notify_completion();
+}
+
+// The scheduler assumes the xOverhead that the DU signals to the UE. A UE without dedicated configuration has none.
+TEST_F(ue_configuration_tester, ue_with_dedicated_config_assumes_the_x_overhead_of_the_cell)
+{
+  sched_cell_configuration_request_message sched_cfg =
+      sched_config_helper::make_default_sched_cell_configuration_request();
+  sched_cfg.ran.init_bwp.pdsch.x_ov_head     = x_overhead::xoh12;
+  sched_cfg.ran.init_bwp.pusch.x_ov_head     = x_overhead::xoh6;
+  sched_cfg.rrm                              = make_cell_rrm_config(sched_cfg.ran);
+  const cell_configuration&         cell_cfg = add_cell(sched_cfg);
+  sched_ue_creation_request_message ue_req   = make_ue_creation_request(cell_cfg);
+  ue_config_update_event            ev       = cfg_mng.add_ue(ue_req);
+  ASSERT_TRUE(ev.valid());
+  const ue_cell_configuration& ue_cell_cfg = ev.next_config().pcell_cfg();
+  EXPECT_EQ(ue_cell_cfg.pdsch_nof_oh_prb(), 12);
+  EXPECT_EQ(ue_cell_cfg.pusch_nof_oh_prb(), 6);
+
+  // The overhead reaches the PDSCH parameters of the UE-specific search spaces.
+  unsigned nof_checked = 0;
+  for (unsigned id = 0; id != MAX_NOF_SEARCH_SPACES; ++id) {
+    const search_space_info* ss = ue_cell_cfg.find_search_space(to_search_space_id(id));
+    if (ss == nullptr or ss->cfg->is_common_search_space()) {
+      continue;
+    }
+    for (unsigned td = 0, e = ss->bwp->dl.td_mapper().pdsch_td_resources(ss->get_dl_dci_format()).size(); td != e;
+         ++td) {
+      for (unsigned nof_layers = 1, max_layers = ss->get_nof_pdsch_layer_configs(td); nof_layers <= max_layers;
+           ++nof_layers) {
+        EXPECT_EQ(ss->get_pdsch_config(td, nof_layers).nof_oh_prb, 12);
+        ++nof_checked;
+      }
+    }
+  }
+  EXPECT_GT(nof_checked, 0);
+  ev.notify_completion();
+
+  // A UE that only has the common configuration of the cell, e.g. to get an RRC Reject, has no overhead.
+  sched_ue_creation_request_message reject_ue_req = make_ue_creation_request(cell_cfg);
+  reject_ue_req.ue_index                          = to_du_ue_index(1);
+  reject_ue_req.crnti                             = to_rnti(0x4602);
+  reject_ue_req.cfg.cells->front().ded.reset();
+  ue_config_update_event reject_ev = cfg_mng.add_ue(reject_ue_req);
+  ASSERT_TRUE(reject_ev.valid());
+  EXPECT_EQ(reject_ev.next_config().pcell_cfg().pdsch_nof_oh_prb(), 0);
+  EXPECT_EQ(reject_ev.next_config().pcell_cfg().pusch_nof_oh_prb(), 0);
+  reject_ev.notify_completion();
 }

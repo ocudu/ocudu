@@ -51,13 +51,14 @@ void search_space_info::update_pdsch_time_domain_list(const ue_cell_configuratio
     switch (get_dl_dci_format()) {
       case dci_dl_format::f1_0: {
         pdsch_cfg_list[i].resize(1);
-        pdsch_cfg_list[i][0] = sched_helper::get_pdsch_config_f1_0_c_rnti(ue_cell_cfg.cell_cfg_common, pdsch_td_res);
+        pdsch_cfg_list[i][0] = sched_helper::get_pdsch_config_f1_0_c_rnti(
+            ue_cell_cfg.cell_cfg_common, ue_cell_cfg.pdsch_nof_oh_prb(), pdsch_td_res);
       } break;
       case dci_dl_format::f1_1: {
         pdsch_cfg_list[i].resize(ue_cell_cfg.cell_cfg_common.params.init_bwp.pdsch.max_nof_layers);
         for (unsigned j = 0, je = pdsch_cfg_list[i].size(); j != je; ++j) {
           pdsch_cfg_list[i][j] = sched_helper::get_pdsch_config_f1_1_c_rnti(
-              ue_cell_cfg.cell_cfg_common, *bwp->dl.pdsch().ded(), pdsch_td_res, j + 1);
+              ue_cell_cfg.cell_cfg_common, *bwp->dl.pdsch().ded(), ue_cell_cfg.pdsch_nof_oh_prb(), pdsch_td_res, j + 1);
         }
       } break;
       default:

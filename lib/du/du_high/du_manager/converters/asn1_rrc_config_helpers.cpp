@@ -3060,8 +3060,26 @@ static bool calculate_bwp_ul_dedicated_diff(asn1::rrc_nr::bwp_ul_ded_s&  out,
 
 static void calculate_pusch_serving_cell_cfg_diff(asn1::rrc_nr::pusch_serving_cell_cfg_s& out,
                                                   const ue_pusch_rrm_config&              src,
-                                                  const ue_pusch_rrm_config&              dest)
+                                                  const ue_pusch_rrm_config&              dest,
+                                                  x_overhead                              x_ov_head)
 {
+  if (x_ov_head != x_overhead::not_set) {
+    out.xoverhead_present = true;
+    switch (x_ov_head) {
+      case x_overhead::xoh6:
+        out.xoverhead = pusch_serving_cell_cfg_s::xoverhead_opts::xoh6;
+        break;
+      case x_overhead::xoh12:
+        out.xoverhead = pusch_serving_cell_cfg_s::xoverhead_opts::xoh12;
+        break;
+      case x_overhead::xoh18:
+        out.xoverhead = pusch_serving_cell_cfg_s::xoverhead_opts::xoh18;
+        break;
+      default:
+        ocudu_assertion_failure("Invalid xOverhead={}", fmt::underlying(x_ov_head));
+    }
+  }
+
   if (dest.nof_harqs != MAX_NOF_HARQS_NON_NTN) {
     out.nrof_harq_processes_for_pusch_r17_present = true;
   }
@@ -3079,22 +3097,29 @@ static void calculate_pusch_serving_cell_cfg_diff(asn1::rrc_nr::pusch_serving_ce
   // TODO: Remaining.
 }
 
-static bool calculate_uplink_config_diff(asn1::rrc_nr::ul_cfg_s&      out,
-                                         const uplink_config&         src,
-                                         const uplink_config&         dest,
-                                         const cell_pucch_rrm_config& cell_pucch,
-                                         const ue_rrm_config*         src_rrm,
-                                         const ue_rrm_config&         dest_rrm)
+/// Checks whether the PUSCH-ServingCellConfig of the UE changes.
+static bool pusch_serving_cell_cfg_changed(const ue_rrm_config* src_rrm, const ue_rrm_config& dest_rrm)
+{
+  return src_rrm == nullptr or not(src_rrm->pusch == dest_rrm.pusch);
+}
+
+static bool calculate_uplink_config_diff(asn1::rrc_nr::ul_cfg_s& out,
+                                         const uplink_config&    src,
+                                         const uplink_config&    dest,
+                                         const cell_rrm_config&  cell_rrm,
+                                         const ue_rrm_config*    src_rrm,
+                                         const ue_rrm_config&    dest_rrm)
 {
   out.init_ul_bwp_present = calculate_bwp_ul_dedicated_diff(
-      out.init_ul_bwp, src.init_ul_bwp, dest.init_ul_bwp, cell_pucch, src_rrm, dest_rrm);
+      out.init_ul_bwp, src.init_ul_bwp, dest.init_ul_bwp, cell_rrm.pucch, src_rrm, dest_rrm);
 
   // PUSCH-ServingCellConfig.
-  if (src_rrm == nullptr or not(src_rrm->pusch == dest_rrm.pusch)) {
+  if (pusch_serving_cell_cfg_changed(src_rrm, dest_rrm)) {
     out.pusch_serving_cell_cfg_present = true;
     calculate_pusch_serving_cell_cfg_diff(out.pusch_serving_cell_cfg.set_setup(),
                                           src_rrm != nullptr ? src_rrm->pusch : ue_pusch_rrm_config{},
-                                          dest_rrm.pusch);
+                                          dest_rrm.pusch,
+                                          cell_rrm.pusch.x_ov_head);
   }
   // TODO: Remaining.
 
@@ -3109,8 +3134,26 @@ static bool pdsch_serving_cell_cfg_changed(const ue_rrm_config* src_rrm, const u
 
 static void calculate_pdsch_serving_cell_cfg_diff(asn1::rrc_nr::pdsch_serving_cell_cfg_s& out,
                                                   const ue_pdsch_rrm_config&              src,
-                                                  const ue_pdsch_rrm_config&              dest)
+                                                  const ue_pdsch_rrm_config&              dest,
+                                                  x_overhead                              x_ov_head)
 {
+  if (x_ov_head != x_overhead::not_set) {
+    out.xoverhead_present = true;
+    switch (x_ov_head) {
+      case x_overhead::xoh6:
+        out.xoverhead = pdsch_serving_cell_cfg_s::xoverhead_opts::xoh6;
+        break;
+      case x_overhead::xoh12:
+        out.xoverhead = pdsch_serving_cell_cfg_s::xoverhead_opts::xoh12;
+        break;
+      case x_overhead::xoh18:
+        out.xoverhead = pdsch_serving_cell_cfg_s::xoverhead_opts::xoh18;
+        break;
+      default:
+        ocudu_assertion_failure("Invalid xOverhead={}", fmt::underlying(x_ov_head));
+    }
+  }
+
   if (dest.nof_harqs != 8) {
     out.nrof_harq_processes_for_pdsch_present = true;
     switch (dest.nof_harqs) {
@@ -3177,7 +3220,7 @@ static bool calculate_serving_cell_config_diff(asn1::rrc_nr::serving_cell_cfg_s&
         calculate_uplink_config_diff(out.ul_cfg,
                                      src.ul_config.has_value() ? src.ul_config.value() : uplink_config{},
                                      dest.ul_config.value(),
-                                     cell_rrm.pucch,
+                                     cell_rrm,
                                      src_ue != nullptr ? &src_ue->rrm : nullptr,
                                      dest_ue.rrm);
   }
@@ -3187,7 +3230,8 @@ static bool calculate_serving_cell_config_diff(asn1::rrc_nr::serving_cell_cfg_s&
     out.pdsch_serving_cell_cfg_present = true;
     calculate_pdsch_serving_cell_cfg_diff(out.pdsch_serving_cell_cfg.set_setup(),
                                           src_ue != nullptr ? src_ue->rrm.pdsch : ue_pdsch_rrm_config{},
-                                          dest_ue.rrm.pdsch);
+                                          dest_ue.rrm.pdsch,
+                                          cell_rrm.pdsch.x_ov_head);
   }
 
   // CSI-MeasConfig.

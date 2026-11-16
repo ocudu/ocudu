@@ -204,6 +204,26 @@ public:
     return cell_cfg_common.bwp_res[to_bwp_id(0)].dl().csi.value().report(init_bwp().ul.ue_cfg()->csi.codebook);
   }
 
+  /// \brief Number of PRBs of overhead that the PDSCH scheduling of the UE assumes.
+  ///
+  /// It is \c xOverhead of the PDSCH-ServingCellConfig, as per TS 38.214, Section 5.1.3.2. A UE without dedicated
+  /// configuration has none.
+  unsigned pdsch_nof_oh_prb() const
+  {
+    return has_dedicated_cfg() ? static_cast<unsigned>(cell_cfg_common.bwp_res[to_bwp_id(0)].dl().pdsch.x_ov_head)
+                               : static_cast<unsigned>(x_overhead::not_set);
+  }
+
+  /// \brief Number of PRBs of overhead that the PUSCH scheduling of the UE assumes.
+  ///
+  /// It is \c xOverhead of the PUSCH-ServingCellConfig, as per TS 38.214, Section 6.1.4.2. A UE without dedicated
+  /// configuration has none.
+  unsigned pusch_nof_oh_prb() const
+  {
+    return has_dedicated_cfg() ? static_cast<unsigned>(cell_cfg_common.bwp_res[to_bwp_id(0)].ul().pusch.x_ov_head)
+                               : static_cast<unsigned>(x_overhead::not_set);
+  }
+
   /// \brief Transport block size for limited buffer rate matching of the UE PDSCHs.
   ///
   /// Parameter \f$TBS_{LBRM}\f$ of TS 38.212, Section 5.4.2.1, derived from the UE configuration.

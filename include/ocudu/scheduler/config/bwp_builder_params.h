@@ -10,6 +10,7 @@
 #include "ocudu/ran/pdsch/pdsch_mcs.h"
 #include "ocudu/ran/radio_link_monitoring.h"
 #include "ocudu/ran/resource_allocation/vrb_to_prb.h"
+#include "ocudu/ran/sch/tbs_calculator.h"
 #include "ocudu/ran/sr_configuration.h"
 #include "ocudu/scheduler/config/cg_builder_params.h"
 #include "ocudu/scheduler/config/csi_helper.h"
@@ -39,6 +40,9 @@ struct pdsch_builder_params {
   pdsch_config::resource_allocation res_alloc = pdsch_config::resource_allocation::resource_allocation_type_1;
   /// RBG size configuration for PDSCH resource allocation type 0.
   rbg_size rbg_sz = rbg_size::config1;
+  /// \c xOverhead of the \c PDSCH-ServingCellConfig. Assumed by the PDSCH scheduling, as per TS 38.214,
+  /// Section 5.1.3.2.
+  x_overhead x_ov_head{x_overhead::not_set};
   /// See TS 38.331, \c downlinkHARQ-FeedbackDisabled.
   /// A bit set to 1 indicates HARQ processes with disabled DL HARQ feedback; a bit set to 0 indicate feedback enabled.
   harq_dl_feedback_disabled_mask dl_harq_feedback_disabled = harq_dl_feedback_disabled_mask(MAX_NOF_HARQS);
@@ -88,7 +92,8 @@ struct pusch_builder_params {
   /// A bit set to one identifies a HARQ process in modeA and a bit set to zero identifies a HARQ process in modeB.
   /// \remark See TS 38.331, \c uplinkHARQ-mode.
   harq_ul_mode_mask ul_harq_mode = ~harq_ul_mode_mask(MAX_NOF_HARQS);
-  /// \c xOverhead.
+  /// \c xOverhead of the \c PUSCH-ServingCellConfig. Assumed by the PUSCH scheduling, as per TS 38.214,
+  /// Section 6.1.4.2.
   x_overhead x_ov_head{x_overhead::not_set};
   /// \brief Maximum number of PUSCH repetitions offered in the dedicated Rel-16 TDRA list of supporting UEs.
   /// Value 1 disables dynamic PUSCH repetitions.

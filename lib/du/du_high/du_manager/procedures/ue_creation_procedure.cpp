@@ -253,7 +253,7 @@ async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()
   if (cells.contains(SERVING_PCELL_IDX)) {
     const auto& ue_pcell = cells.at(SERVING_PCELL_IDX);
     // For NTN cells, pre-size the MAC DL HARQ buffer pool to the cell maximum. UE capabilities
-    // are unknown at creation time, so nof_harq_proc is capped at 16; after capability exchange
+    // are unknown at creation time, so the number of DL HARQs is capped at 16; after capability exchange
     // the scheduler HARQ entity is extended up to max_harq_procs (e.g. 32). The MAC buffer must
     // already be large enough at that point to avoid an out-of-bounds assertion.
     mac_ue_create_msg.pdsch_harqs_per_cell = cell_ran.ntn_params.has_value() and cell_ran.ntn_params->is_enabled()
