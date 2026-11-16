@@ -52,11 +52,10 @@ struct input_header {
 /// Decode the control byte. See tests/fuzz/README.md for the bit layout.
 input_header decode_header(uint8_t byte)
 {
-  // State 3 is unused; fold it onto the secured state so that no input is silently dropped.
   const uint8_t state_bits = (byte >> 2U) & 0b0000'0011U;
   return input_header{.is_dcch = (byte & 0b0000'0001U) != 0,
                       .srb_id  = (byte & 0b0000'0010U) != 0 ? srb_id_t::srb2 : srb_id_t::srb1,
-                      .state   = static_cast<ue_state>(state_bits == 3 ? 2 : state_bits)};
+                      .state   = static_cast<ue_state>(state_bits)};
 }
 
 fuzz_state*    g_state = nullptr;
@@ -81,10 +80,11 @@ void ensure_state()
 
     // Bring one UE all the way up before fuzzing starts. A broken security bring-up is otherwise
     // invisible: every payload would be dropped by PDCP on integrity failure and the harness would
-    // report healthy throughput while covering nothing past RRC Setup.
+    // report healthy throughput while covering nothing past RRC Setup. Likewise, a PDU session setup
+    // that stalls would leave the last UE state no different from the secured one.
     fuzz_ue probe{*g_state};
-    probe.drive_to(ue_state::secured);
-    if (!probe.is_secured()) {
+    probe.drive_to(ue_state::awaiting_reconfiguration_complete);
+    if (!probe.is_awaiting_reconfiguration_complete()) {
       std::abort();
     }
   });

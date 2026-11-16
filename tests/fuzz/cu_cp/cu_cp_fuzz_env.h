@@ -66,6 +66,9 @@ enum class ue_state : uint8_t {
   connected = 1,
   /// AS security activated on SRB1, UE capabilities transferred and SRB2 created.
   secured = 2,
+  /// Secured, and a PDU session setup run up to the RRCReconfiguration adding its DRB, which awaits the
+  /// RRCReconfigurationComplete.
+  awaiting_reconfiguration_complete = 3,
 };
 
 // ---------------------------------------------------------------------------
@@ -288,7 +291,7 @@ class fuzz_du
                                      concurrent_queue_wait_policy::condition_variable>;
 
 public:
-  explicit fuzz_du(cu_cp_f1c_handler& cu_cp_f1c) : dl_pdus(1024)
+  explicit fuzz_du(cu_cp_f1c_handler& cu_cp_f1c) : dl_pdus(1024), ue_ctxt_mod_requests(16)
   {
     tx_pdu_notifier = cu_cp_f1c.handle_new_du_connection(std::make_unique<rx_pdu_notifier>(*this));
   }
@@ -306,13 +309,25 @@ public:
   /// Pop the next PDU sent by the CU-CP to the DU. Returns false if empty.
   bool try_pop_dl_pdu(f1ap_message& msg) { return dl_pdus.try_pop(msg); }
 
+  /// Pop the next UE Context Modification Request the DU has not answered yet. Returns false if empty.
+  bool try_pop_ue_context_modification_request(f1ap_message& msg) { return ue_ctxt_mod_requests.try_pop(msg); }
+
 private:
   class rx_pdu_notifier : public f1ap_message_notifier
   {
   public:
     explicit rx_pdu_notifier(fuzz_du& parent_) : parent(parent_) {}
 
-    void on_new_message(const f1ap_message& msg) override { parent.dl_pdus.push_blocking(msg); }
+    void on_new_message(const f1ap_message& msg) override
+    {
+      // The request is also left in the DL queue, since it can carry the RRCReconfiguration.
+      if (msg.pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg and
+          msg.pdu.init_msg().value.type().value ==
+              asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_mod_request) {
+        parent.ue_ctxt_mod_requests.push_blocking(msg);
+      }
+      parent.dl_pdus.push_blocking(msg);
+    }
 
   private:
     fuzz_du& parent;
@@ -320,7 +335,17 @@ private:
 
   std::unique_ptr<f1ap_message_notifier> tx_pdu_notifier;
   pdu_queue                              dl_pdus;
+  pdu_queue                              ue_ctxt_mod_requests;
 };
+
+/// Build the UE Context Modification Response a DU sends when it accepts the request, as in TS 38.473
+/// section 8.3.4.2.
+inline f1ap_message make_ue_context_modification_response(const f1ap_message& msg)
+{
+  const auto& req = msg.pdu.init_msg().value.ue_context_mod_request();
+  return test_helpers::generate_ue_context_modification_response(int_to_gnb_du_ue_f1ap_id(req->gnb_du_ue_f1ap_id),
+                                                                 int_to_gnb_cu_ue_f1ap_id(req->gnb_cu_ue_f1ap_id));
+}
 
 // ---------------------------------------------------------------------------
 // fuzz_cu_up - replaces the SCTP E1 gateway
@@ -368,6 +393,43 @@ private:
   std::unique_ptr<e1ap_message_notifier> tx_pdu_notifier;
   pdu_queue                              rx_pdus;
 };
+
+/// Build the answer a CU-UP gives to a Bearer Context Setup, Modification or Release, as in TS 38.463
+/// section 8.3. Returns nothing for any other message.
+///
+/// The responses set up PDU session 1 with DRB 1 and QoS flow 1, which is what the PDU session
+/// harness steps request. A request for anything else is answered the same way, and the CU-CP then
+/// runs its failure handling instead.
+inline std::optional<e1ap_message> make_bearer_context_answer(const e1ap_message& msg)
+{
+  if (msg.pdu.type().value != asn1::e1ap::e1ap_pdu_c::types_opts::init_msg) {
+    return std::nullopt;
+  }
+  const auto& init_msg = msg.pdu.init_msg();
+  using init_types     = asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts;
+  switch (init_msg.value.type().value) {
+    case init_types::bearer_context_setup_request: {
+      const uint64_t cu_cp_id = init_msg.value.bearer_context_setup_request()->gnb_cu_cp_ue_e1ap_id;
+      // The CU-UP picks its own UE identifier; reusing the CU-CP one keeps it unique per UE.
+      return generate_bearer_context_setup_response(int_to_gnb_cu_cp_ue_e1ap_id(cu_cp_id),
+                                                    int_to_gnb_cu_up_ue_e1ap_id(cu_cp_id));
+    }
+    case init_types::bearer_context_mod_request: {
+      const auto& req = init_msg.value.bearer_context_mod_request();
+      return generate_bearer_context_modification_response(int_to_gnb_cu_cp_ue_e1ap_id(req->gnb_cu_cp_ue_e1ap_id),
+                                                           int_to_gnb_cu_up_ue_e1ap_id(req->gnb_cu_up_ue_e1ap_id),
+                                                           {},
+                                                           {{uint_to_pdu_session_id(1), drb_id_t::drb1}});
+    }
+    case init_types::bearer_context_release_cmd: {
+      const auto& cmd = init_msg.value.bearer_context_release_cmd();
+      return generate_bearer_context_release_complete(int_to_gnb_cu_cp_ue_e1ap_id(cmd->gnb_cu_cp_ue_e1ap_id),
+                                                      int_to_gnb_cu_up_ue_e1ap_id(cmd->gnb_cu_up_ue_e1ap_id));
+    }
+    default:
+      return std::nullopt;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Persistent harness state
@@ -471,15 +533,55 @@ struct fuzz_state {
     }
   }
 
-  /// Run queued CU-CP tasks and advance the clock so that armed timers fire.
+  /// Run queued CU-CP tasks, answer the peers' requests and advance the clock so that armed timers fire.
   void drain()
+  {
+    run_pending_tasks();
+    for (unsigned i = 0; i != nof_timer_ticks; ++i) {
+      worker.push_task_blocking([this]() { timers.tick(); });
+      run_pending_tasks();
+    }
+  }
+
+private:
+  /// Upper bound on the request-answer rounds of one drain. A PDU session setup takes four, and the bound only stops a
+  /// CU-CP that keeps asking forever from hanging the harness.
+  static constexpr unsigned max_nof_answer_rounds = 16;
+
+  void run_pending_tasks()
   {
     worker.wait_pending_tasks();
     worker.wait_pending_tasks();
-    for (unsigned i = 0; i != nof_timer_ticks; ++i) {
-      worker.push_task_blocking([this]() { timers.tick(); });
+    for (unsigned i = 0; i != max_nof_answer_rounds and answer_peers(); ++i) {
+      worker.wait_pending_tasks();
       worker.wait_pending_tasks();
     }
+  }
+
+  /// Answer the CU-UP and DU requests the CU-CP sent, so that the procedures waiting on them run to their end. Returns
+  /// whether anything was answered.
+  ///
+  /// The UE Context Setup and Release Commands are left to the UE, which steps through them itself.
+  bool answer_peers()
+  {
+    bool answered = false;
+    if (cu_up != nullptr) {
+      e1ap_message e1ap_pdu;
+      while (cu_up->try_pop_rx_pdu(e1ap_pdu)) {
+        if (std::optional<e1ap_message> answer = make_bearer_context_answer(e1ap_pdu); answer.has_value()) {
+          cu_up->push_ul_pdu(answer.value());
+          answered = true;
+        }
+      }
+    }
+    if (du != nullptr) {
+      f1ap_message f1ap_pdu;
+      while (du->try_pop_ue_context_modification_request(f1ap_pdu)) {
+        du->push_ul_pdu(make_ue_context_modification_response(f1ap_pdu));
+        answered = true;
+      }
+    }
+    return answered;
   }
 };
 
@@ -516,6 +618,9 @@ public:
   /// Whether AS security was activated, which is what lets a mutated payload reach RRC on a secured UE.
   bool is_secured() const { return srb2_pdcp != nullptr; }
 
+  /// Whether the PDU session setup reached the RRCReconfiguration, which is what lets a mutated payload answer it.
+  bool is_awaiting_reconfiguration_complete() const { return reconfig_transaction_id.has_value(); }
+
   /// Identifiers naming this UE over NGAP, once it has sent its Initial UE Message.
   std::optional<ran_ue_id_t> get_ran_ue_id() const { return ran_ue_id; }
   static amf_ue_id_t         get_amf_ue_id() { return amf_ue_id; }
@@ -531,6 +636,10 @@ public:
       return;
     }
     activate_security();
+    if (target == ue_state::secured) {
+      return;
+    }
+    start_pdu_session_setup();
   }
 
   void inject_ccch(span<const uint8_t> pdu)
@@ -635,6 +744,30 @@ private:
     srb2_pdcp->enable_security(state.rrc_sec_cfg);
   }
 
+  /// Run a PDU Session Resource Setup for PDU session 1 up to the RRCReconfiguration that adds its DRB.
+  ///
+  /// The CU-UP and DU stubs answer the E1AP Bearer Context and F1AP UE Context Modification exchanges in between. The
+  /// RRCReconfigurationComplete is left to the input, so that it reaches the procedure that waits for it.
+  void start_pdu_session_setup()
+  {
+    if (!is_secured() or !ran_ue_id.has_value()) {
+      return;
+    }
+    state.amf.push_tx_pdu(generate_valid_pdu_session_resource_setup_request_message(
+        amf_ue_id,
+        ran_ue_id.value(),
+        {{uint_to_pdu_session_id(1), {pdu_session_type_t::ipv4, {{uint_to_qos_flow_id(1), 9}}}}}));
+    state.drain();
+    drain_ngap_pdus();
+
+    std::optional<f1ap_message> dl_rrc =
+        pop_dl_pdu(asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::dl_rrc_msg_transfer);
+    if (dl_rrc.has_value()) {
+      reconfig_transaction_id =
+          get_transaction_id(dl_rrc.value(), asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::rrc_recfg);
+    }
+  }
+
   /// Read the RRC transaction ID out of the DL-DCCH message an F1AP PDU carries, when it is of the
   /// expected type. The CU-CP drops a response that answers a transaction it did not open.
   static std::optional<uint8_t> get_transaction_id(const f1ap_message&                                          pdu,
@@ -659,6 +792,8 @@ private:
         return dl_dcch_msg.msg.c1().security_mode_cmd().rrc_transaction_id;
       case asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::ue_cap_enquiry:
         return dl_dcch_msg.msg.c1().ue_cap_enquiry().rrc_transaction_id;
+      case asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::rrc_recfg:
+        return dl_dcch_msg.msg.c1().rrc_recfg().rrc_transaction_id;
       default:
         return std::nullopt;
     }
@@ -766,6 +901,8 @@ private:
   std::unique_ptr<du_srb_pdcp_tx>    srb1_pdcp;
   std::unique_ptr<du_srb_pdcp_tx>    srb2_pdcp;
   std::optional<ran_ue_id_t>         ran_ue_id;
+  /// RRC transaction ID of the RRCReconfiguration the PDU session setup is waiting on, once it was sent.
+  std::optional<uint8_t> reconfig_transaction_id;
   /// Any AMF UE ID works: the stub AMF holds no state of its own.
   static constexpr amf_ue_id_t amf_ue_id = uint_to_amf_ue_id(0x1234);
 };

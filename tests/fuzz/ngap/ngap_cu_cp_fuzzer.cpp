@@ -48,9 +48,8 @@ struct input_header {
 /// Decode the control byte. See tests/fuzz/README.md for the bit layout.
 input_header decode_header(uint8_t byte)
 {
-  // State 3 is unused; fold it onto the secured state so that no input is silently dropped.
   const uint8_t state_bits = byte & 0b0000'0011U;
-  return input_header{.state = static_cast<ue_state>(state_bits == 3 ? 2 : state_bits)};
+  return input_header{.state = static_cast<ue_state>(state_bits)};
 }
 
 /// Upper bound on the messages taken from one input.
@@ -102,8 +101,8 @@ void ensure_state()
     // Bring one UE all the way up before fuzzing starts, so that a broken bring-up shows as an abort
     // rather than as a harness that only ever reaches the UE lookup.
     fuzz_ue probe{*g_state};
-    probe.drive_to(ue_state::secured);
-    if (!probe.is_secured()) {
+    probe.drive_to(ue_state::awaiting_reconfiguration_complete);
+    if (!probe.is_awaiting_reconfiguration_complete()) {
       std::abort();
     }
   });

@@ -108,6 +108,7 @@ CU_CP_SRB2 = 0b0000_0010
 CU_CP_AWAITING_SETUP_COMPLETE = 0 << 2
 CU_CP_CONNECTED = 1 << 2
 CU_CP_SECURED = 2 << 2
+CU_CP_AWAITING_RECONFIGURATION_COMPLETE = 3 << 2
 
 RRC_CU_CP_SEEDS = {
     # RRCSetupRequest on UL-CCCH: the pre-authentication entry point.
@@ -145,6 +146,13 @@ RRC_CU_CP_SEEDS = {
 
     # MeasurementReport with a complete message body, on SRB1 after security activation.
     "dcch_measurement_report": seed(CU_CP_DCCH | CU_CP_SECURED, RRC_MEASUREMENT_REPORT),
+
+    # RRCReconfigurationComplete answering the RRCReconfiguration that adds the DRB of a PDU session,
+    # which completes the PDU Session Resource Setup. The CU-CP sends that RRCReconfiguration with
+    # transaction ID 3.
+    "dcch_reconfig_complete_pdu_session": seed(
+        CU_CP_DCCH | CU_CP_AWAITING_RECONFIGURATION_COMPLETE, "0e00"
+    ),
 }
 
 # ---------------------------------------------------------------------------

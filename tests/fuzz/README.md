@@ -321,7 +321,8 @@ that gets there, and a single malformed message cannot do that.
 | ----- | ----------------------------------------------------------------------------- |
 | 0     | UE created by an Initial UL RRC Message Transfer, awaiting `RRCSetupComplete` |
 | 1     | `RRCSetupComplete` handled. SRB1 is up, AS security is not active             |
-| 2, 3  | AS security activated on SRB1, UE capabilities transferred, SRB2 created      |
+| 2     | AS security activated on SRB1, UE capabilities transferred, SRB2 created      |
+| 3     | As 2, plus a PDU session setup that awaits the `RRCReconfigurationComplete`   |
 
 As with the RRC harness, the bring-up is checked once at startup and the harness aborts if it did not complete, so that
 a UE that silently fails to come up cannot look like a healthy run.
@@ -405,7 +406,8 @@ unlike `rrc_ue_fuzzer`: here PDCP derives that from the MAC-I the harness comput
 | ----- | ----------------------------------------------------------------------------- |
 | 0     | UE created by an Initial UL RRC Message Transfer, awaiting `RRCSetupComplete` |
 | 1     | `RRCSetupComplete` handled. SRB1 is up, AS security is not active             |
-| 2, 3  | AS security activated on SRB1, UE capabilities transferred, SRB2 created      |
+| 2     | AS security activated on SRB1, UE capabilities transferred, SRB2 created      |
+| 3     | As 2, plus a PDU session setup that awaits the `RRCReconfigurationComplete`   |
 
 #### Reaching the post-security states
 
@@ -420,6 +422,17 @@ included, and the CU-CP accepts them.
 A wrong key, direction or algorithm would fail silently: every input dropped, the harness still reporting healthy
 throughput while covering nothing past RRC Setup. To make that impossible to miss, the harness brings one UE all the way
 up at startup and aborts if security did not activate.
+
+#### Reaching the PDU session state
+
+The stub CU-UP answers every Bearer Context Setup, Modification and Release, and the stub DU answers every UE Context
+Modification Request, so procedures that wait on those peers run to their end instead of stalling. This applies to every
+input of both CU-CP harnesses, whichever message started the procedure.
+
+State 3 uses this to run a PDU Session Resource Setup for PDU session 1 up to the `RRCReconfiguration` that adds its
+DRB. The input then answers that `RRCReconfiguration`, which the CU-CP sends with transaction ID 3, so a matching
+`RRCReconfigurationComplete` completes the setup, and the release of the UE afterwards also tears down its bearers. The
+startup check covers this state too.
 
 #### Choosing between the two RRC targets
 
