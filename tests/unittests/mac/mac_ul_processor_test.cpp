@@ -339,6 +339,35 @@ TEST(mac_ul_processor, decode_short_bsr)
   ASSERT_NO_FATAL_FAILURE(t_bench.verify_sched_bsr_notification(bsr));
 }
 
+TEST(mac_ul_processor, when_sdu_is_empty_then_it_is_discarded_and_the_rest_of_the_pdu_is_processed)
+{
+  // Define UE and create test_bench.
+  rnti_t          ue1_rnti = to_rnti(0x4601);
+  du_ue_index_t   ue1_idx  = to_du_ue_index(1U);
+  du_cell_index_t cell_idx = to_du_cell_index(1U);
+  test_bench      t_bench(ue1_rnti, ue1_idx, cell_idx);
+
+  // Create PDU content.
+  // R/LCID MAC subheader | MAC CE Short BSR | R/F/LCID/L MAC subheader of an empty SRB1 SDU
+  // { 0x3d | 0x59 | 0x01, 0x00 }
+  byte_buffer pdu = byte_buffer::create({0x3d, 0x59, 0x01, 0x00}).value();
+
+  // Send RX data indication to MAC UL
+  t_bench.send_rx_indication_msg(ue1_rnti, pdu);
+
+  // The empty SDU is not forwarded to RLC.
+  ASSERT_TRUE(t_bench.get_test_ues()[ue1_idx].bearers[LCID_SRB1].ul_notifier.last_sdu.empty());
+
+  // The Short BSR is still processed.
+  mac_bsr_ce_info bsr;
+  bsr.cell_index  = cell_idx;
+  bsr.ue_index    = ue1_idx;
+  bsr.rnti        = ue1_rnti;
+  bsr.bsr_fmt     = bsr_format::SHORT_BSR;
+  bsr.lcg_reports = {lcg_bsr_report{.lcg_id = uint_to_lcg_id(2U), .buffer_size = 25}};
+  ASSERT_NO_FATAL_FAILURE(t_bench.verify_sched_bsr_notification(bsr));
+}
+
 // Test UL MAC processing of RX indication message with MAC PDU for MAC CE Short Truncated BSR.
 TEST(mac_ul_processor, decode_short_trunc_bsr)
 {

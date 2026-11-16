@@ -187,6 +187,12 @@ bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_
     return false;
   }
 
+  // Discard empty SDU.
+  if (sdu.sdu_length() == 0) {
+    logger.info("{}: Discarding SDU. Cause: Empty SDU", create_prefix(ctx, sdu));
+    return true;
+  }
+
   // Log MAC UL SDU
   logger.debug("{}: Forwarding SDU of {} bytes", create_prefix(ctx, sdu), sdu.sdu_length());
 
