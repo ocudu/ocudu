@@ -384,7 +384,7 @@ AFL_FAST_CAL=1 afl-fuzz \
 
 Injects RRC messages through a complete CU-CP with stub AMF, CU-UP and DU peers attached, so that the F1AP, PDCP and
 CU-CP layers around RRC are exercised on every input. The F1AP wrapper and the PDCP PDU are scaffolding the harness
-builds; only the RRC message inside is mutated. Fuzzing the F1AP wrapper itself belongs in a target under
+builds; only the RRC messages inside are mutated. Fuzzing the F1AP wrapper itself belongs in a target under
 `tests/fuzz/f1ap`.
 
 A UE is created and released for every input, so a crash reproduces from its input file alone. The UE pool is capped at
@@ -396,15 +396,13 @@ and the coverage of a corpus replay would then depend on the order of the inputs
 
 #### Input format of the full-stack fuzzer
 
-The first byte is a control byte; the remaining bytes are the RRC message. It carries no `integrity_verified` bit,
+The first byte is a control byte; the remaining bytes are a sequence of steps. It carries no `integrity_verified` bit,
 unlike `rrc_ue_fuzzer`: here PDCP derives that from the MAC-I the harness computes.
 
-| Bit | Meaning                                                     |
-| --- | ----------------------------------------------------------- |
-| 0   | Logical channel: 0 = UL-CCCH, 1 = UL-DCCH                   |
-| 1   | SRB: 0 = SRB1, 1 = SRB2                                     |
-| 2-3 | UE state reached before the message is injected (see below) |
-| 4-7 | Unused                                                      |
+| Bit | Meaning                                           |
+| --- | ------------------------------------------------- |
+| 0-1 | UE state reached before the steps run (see below) |
+| 2-7 | Unused                                            |
 
 | Value | UE state                                                                      |
 | ----- | ----------------------------------------------------------------------------- |
@@ -412,6 +410,34 @@ unlike `rrc_ue_fuzzer`: here PDCP derives that from the MAC-I the harness comput
 | 1     | `RRCSetupComplete` handled. SRB1 is up, AS security is not active             |
 | 2     | AS security activated on SRB1, UE capabilities transferred, SRB2 created      |
 | 3     | As 2, plus a PDU session setup that awaits the `RRCReconfigurationComplete`   |
+
+Each step is a type byte, a length byte and that many bytes of payload. The type is taken modulo 12, so that every byte
+value names a step. A truncated final step ends the sequence, so that a mutation that shortens the input drops one step
+and does not make the remainder invalid. The harness takes at most 16 steps from one input.
+
+| Type | Step                                                                                                       |
+| ---- | ---------------------------------------------------------------------------------------------------------- |
+| 0    | UL-CCCH message, the payload, from a new UE                                                                |
+| 1    | UL-DCCH message on SRB1, the payload                                                                       |
+| 2    | UL-DCCH message on SRB2, the payload                                                                       |
+| 3    | Advance the clock by (first payload byte + 1) x 16 ms, 16 ms without a payload                             |
+| 4    | Initial Context Setup from the AMF, up to the `SecurityModeCommand`, with the DU-side PDCP keyed           |
+| 5    | PDU Session Resource Setup of PDU session 1 from the AMF, up to the `RRCReconfiguration` that adds its DRB |
+| 6    | PDU Session Resource Modify of PDU session 1 from the AMF                                                  |
+| 7    | PDU Session Resource Release of PDU session 1 from the AMF                                                 |
+| 8    | Downlink NAS Transport from the AMF, which the CU-CP forwards in a `DLInformationTransfer`                 |
+| 9    | UE Context Modification from the AMF                                                                       |
+| 10   | UE Context Release from the AMF                                                                            |
+| 11   | UE Context Release Request from the DU, as on a radio link failure                                         |
+
+Only the RRC messages of steps 0 to 2 are mutated; the other steps are messages the harness builds, which start a
+procedure that the messages after them then answer. Most UL-DCCH messages are only handled while a procedure waits for
+them: a `UECapabilityInformation`, for example, only reaches the capability decoding after the `UECapabilityEnquiry` of
+step 4, and a `RRCReconfigurationComplete` only completes something after step 5, 6 or 7. A single message per input
+cannot express that, and neither can the bring-up states alone.
+
+The RRC transaction IDs the CU-CP uses are deterministic per UE, so the seeds answer each procedure with the ID it
+expects; see `tests/fuzz/rrc/seeds.py`.
 
 #### Reaching the post-security states
 
@@ -446,6 +472,7 @@ startup check covers this state too.
 | `integrity_verified` as an input | Yes             | No, derived from the MAC-I                 |
 | Throughput (ASan, Debug)         | ~1000 exec/s    | ~450 exec/s connected, ~110 exec/s secured |
 | Cross-layer bugs                 | Out of reach    | In reach                                   |
+| Procedure orderings              | Out of reach    | In reach, through the steps of an input    |
 
 The secured state costs a full Initial Context Setup exchange per input, which is where the throughput difference
 between the two states comes from.

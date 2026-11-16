@@ -654,7 +654,7 @@ public:
   bool is_valid() const { return cu_ue_id.has_value(); }
 
   /// Whether AS security was activated, which is what lets a mutated payload reach RRC on a secured UE.
-  bool is_secured() const { return srb2_pdcp != nullptr; }
+  bool is_secured() const { return security_activated; }
 
   /// Whether the PDU session setup reached the RRCReconfiguration, which is what lets a mutated payload answer it.
   bool is_awaiting_reconfiguration_complete() const { return reconfig_transaction_id.has_value(); }
@@ -725,20 +725,23 @@ public:
     return buf.has_value() ? std::move(buf.value()) : byte_buffer{};
   }
 
-private:
-  /// Run the Initial Context Setup exchange, which activates AS security and creates SRB2.
-  ///
-  /// This mirrors cu_cp_test_environment::setup_ue_security_and_ue_capabilities(), except that the
-  /// SecurityModeComplete and the UE capabilities are packed by the DU-side PDCP entity rather than
-  /// replayed from a captured PDU.
-  void activate_security()
+  // -------------------------------------------------------------------------
+  // Events from the AMF and the DU
+  // -------------------------------------------------------------------------
+  //
+  // Each starts a CU-CP procedure that the UE then answers, or tears the UE down. They leave the
+  // procedure waiting on the UE, so that the next UL-DCCH message an input injects reaches it.
+
+  /// Run the Initial Context Setup up to the SecurityModeCommand, and key the DU-side PDCP entities
+  /// as the UE does on receiving it. Returns the transaction ID of the SecurityModeCommand, if it
+  /// was sent.
+  std::optional<uint8_t> start_initial_context_setup()
   {
-    if (!ran_ue_id.has_value()) {
-      return;
+    if (!has_ngap_context()) {
+      return std::nullopt;
     }
 
-    // The AMF answers the Initial UE Message with an Initial Context Setup Request, which carries the
-    // K_gNB the DU-side PDCP entities are keyed with.
+    // The Initial Context Setup Request carries the K_gNB the DU-side PDCP entities are keyed with.
     state.amf.push_tx_pdu(generate_valid_initial_context_setup_request_message(amf_ue_id, ran_ue_id.value()));
     state.drain();
 
@@ -746,18 +749,130 @@ private:
     std::optional<f1ap_message> ue_ctxt_setup =
         pop_dl_pdu(asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request);
     if (!ue_ctxt_setup.has_value()) {
-      return;
+      return std::nullopt;
     }
     std::optional<uint8_t> smc_transaction_id = get_transaction_id(
         ue_ctxt_setup.value(), asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::security_mode_cmd);
     if (!smc_transaction_id.has_value()) {
-      return;
+      return std::nullopt;
     }
     state.du->push_ul_pdu(test_helpers::generate_ue_context_setup_response(cu_ue_id.value(), du_ue_id));
     state.drain();
+    drain_ngap_pdus();
 
-    // From here the CU-CP verifies the MAC-I of everything arriving on SRB1.
+    // From here the CU-CP verifies the MAC-I of everything arriving on SRB1. SRB2 is set up by the
+    // CU-CP once the UE is registered, and is keyed from the start.
     srb1_pdcp->enable_security(state.rrc_sec_cfg);
+    if (srb2_pdcp == nullptr) {
+      srb2_pdcp = std::make_unique<du_srb_pdcp_tx>(
+          srb_id_t::srb2, to_underlying(du_ue_id), timer_factory{state.timers, *state.exec}, *state.exec);
+      srb2_pdcp->enable_security(state.rrc_sec_cfg);
+    }
+    return smc_transaction_id;
+  }
+
+  /// Run a PDU Session Resource Setup for PDU session 1 up to the RRCReconfiguration that adds its DRB.
+  ///
+  /// The CU-UP and DU stubs answer the E1AP Bearer Context and F1AP UE Context Modification exchanges in between. The
+  /// RRCReconfigurationComplete is left to the input, so that it reaches the procedure that waits for it.
+  void start_pdu_session_setup()
+  {
+    if (!has_ngap_context()) {
+      return;
+    }
+    send_from_amf(generate_valid_pdu_session_resource_setup_request_message(
+        amf_ue_id,
+        ran_ue_id.value(),
+        {{uint_to_pdu_session_id(1), {pdu_session_type_t::ipv4, {{uint_to_qos_flow_id(1), 9}}}}}));
+
+    std::optional<f1ap_message> dl_rrc =
+        pop_dl_pdu(asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::dl_rrc_msg_transfer);
+    if (dl_rrc.has_value()) {
+      reconfig_transaction_id =
+          get_transaction_id(dl_rrc.value(), asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::rrc_recfg);
+    }
+  }
+
+  /// Modify the QoS flow of PDU session 1, which runs an RRCReconfiguration for the session.
+  void modify_pdu_session()
+  {
+    if (has_ngap_context()) {
+      send_from_amf(generate_valid_pdu_session_resource_modify_request_message(
+          amf_ue_id, ran_ue_id.value(), uint_to_pdu_session_id(1)));
+    }
+  }
+
+  /// Release PDU session 1, which runs an RRCReconfiguration removing its DRB.
+  void release_pdu_session()
+  {
+    if (has_ngap_context()) {
+      send_from_amf(
+          generate_valid_pdu_session_resource_release_command(amf_ue_id, ran_ue_id.value(), uint_to_pdu_session_id(1)));
+    }
+  }
+
+  /// Deliver a NAS PDU, which the CU-CP forwards in a DLInformationTransfer.
+  void send_dl_nas_transport()
+  {
+    // Configuration Update Command, from cu_cp_test_environment::request_pdu_session_resource_setup().
+    static constexpr uint8_t nas_pdu[] = {0x7e, 0x02, 0x05, 0x54, 0x5b, 0xfc, 0x02, 0x7e, 0x00, 0x54,
+                                          0x43, 0x0f, 0x90, 0x00, 0x4f, 0x00, 0x70, 0x00, 0x65, 0x00,
+                                          0x6e, 0x00, 0x35, 0x00, 0x47, 0x00, 0x53, 0x46, 0x00, 0x47,
+                                          0x32, 0x80, 0x01, 0x31, 0x23, 0x52, 0x00, 0x49, 0x01, 0x00};
+    if (has_ngap_context()) {
+      send_from_amf(generate_downlink_nas_transport_message(amf_ue_id, ran_ue_id.value(), make_buffer(nas_pdu)));
+    }
+  }
+
+  /// Modify the UE context from the AMF, as for a new UE-AMBR.
+  void modify_ue_context()
+  {
+    if (has_ngap_context()) {
+      send_from_amf(generate_valid_ue_context_modification_request_message(amf_ue_id, ran_ue_id.value()));
+    }
+  }
+
+  /// Release the UE from the AMF, which runs the RRCRelease and the F1AP UE Context Release.
+  void release_from_amf()
+  {
+    if (has_ngap_context()) {
+      send_from_amf(generate_valid_ue_context_release_command_with_ue_ngap_id_pair(amf_ue_id, ran_ue_id.value()));
+      await_release(du_ue_id);
+      state.released_du_ue_ids.erase(to_underlying(du_ue_id));
+      cu_ue_id.reset();
+    }
+  }
+
+  /// Release the UE from the DU, as on a radio link failure.
+  void release_from_du()
+  {
+    release(du_ue_id, cu_ue_id);
+    cu_ue_id.reset();
+  }
+
+private:
+  /// Whether the UE is still up and known to the AMF, so that an AMF message can address it.
+  bool has_ngap_context() const { return cu_ue_id.has_value() and ran_ue_id.has_value(); }
+
+  /// Deliver an AMF message addressed to this UE.
+  void send_from_amf(const ngap_message& msg)
+  {
+    state.amf.push_tx_pdu(msg);
+    state.drain();
+    drain_ngap_pdus();
+  }
+
+  /// Run the Initial Context Setup exchange, which activates AS security and transfers the UE capabilities.
+  ///
+  /// This mirrors cu_cp_test_environment::setup_ue_security_and_ue_capabilities(), except that the
+  /// SecurityModeComplete and the UE capabilities are packed by the DU-side PDCP entity rather than
+  /// replayed from a captured PDU.
+  void activate_security()
+  {
+    std::optional<uint8_t> smc_transaction_id = start_initial_context_setup();
+    if (!smc_transaction_id.has_value()) {
+      return;
+    }
     inject_dcch(
         srb_id_t::srb1,
         test_helpers::pack_ul_dcch_msg(test_helpers::create_security_mode_complete(smc_transaction_id.value())));
@@ -776,35 +891,7 @@ private:
     }
     inject_dcch(srb_id_t::srb1,
                 test_helpers::pack_ul_dcch_msg(test_helpers::create_ue_capability_info(cap_transaction_id.value())));
-
-    // SRB2 is set up by the CU-CP once the UE is registered, and is keyed from the start.
-    srb2_pdcp = std::make_unique<du_srb_pdcp_tx>(
-        srb_id_t::srb2, to_underlying(du_ue_id), timer_factory{state.timers, *state.exec}, *state.exec);
-    srb2_pdcp->enable_security(state.rrc_sec_cfg);
-  }
-
-  /// Run a PDU Session Resource Setup for PDU session 1 up to the RRCReconfiguration that adds its DRB.
-  ///
-  /// The CU-UP and DU stubs answer the E1AP Bearer Context and F1AP UE Context Modification exchanges in between. The
-  /// RRCReconfigurationComplete is left to the input, so that it reaches the procedure that waits for it.
-  void start_pdu_session_setup()
-  {
-    if (!is_secured() or !ran_ue_id.has_value()) {
-      return;
-    }
-    state.amf.push_tx_pdu(generate_valid_pdu_session_resource_setup_request_message(
-        amf_ue_id,
-        ran_ue_id.value(),
-        {{uint_to_pdu_session_id(1), {pdu_session_type_t::ipv4, {{uint_to_qos_flow_id(1), 9}}}}}));
-    state.drain();
-    drain_ngap_pdus();
-
-    std::optional<f1ap_message> dl_rrc =
-        pop_dl_pdu(asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::dl_rrc_msg_transfer);
-    if (dl_rrc.has_value()) {
-      reconfig_transaction_id =
-          get_transaction_id(dl_rrc.value(), asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::rrc_recfg);
-    }
+    security_activated = true;
   }
 
   /// Read the RRC transaction ID out of the DL-DCCH message an F1AP PDU carries, when it is of the
@@ -948,6 +1035,8 @@ private:
   std::optional<ran_ue_id_t>         ran_ue_id;
   /// RRC transaction ID of the RRCReconfiguration the PDU session setup is waiting on, once it was sent.
   std::optional<uint8_t> reconfig_transaction_id;
+  /// Whether the canned SecurityModeComplete and UE capabilities of the bring-up were accepted.
+  bool security_activated = false;
   /// Any AMF UE ID works: the stub AMF holds no state of its own.
   static constexpr amf_ue_id_t amf_ue_id = uint_to_amf_ue_id(0x1234);
 };

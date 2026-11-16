@@ -97,61 +97,145 @@ RRC_SEEDS = {
 # ---------------------------------------------------------------------------
 # rrc_cu_cp corpus seeds
 # ---------------------------------------------------------------------------
-# The full-stack harness uses a control byte of its own: bit 0 selects the
-# logical channel, bit 1 the SRB and bits 2-3 the UE state. It has no
-# integrity_verified bit, because PDCP derives that from the MAC-I the harness
-# computes.
+# The full-stack harness takes a control byte selecting the UE state, then a
+# sequence of steps: a step type byte, a length byte and that many bytes of
+# payload. See tests/fuzz/README.md for the input format.
 # ---------------------------------------------------------------------------
 
-CU_CP_DCCH = 0b0000_0001
-CU_CP_SRB2 = 0b0000_0010
-CU_CP_AWAITING_SETUP_COMPLETE = 0 << 2
-CU_CP_CONNECTED = 1 << 2
-CU_CP_SECURED = 2 << 2
-CU_CP_AWAITING_RECONFIGURATION_COMPLETE = 3 << 2
+CU_CP_AWAITING_SETUP_COMPLETE = 0
+CU_CP_CONNECTED = 1
+CU_CP_SECURED = 2
+CU_CP_AWAITING_RECONFIGURATION_COMPLETE = 3
+
+# Step types, in the order of step_type in rrc_cu_cp_fuzzer.cpp.
+UL_CCCH = 0
+UL_DCCH_SRB1 = 1
+UL_DCCH_SRB2 = 2
+ADVANCE_TIME = 3
+INITIAL_CONTEXT_SETUP = 4
+PDU_SESSION_SETUP = 5
+PDU_SESSION_MODIFICATION = 6
+PDU_SESSION_RELEASE = 7
+DL_NAS_TRANSPORT = 8
+UE_CONTEXT_MODIFICATION = 9
+AMF_UE_CONTEXT_RELEASE = 10
+DU_UE_CONTEXT_RELEASE = 11
+
+
+def steps(state: int, *items: tuple) -> bytes:
+    """Control byte followed by (step type, payload hex) steps."""
+    out = bytes([state])
+    for step_type, pdu in items:
+        payload = bytes.fromhex(pdu)
+        assert len(payload) < 256, "a step payload must fit a single length byte"
+        out += bytes([step_type, len(payload)]) + payload
+    return out
+
+
+# The CU-CP numbers the RRC transactions of a UE in the order it opens them, so
+# every sequence below answers with the transaction ID the CU-CP expects:
+# RRCSetup 0, SecurityModeCommand 1, UECapabilityEnquiry 2, then the
+# RRCReconfiguration of the first PDU session 3, and the next one 0 again.
+# The PDUs come from tests/test_doubles/rrc/rrc_test_messages.cpp, packed with
+# pack_ul_dcch_msg(): create_security_mode_complete(1),
+# create_ue_capability_info(2) and create_rrc_reconfiguration_complete(3) and (0).
+SECURITY_MODE_COMPLETE = "2a00"
+SECURITY_MODE_FAILURE = "3200"
+UE_CAPABILITY_INFORMATION = (
+    "4c82202378680ce811d1968097e360e1a80000b0498b8000c1f86800637f"
+    "e002e0013141360000000a800163401801e81c790e7c000090200789a001"
+    "c4d00000000713410400800809a5600000068081489004803804200c07c0"
+    "1000000000000010000000091c004100000965940401000009659400148e"
+    "20d800012003e0f000108080100202004008004010020a40a000"
+)
+RRC_RECONFIGURATION_COMPLETE_3 = "0e00"
+RRC_RECONFIGURATION_COMPLETE_0 = "0800"
 
 RRC_CU_CP_SEEDS = {
     # RRCSetupRequest on UL-CCCH: the pre-authentication entry point.
-    "ccch_setup_request": seed(CU_CP_AWAITING_SETUP_COMPLETE, "1dec89d05766"),
+    "ccch_setup_request": steps(CU_CP_AWAITING_SETUP_COMPLETE, (UL_CCCH, "1dec89d05766")),
 
     # Corrupted UL-CCCH message (triggers the unpack failure path).
-    "ccch_invalid": seed(CU_CP_AWAITING_SETUP_COMPLETE, "9dec89de5766"),
+    "ccch_invalid": steps(CU_CP_AWAITING_SETUP_COMPLETE, (UL_CCCH, "9dec89de5766")),
 
     # RRCResumeRequest on UL-CCCH, which the CU-CP routes by its resume identity.
-    "ccch_resume_request": seed(CU_CP_AWAITING_SETUP_COMPLETE, "20202066f020"),
+    "ccch_resume_request": steps(CU_CP_AWAITING_SETUP_COMPLETE, (UL_CCCH, "20202066f020")),
 
     # RRCSetupComplete on SRB1 against a UE awaiting it.
-    "dcch_setup_complete": seed(CU_CP_DCCH | CU_CP_AWAITING_SETUP_COMPLETE, RRC_SETUP_COMPLETE),
+    "dcch_setup_complete": steps(CU_CP_AWAITING_SETUP_COMPLETE, (UL_DCCH_SRB1, RRC_SETUP_COMPLETE)),
 
     # UL-DCCH against a connected UE, before security activation.
-    "dcch_ul_info_transfer": seed(CU_CP_DCCH | CU_CP_CONNECTED, "0000"),
+    "dcch_ul_info_transfer": steps(CU_CP_CONNECTED, (UL_DCCH_SRB1, "0000")),
 
-    # RRCReconfigurationComplete on SRB1 after security activation.
-    "dcch_reconfig_complete": seed(CU_CP_DCCH | CU_CP_SECURED, "0a00"),
+    # RRCReconfigurationComplete on SRB1 after security activation, with no reconfiguration open.
+    "dcch_reconfig_complete": steps(CU_CP_SECURED, (UL_DCCH_SRB1, "0a00")),
 
     # MeasurementReport on SRB1 after security activation.
-    "dcch_meas_report": seed(CU_CP_DCCH | CU_CP_SECURED, "0800"),
+    "dcch_meas_report": steps(CU_CP_SECURED, (UL_DCCH_SRB1, "0800")),
 
     # UL-DCCH on SRB2, which only exists after security activation.
-    "dcch_srb2": seed(CU_CP_DCCH | CU_CP_SRB2 | CU_CP_SECURED, "0000"),
+    "dcch_srb2": steps(CU_CP_SECURED, (UL_DCCH_SRB2, "0000")),
 
     # Truncated payload (triggers the early-exit path).
-    "dcch_truncated": seed(CU_CP_DCCH | CU_CP_SECURED, "2a"),
+    "dcch_truncated": steps(CU_CP_SECURED, (UL_DCCH_SRB1, "2a")),
 
     # Corrupt / non-RRC payload (triggers the unpack failure path).
-    "dcch_invalid": seed(CU_CP_DCCH | CU_CP_SECURED, "deadbeef"),
+    "dcch_invalid": steps(CU_CP_SECURED, (UL_DCCH_SRB1, "deadbeef")),
 
     # ULInformationTransfer with a complete message body, against a connected UE.
-    "dcch_ul_information_transfer": seed(CU_CP_DCCH | CU_CP_CONNECTED, RRC_UL_INFORMATION_TRANSFER),
+    "dcch_ul_information_transfer": steps(CU_CP_CONNECTED, (UL_DCCH_SRB1, RRC_UL_INFORMATION_TRANSFER)),
 
     # MeasurementReport with a complete message body, on SRB1 after security activation.
-    "dcch_measurement_report": seed(CU_CP_DCCH | CU_CP_SECURED, RRC_MEASUREMENT_REPORT),
+    "dcch_measurement_report": steps(CU_CP_SECURED, (UL_DCCH_SRB1, RRC_MEASUREMENT_REPORT)),
 
     # RRCReconfigurationComplete answering the RRCReconfiguration that adds the DRB of a PDU session,
-    # which completes the PDU Session Resource Setup. The CU-CP sends that RRCReconfiguration with
-    # transaction ID 3.
-    "dcch_reconfig_complete_pdu_session": seed(
-        CU_CP_DCCH | CU_CP_AWAITING_RECONFIGURATION_COMPLETE, "0e00"
+    # which completes the PDU Session Resource Setup.
+    "dcch_reconfig_complete_pdu_session": steps(
+        CU_CP_AWAITING_RECONFIGURATION_COMPLETE, (UL_DCCH_SRB1, RRC_RECONFIGURATION_COMPLETE_3)
+    ),
+
+    # The security activation and UE capability transfer of the Initial Context Setup, answered by the
+    # input rather than by the bring-up, so that both messages are mutated in the procedures that
+    # wait for them.
+    "initial_context_setup": steps(
+        CU_CP_CONNECTED,
+        (INITIAL_CONTEXT_SETUP, ""),
+        (UL_DCCH_SRB1, SECURITY_MODE_COMPLETE),
+        (UL_DCCH_SRB1, UE_CAPABILITY_INFORMATION),
+    ),
+
+    # SecurityModeFailure answering the SecurityModeCommand. The harness keys SRB1 as the
+    # SecurityModeCommand goes out, so this arrives integrity protected, which the CU-CP rejects: a UE
+    # sends it unprotected (TS 38.331 section 5.3.4.3).
+    "initial_context_setup_security_mode_failure": steps(
+        CU_CP_CONNECTED, (INITIAL_CONTEXT_SETUP, ""), (UL_DCCH_SRB1, SECURITY_MODE_FAILURE)
+    ),
+
+    # A PDU session set up, modified and released, each RRCReconfiguration answered in turn.
+    "pdu_session_lifecycle": steps(
+        CU_CP_AWAITING_RECONFIGURATION_COMPLETE,
+        (UL_DCCH_SRB1, RRC_RECONFIGURATION_COMPLETE_3),
+        (PDU_SESSION_MODIFICATION, ""),
+        (UL_DCCH_SRB1, RRC_RECONFIGURATION_COMPLETE_0),
+        (PDU_SESSION_RELEASE, ""),
+        (UL_DCCH_SRB1, "0a00"),
+    ),
+
+    # The RRCReconfiguration of a PDU session left unanswered until its guard timer expires.
+    "pdu_session_setup_timeout": steps(CU_CP_AWAITING_RECONFIGURATION_COMPLETE, (ADVANCE_TIME, "ff")),
+
+    # NAS delivery, a UE context modification and the AMF releasing the UE.
+    "amf_procedures": steps(
+        CU_CP_AWAITING_RECONFIGURATION_COMPLETE,
+        (UL_DCCH_SRB1, RRC_RECONFIGURATION_COMPLETE_3),
+        (DL_NAS_TRANSPORT, ""),
+        (UE_CONTEXT_MODIFICATION, ""),
+        (AMF_UE_CONTEXT_RELEASE, ""),
+    ),
+
+    # A radio link failure reported by the DU while a PDU session setup waits for the UE.
+    "du_release_during_pdu_session_setup": steps(
+        CU_CP_AWAITING_RECONFIGURATION_COMPLETE, (DU_UE_CONTEXT_RELEASE, ""), (UL_DCCH_SRB1, RRC_RECONFIGURATION_COMPLETE_3)
     ),
 }
 
