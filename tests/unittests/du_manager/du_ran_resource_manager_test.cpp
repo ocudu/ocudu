@@ -369,18 +369,26 @@ TEST_P(du_ran_resource_manager_tester, when_the_ue_has_dl_harq_processes_without
   // The DL mask only reaches a UE on an NTN band that reports both the band and the capability, where the UL mode mask
   // asks for the capability alone.
   cell_cfg_list[0].ran.dl_carrier.band = nr_band::n256;
-  const unsigned nof_harqs             = std::min<unsigned>(cell_cfg_list[0].ran.init_bwp.pdsch.max_harq_procs,
-                                                ue_capability_summary::default_max_harq_process_num);
+  cell_cfg_list[0].ran.ul_carrier.band = nr_band::n256;
+  // An NTN cell with more HARQ processes than the default, which the UE supports.
+  constexpr unsigned nof_harqs                       = 32;
+  cell_cfg_list[0].ran.init_bwp.pdsch.max_harq_procs = nof_harqs;
+  cell_cfg_list[0].ran.init_bwp.pusch.max_harq_procs = nof_harqs;
   // A bit set to one disables the feedback, so the second half of the processes loses it and both remain available.
   cell_cfg_list[0].ran.init_bwp.pdsch.dl_harq_feedback_disabled.fill(nof_harqs / 2, nof_harqs, true);
   ue_capability_summary ue_caps;
-  ue_caps.ntn_supported                       = true;
-  ue_caps.disabled_dl_harq_feedback_supported = true;
-  ue_caps.bands[nr_band::n256]                = {};
+  ue_caps.ntn_supported                                = true;
+  ue_caps.disabled_dl_harq_feedback_supported          = true;
+  ue_caps.bands[nr_band::n256].max_dl_harq_process_num = nof_harqs;
+  ue_caps.bands[nr_band::n256].max_ul_harq_process_num = nof_harqs;
 
   const du_ue_index_t           ue_idx1 = to_du_ue_index(0);
   ue_ran_resource_configurator* ue_res  = create_ue(ue_idx1);
   ASSERT_NE(ue_res, nullptr);
+  // Without the UE capabilities, the UE gets at most the default number of HARQ processes.
+  const ue_rrm_config& rrm = ue_res->value().cell_group.cells.at(SERVING_PCELL_IDX).rrm;
+  ASSERT_EQ(rrm.pdsch.nof_harqs, ue_capability_summary::default_max_harq_process_num);
+  ASSERT_EQ(rrm.pusch.nof_harqs, ue_capability_summary::default_max_harq_process_num);
   ASSERT_FALSE(ue_res->update(to_du_cell_index(0), srb1_creation_req(ue_idx1)).failed());
   ASSERT_TRUE(ue_res->value().srbs.contains(srb_id_t::srb1));
   ASSERT_FALSE(ue_res->value().srbs[srb_id_t::srb1].mac_cfg.allowed_dl_harq_feedback.has_value())
@@ -390,6 +398,10 @@ TEST_P(du_ran_resource_manager_tester, when_the_ue_has_dl_harq_processes_without
 
   ASSERT_TRUE(ue_res->value().srbs[srb_id_t::srb1].mac_cfg.allowed_dl_harq_feedback.has_value());
   EXPECT_EQ(*ue_res->value().srbs[srb_id_t::srb1].mac_cfg.allowed_dl_harq_feedback, dl_harq_feedback::enabled);
+
+  // The UE gets the HARQ processes of the cell, as it reports to support them.
+  EXPECT_EQ(rrm.pdsch.nof_harqs, nof_harqs);
+  EXPECT_EQ(rrm.pusch.nof_harqs, nof_harqs);
 }
 
 TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_use_different_sr_offsets)
