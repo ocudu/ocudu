@@ -175,21 +175,6 @@ struct bwp_downlink_dedicated {
   bool operator!=(const bwp_downlink_dedicated& other) const { return !(other == *this); }
 };
 
-/// "BWP-Downlink" as per TS 38.331.
-struct bwp_downlink {
-  /// Identifier of BWP. Value 0 is reserved for the initial BWP.
-  bwp_id_t bwp_id;
-  /// Common parameters of the BWP.
-  bwp_downlink_common bwp_dl_common;
-  /// UE-dedicated parameters of the BWP.
-  bwp_downlink_dedicated bwp_dl_ded;
-
-  bool operator==(const bwp_downlink& other) const
-  {
-    return bwp_id == other.bwp_id and bwp_dl_common == other.bwp_dl_common and bwp_dl_ded == other.bwp_dl_ded;
-  }
-};
-
 /// Used to configure the dedicated UE-specific parameters of an UL BWP.
 /// \remark See TS 38.331, BWP-UplinkDedicated.
 struct bwp_uplink_dedicated {
@@ -217,8 +202,6 @@ struct serving_cell_config {
   du_cell_index_t cell_index;
   /// Initial Downlink BWP.
   bwp_downlink_dedicated init_dl_bwp;
-  /// List of UE DL BWPs. Size: (0..maxNrofBWPs=4)
-  static_vector<bwp_downlink, MAX_NOF_BWPS> dl_bwps;
   /// \c uplinkConfig, containing the UL configuration.
   std::optional<uplink_config> ul_config;
   /// \c CSI-MeasConfig.
@@ -226,8 +209,8 @@ struct serving_cell_config {
 
   bool operator==(const serving_cell_config& other) const
   {
-    return cell_index == other.cell_index and init_dl_bwp == other.init_dl_bwp and dl_bwps == other.dl_bwps and
-           ul_config == other.ul_config and csi_meas_cfg == other.csi_meas_cfg;
+    return cell_index == other.cell_index and init_dl_bwp == other.init_dl_bwp and ul_config == other.ul_config and
+           csi_meas_cfg == other.csi_meas_cfg;
   }
 };
 

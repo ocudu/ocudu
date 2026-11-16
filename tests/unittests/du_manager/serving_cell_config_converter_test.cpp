@@ -398,10 +398,10 @@ TEST(serving_cell_config_converter_test, test_default_initial_ue_dl_bwp_conversi
   ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg_present);
   ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded_present);
 
-  auto& rrc_sp_cell_cfg_ded  = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
-  auto& dest_sp_cell_cfg_ded = dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg;
+  auto& rrc_sp_cell_cfg_ded = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
 
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.dl_bwp_to_add_mod_list.size(), dest_sp_cell_cfg_ded.dl_bwps.size());
+  // Only the initial DL BWP is configured.
+  ASSERT_EQ(rrc_sp_cell_cfg_ded.dl_bwp_to_add_mod_list.size(), 0);
   ASSERT_EQ(rrc_sp_cell_cfg_ded.dl_bwp_to_release_list.size(), 0);
 }
 

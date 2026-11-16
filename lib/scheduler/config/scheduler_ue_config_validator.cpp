@@ -163,7 +163,6 @@ validate_cg_cfg(const serving_cell_config& serv_cell_cfg, const ue_rrm_config& r
 
 validator_result validate_bwp_ded_cfg(const serving_cell_config& ue_cell_cfg, const cell_configuration& cell_cfg)
 {
-  VERIFY(ue_cell_cfg.dl_bwps.empty(), "Only init DL BWP is supported");
   const auto& ue_bwp_ded              = ue_cell_cfg.init_dl_bwp;
   const auto& expected_bwp_ded_pdcchs = cell_cfg.bwp_res[to_bwp_id(0)].dl().ded_pdcchs;
   if (ue_bwp_ded.pdcch_cfg.has_value()) {
