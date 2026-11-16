@@ -959,15 +959,20 @@ void ul_harq_process_handle::save_grant_params(const ul_harq_alloc_context& ctx,
   ul_harq_process_impl::alloc_params& prev_tx_params = impl->prev_tx_params;
 
   if (impl->nof_retxs == 0) {
-    prev_tx_params.dci_cfg_type    = ctx.dci_cfg_type;
-    prev_tx_params.nof_repetitions = ctx.nof_repetitions;
-    prev_tx_params.olla_mcs        = ctx.olla_mcs;
-    prev_tx_params.tbs             = pusch.tb_size_bytes;
-    prev_tx_params.slice_id        = ctx.slice_id;
+    prev_tx_params.dci_cfg_type                     = ctx.dci_cfg_type;
+    prev_tx_params.nof_repetitions                  = ctx.nof_repetitions;
+    prev_tx_params.olla_mcs                         = ctx.olla_mcs;
+    prev_tx_params.tbs                              = pusch.tb_size_bytes;
+    prev_tx_params.slice_id                         = ctx.slice_id;
+    prev_tx_params.nof_dmrs_cdm_groups_without_data = pusch.dmrs.num_dmrs_cdm_grps_no_data;
   } else {
     ocudu_assert(ctx.dci_cfg_type == prev_tx_params.dci_cfg_type,
                  "DCI format and RNTI type cannot change during HARQ retxs");
     ocudu_assert(prev_tx_params.tbs == pusch.tb_size_bytes, "TBS cannot change during HARQ retxs");
+    ocudu_assert(prev_tx_params.nof_dmrs_cdm_groups_without_data == pusch.dmrs.num_dmrs_cdm_grps_no_data,
+                 "Number of DM-RS CDM groups without data cannot change during HARQ retxs");
+    ocudu_assert(prev_tx_params.dmrs_ports.count() == pusch.dmrs.dmrs_ports.count(),
+                 "Number of layers cannot change during HARQ retxs");
     ocudu_assert(ctx.nof_repetitions == prev_tx_params.nof_repetitions or ctx.nof_repetitions == 1,
                  "A reTx repeats the PUSCH as many times as the original transmission did, or not at all");
   }
@@ -975,7 +980,7 @@ void ul_harq_process_handle::save_grant_params(const ul_harq_alloc_context& ctx,
   prev_tx_params.mcs         = pusch.mcs_index;
   prev_tx_params.rbs         = pusch.rbs;
   prev_tx_params.nof_symbols = pusch.symbols.length();
-  prev_tx_params.nof_layers  = pusch.nof_layers;
+  prev_tx_params.dmrs_ports  = pusch.dmrs.dmrs_ports;
 
   if (impl->mode == harq_mode_t::feedback_disabled_or_mode_b) {
     // In NTN mode, save the HARQ info in history.

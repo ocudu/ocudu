@@ -171,6 +171,14 @@ public:
     ul_repetition_occasion_list repetition_slots;
   };
 
+  /// DM-RS ports of a PDSCH or PUSCH, with its number of DM-RS CDM groups without data.
+  struct dmrs_port_selection {
+    /// DM-RS ports, one per layer.
+    dmrs_port_mask ports;
+    /// Number of DM-RS CDM groups without data.
+    unsigned nof_cdm_groups_without_data;
+  };
+
   /// \brief Interface for a DL grant, which allows deferred setting of PDSCH parameters.
   class dl_newtx_grant_builder
   {
@@ -179,16 +187,18 @@ public:
     dl_newtx_grant_builder& operator=(dl_newtx_grant_builder&&) noexcept = default;
     ~dl_newtx_grant_builder() { ocudu_assert(parent == nullptr, "PDSCH parameters were not set"); }
 
-    /// \brief Sets the DM-RS ports of the PDSCH, which replace the default single-user DM-RS ports of the grant.
-    ///
-    /// The number of layers of the PDSCH is the number of DM-RS ports. The recommended MCS and VRBs of the grant are
-    /// not recomputed.
-    /// \remark It must be called before \ref set_pdsch_params, which asserts that DCI f1_1 can signal the DM-RS ports.
-    void set_dmrs_ports(const dmrs_port_mask& dmrs_ports, unsigned nof_cdm_groups_without_data);
-
     /// \brief Sets the final VRBs for the PDSCH allocation. Returns the slots of any PDSCH repetition occasions that
     /// were actually committed to the resource grid (see \ref dl_repetition_occasion_list).
-    dl_repetition_occasion_list set_pdsch_params(const vrb_alloc& alloc_vrbs, bool enable_interleaving);
+    ///
+    /// \param alloc_vrbs          VRBs of the PDSCH.
+    /// \param enable_interleaving Set to \c true if the VRB-to-PRB mapping is interleaved.
+    /// \param dmrs                DM-RS ports of the PDSCH, which replace the default single-user DM-RS ports of the
+    ///                            grant. The number of layers of the PDSCH is the number of DM-RS ports. The
+    ///                            recommended MCS of the grant is not recomputed.
+    /// \remark An assertion is triggered if DCI f1_1 cannot signal the DM-RS ports.
+    dl_repetition_occasion_list set_pdsch_params(const vrb_alloc&                          alloc_vrbs,
+                                                 bool                                      enable_interleaving,
+                                                 const std::optional<dmrs_port_selection>& dmrs = std::nullopt);
 
     /// \brief Returns the recommended VRBs of the PDSCH grant, of resource allocation type 0 or 1.
     ///
@@ -238,7 +248,14 @@ public:
 
     /// \brief Sets the final VRBs for the PUSCH allocation. Returns the slots of any PUSCH repetition occasions that
     /// were committed to the resource grid (see \ref ul_repetition_occasion_list).
-    ul_repetition_occasion_list set_pusch_params(const vrb_interval& alloc_vrbs);
+    ///
+    /// \param alloc_vrbs VRBs of the PUSCH.
+    /// \param dmrs       DM-RS ports of the PUSCH, which replace the default single-user DM-RS ports of the grant. The
+    ///                   number of layers of the PUSCH is the number of DM-RS ports. The recommended MCS of the grant
+    ///                   is not recomputed.
+    /// \remark An assertion is triggered if DCI f0_1 cannot signal the DM-RS ports.
+    ul_repetition_occasion_list set_pusch_params(const vrb_interval&                       alloc_vrbs,
+                                                 const std::optional<dmrs_port_selection>& dmrs = std::nullopt);
 
     /// For a given max number of RBs and a bitmap of used VRBs, returns the recommended parameters for the PUSCH grant.
     vrb_interval recommended_vrbs(const vrb_bitmap& used_vrbs, unsigned max_nof_rbs = MAX_NOF_PRBS) const

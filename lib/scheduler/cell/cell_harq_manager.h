@@ -137,7 +137,7 @@ struct dl_harq_process_impl : public base_harq_process {
     uint8_t                 nof_layers{1};
     /// Number of DM-RS CDM groups without data. Fixed across HARQ retxs.
     uint8_t nof_dmrs_cdm_groups_without_data{1};
-    /// DM-RS ports of the last transmission, one per layer. A reTx may use other ports.
+    /// DM-RS ports of the last transmission, one per layer. A reTx reuses them.
     dmrs_port_mask dmrs_ports;
     /// Number of Rel-16 slot-based PDSCH repetitions of the grant. Value 1 means a single transmission.
     uint8_t                                     nof_repetitions{1};
@@ -171,7 +171,10 @@ struct ul_harq_process_impl : public base_harq_process {
     sch_mcs_index           mcs;
     units::bytes            tbs;
     uint8_t                 nof_symbols;
-    uint8_t                 nof_layers;
+    /// Number of DM-RS CDM groups without data. Fixed across HARQ retxs.
+    uint8_t nof_dmrs_cdm_groups_without_data{1};
+    /// DM-RS ports of the last transmission, one per layer. A reTx reuses them.
+    dmrs_port_mask dmrs_ports;
     /// Number of Rel-16 PUSCH repetitions of the original transmission. Value 1 means a single transmission.
     uint8_t                       nof_repetitions{1};
     std::optional<ran_slice_id_t> slice_id;

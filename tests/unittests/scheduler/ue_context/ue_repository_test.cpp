@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/scheduler/config/sched_config_manager.h"
+#include "lib/scheduler/support/dmrs_helpers.h"
 #include "lib/scheduler/support/sch_pdu_builder.h"
 #include "lib/scheduler/ue_context/ue_cell_repository.h"
 #include "lib/scheduler/ue_context/ue_repository.h"
@@ -89,7 +90,8 @@ protected:
       case dci_ul_rnti_config_type::c_rnti_f0_1:
         return get_pusch_config_f0_1_c_rnti(ue_cc.cfg(),
                                             pusch_td_cfg,
-                                            ue_cc.channel_state_manager().get_nof_ul_layers(),
+                                            get_su_pusch_dmrs_ports(ue_cc.channel_state_manager().get_nof_ul_layers()),
+                                            std::nullopt,
                                             uci_bits_overallocation,
                                             is_csi_report_slot);
       default:

@@ -530,7 +530,7 @@ double ue_cell::get_estimated_ul_rate(const pusch_config_params& pusch_cfg, sch_
                                                             .nof_dmrs_prb     = dmrs_prbs,
                                                             .nof_oh_prb       = pusch_cfg.nof_oh_prb,
                                                             .mcs_descr        = mcs_info,
-                                                            .nof_layers       = pusch_cfg.nof_layers,
+                                                            .nof_layers       = pusch_cfg.nof_layers(),
                                                             .tb_scaling_field = pusch_cfg.tb_scaling_field,
                                                             .n_prb            = nof_prbs});
 

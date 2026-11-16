@@ -20,7 +20,6 @@ struct pusch_config_params {
   ofdm_symbol_range symbols;
   unsigned          nof_oh_prb;
   unsigned          tb_scaling_field;
-  unsigned          nof_layers;
   bool              tp_pi2bpsk_present;
   bool              use_transform_precoder;
   dmrs_information  dmrs;
@@ -29,6 +28,9 @@ struct pusch_config_params {
   unsigned nof_csi_part1_bits{0};
   bool     aperiodic_csi{false};
   unsigned max_nof_csi_part2_bits{0};
+
+  /// Returns the number of layers of the PUSCH, which transmits one layer per DM-RS port.
+  unsigned nof_layers() const { return dmrs.dmrs_ports.count(); }
 };
 
 /// \brief Fetches the PUSCH parameters needed for PUSCH PDU for DCI format 0_0, scrambled by TC-RNTI.
@@ -50,11 +52,19 @@ pusch_config_params get_pusch_config_f0_0_c_rnti(const cell_configuration&      
 /// \brief Fetches the PUSCH parameters needed for PUSCH PDU for DCI format 0_1, scrambled by C-RNTI.
 ///
 /// The parameters returned by this function are needed to compute the number of PRBs, MCS and TBS.
+/// \param ue_cell_cfg                 UE cell configuration.
+/// \param pusch_td_cfg                PUSCH time domain resource allocation.
+/// \param dmrs_ports                  DM-RS ports of the PUSCH, one per layer.
+/// \param nof_cdm_groups_without_data Number of DM-RS CDM groups without data. If not set, all the CDM groups of the
+///                                    DM-RS type are without data.
+/// \param nof_harq_ack_bits           Number of HARQ-ACK bits multiplexed on the PUSCH.
+/// \param is_csi_report_slot          Set to \c true if a CSI report is multiplexed on the PUSCH.
 pusch_config_params get_pusch_config_f0_1_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
                                                  const pusch_time_domain_resource_allocation& pusch_td_cfg,
-                                                 unsigned                                     nof_layers,
-                                                 unsigned                                     nof_harq_ack_bits,
-                                                 bool                                         is_csi_report_slot);
+                                                 const dmrs_port_mask&                        dmrs_ports,
+                                                 std::optional<unsigned> nof_cdm_groups_without_data,
+                                                 unsigned                nof_harq_ack_bits,
+                                                 bool                    is_csi_report_slot);
 
 /// \brief Builds PDSCH PDU for DCI format 1_0, scrambled by SI-RNTI.
 void build_pdsch_f1_0_si_rnti(pdsch_information&                   pdsch,

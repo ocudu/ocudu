@@ -1261,7 +1261,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
                                                                     calculate_nof_dmrs_per_rb(pusch_cfg.dmrs),
                                                                     pusch_cfg.nof_oh_prb,
                                                                     ul_mcs_cfg,
-                                                                    pusch_cfg.nof_layers});
+                                                                    pusch_cfg.nof_layers()});
 
     // Due to the pre-allocated UCI bits, MCS 0 and PRB 1 would not leave any space for the payload on the TBS, as
     // all the space would be taken by the UCI bits. As a result of this, the effective code rate would be 0 and the

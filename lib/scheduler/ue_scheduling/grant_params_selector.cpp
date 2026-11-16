@@ -65,9 +65,10 @@ static std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(con
 }
 
 /// Compute PUSCH grant parameters for a newTx/reTx given the UE state, DCI type and PUSCH time-domain resource.
-static pusch_config_params compute_pusch_config_params(const ue_cell&                               ue_cc,
-                                                       dci_ul_rnti_config_type                      dci_type,
-                                                       unsigned                                     nof_layers,
+static pusch_config_params compute_pusch_config_params(const ue_cell&          ue_cc,
+                                                       dci_ul_rnti_config_type dci_type,
+                                                       const dmrs_port_mask&   dmrs_ports,
+                                                       std::optional<unsigned> nof_cdm_groups_without_data,
                                                        const pusch_time_domain_resource_allocation& pusch_td_cfg,
                                                        unsigned                                     uci_bits,
                                                        bool                                         is_csi_report_slot)
@@ -86,7 +87,8 @@ static pusch_config_params compute_pusch_config_params(const ue_cell&           
           get_pusch_config_f0_0_c_rnti(cell_cfg, &ue_cell_cfg, bwp_ul_cmn, pusch_td_cfg, uci_bits, is_csi_report_slot);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_1:
-      pusch_cfg = get_pusch_config_f0_1_c_rnti(ue_cell_cfg, pusch_td_cfg, nof_layers, uci_bits, is_csi_report_slot);
+      pusch_cfg = get_pusch_config_f0_1_c_rnti(
+          ue_cell_cfg, pusch_td_cfg, dmrs_ports, nof_cdm_groups_without_data, uci_bits, is_csi_report_slot);
       break;
     default:
       report_fatal_error("Unsupported PDCCH DCI UL format");
@@ -102,8 +104,15 @@ static pusch_config_params compute_newtx_pusch_config_params(const ue_cell&     
                                                              unsigned                                     uci_bits,
                                                              bool is_csi_report_slot)
 {
-  return compute_pusch_config_params(
-      ue_cc, dci_type, ue_cc.channel_state_manager().get_nof_ul_layers(), pusch_td_cfg, uci_bits, is_csi_report_slot);
+  // [Implementation-defined] The PUSCH is a single-user transmission on the default DM-RS ports of its number of
+  // layers.
+  return compute_pusch_config_params(ue_cc,
+                                     dci_type,
+                                     get_su_pusch_dmrs_ports(ue_cc.channel_state_manager().get_nof_ul_layers()),
+                                     std::nullopt,
+                                     pusch_td_cfg,
+                                     uci_bits,
+                                     is_csi_report_slot);
 }
 
 /// Compute PUSCH grant parameters for a reTx given the UE state, DCI type and PUSCH time-domain resource.
@@ -113,9 +122,14 @@ pusch_config_params static compute_retx_pusch_config_params(const ue_cell&      
                                                             unsigned                                     uci_bits,
                                                             bool is_csi_report_slot)
 {
+  // The reTx must keep the CDM groups without data of the original transmission, from whose DM-RS overhead the UE
+  // derives the TBS (see TS 38.214, Section 6.1.4.2).
+  // [Implementation-defined] The reTx also keeps the DM-RS ports of the last transmission.
+  const ul_harq_process_handle::grant_params& prev_params = h_ul.get_grant_params();
   return compute_pusch_config_params(ue_cc,
-                                     h_ul.get_grant_params().dci_cfg_type,
-                                     h_ul.get_grant_params().nof_layers,
+                                     prev_params.dci_cfg_type,
+                                     prev_params.dmrs_ports,
+                                     prev_params.nof_dmrs_cdm_groups_without_data,
                                      pusch_td_cfg,
                                      uci_bits,
                                      is_csi_report_slot);
@@ -139,7 +153,7 @@ static std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(con
                                                                   calculate_nof_dmrs_per_rb(pusch_cfg.dmrs),
                                                                   pusch_cfg.nof_oh_prb,
                                                                   mcs_config,
-                                                                  pusch_cfg.nof_layers},
+                                                                  pusch_cfg.nof_layers()},
                                        nof_rb_lims.stop());
 
   // Apply minimum grant size.

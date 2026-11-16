@@ -29,6 +29,7 @@
 #include "ocudu/ran/duplex_mode.h"
 #include "ocudu/ran/pdcch/search_space.h"
 #include "ocudu/ran/pdsch/pdsch_mcs.h"
+#include "ocudu/ran/pusch/pusch_mcs.h"
 #include "ocudu/ran/sch/sch_segmentation.h"
 #include "ocudu/ran/sch/tbs_calculator.h"
 #include "ocudu/scheduler/config/logical_channel_config_factory.h"
@@ -37,6 +38,8 @@
 #include <gtest/gtest.h>
 
 using namespace ocudu;
+
+using dmrs_port_selection = ue_cell_grid_allocator::dmrs_port_selection;
 
 struct test_params {
   scheduler_expert_config sched_cfg;
@@ -1144,10 +1147,9 @@ protected:
     if (not result.has_value()) {
       return;
     }
-    auto& builder = result.value();
-    builder.set_dmrs_ports(dmrs_ports, nof_cdm_groups);
-    const vrb_alloc vrbs = builder.recommended_vrbs(used_dl_vrbs, MAX_NOF_PRBS, MAX_NOF_PRBS, false);
-    builder.set_pdsch_params(vrbs, false);
+    auto&           builder = result.value();
+    const vrb_alloc vrbs    = builder.recommended_vrbs(used_dl_vrbs, MAX_NOF_PRBS, MAX_NOF_PRBS, false);
+    builder.set_pdsch_params(vrbs, false, dmrs_port_selection{dmrs_ports, nof_cdm_groups});
     mark_used_dl_vrbs(vrbs);
   }
 
@@ -1320,6 +1322,243 @@ TEST_P(ue_grid_allocator_dl_mimo_test, retx_keeps_the_dmrs_ports_of_the_original
 
 INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
                          ue_grid_allocator_dl_mimo_test,
+                         testing::Values(duplex_mode::FDD, duplex_mode::TDD));
+
+class ue_grid_allocator_ul_dmrs_ports_test : public ue_grid_allocator_test
+{
+protected:
+  ue_grid_allocator_ul_dmrs_ports_test() :
+    ue_grid_allocator_test(test_params{.sched_cfg = config_helpers::make_default_scheduler_expert_config()})
+  {
+  }
+
+  /// Allocates a PUSCH newTx on the given DM-RS ports, or on the default ones if none are given.
+  void allocate_ul_newtx_grant_on_ports(const slice_ue& user, const std::optional<dmrs_port_selection>& dmrs)
+  {
+    const slot_point pusch_slot  = get_next_ul_slot(current_slot);
+    const auto&      init_ul_bwp = cell_cfg.params.ul_cfg_common.init_ul_bwp;
+    auto             result      = alloc.allocate_ul_grant(
+        ue_newtx_ul_grant_request{.user            = user,
+                                                   .pusch_slot      = pusch_slot,
+                                                   .pending_bytes   = units::bytes{1000U},
+                                                   .allowed_symbols = ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP},
+                                                   .restrictions    = user.select_ul_grant().restrictions});
+    if (not result.has_value()) {
+      return;
+    }
+    auto&            builder      = result.value();
+    const vrb_bitmap used_ul_vrbs = res_grid[pusch_slot]
+                                        .ul_res_grid
+                                        .used_prbs(init_ul_bwp.generic_params.scs,
+                                                   init_ul_bwp.generic_params.crbs,
+                                                   init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols)
+                                        .convert_to<vrb_bitmap>();
+    builder.set_pusch_params(builder.recommended_vrbs(used_ul_vrbs), dmrs);
+    last_pusch_slot = pusch_slot;
+  }
+
+  /// NACKs the UL HARQ process of the UE that waits for a CRC, and allocates its reTx. Returns true if the reTx is
+  /// allocated.
+  bool nack_and_allocate_ul_retx(const ue& u)
+  {
+    ue_cell&                              ue_cc = ues[u.ue_index].get_pcell();
+    std::optional<ul_harq_process_handle> h_ul  = ue_cc.harqs.find_ul_harq_waiting_ack();
+    if (not h_ul.has_value() or not h_ul->ul_crc_info(false).has_value()) {
+      return false;
+    }
+    return run_until(
+        [&]() {
+          std::optional<ul_harq_process_handle> h_retx = ue_cc.harqs.find_pending_ul_retx();
+          if (not h_retx.has_value()) {
+            return;
+          }
+          const slot_point pusch_slot   = get_next_ul_slot(current_slot);
+          const auto&      init_ul_bwp  = cell_cfg.params.ul_cfg_common.init_ul_bwp;
+          vrb_bitmap       used_ul_vrbs = res_grid[pusch_slot]
+                                        .ul_res_grid
+                                        .used_prbs(init_ul_bwp.generic_params.scs,
+                                                   init_ul_bwp.generic_params.crbs,
+                                                   init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols)
+                                        .convert_to<vrb_bitmap>();
+          if (alloc
+                  .allocate_ul_grant(ue_retx_ul_grant_request{slice_ues[u.ue_index],
+                                                              pusch_slot,
+                                                              *h_retx,
+                                                              used_ul_vrbs,
+                                                              ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP}})
+                  .has_value()) {
+            last_pusch_slot = pusch_slot;
+          }
+        },
+        [&]() {
+          const ul_sched_info* grant = find_pusch(u.crnti);
+          return grant != nullptr and grant->context.nof_retxs > 0;
+        });
+  }
+
+  /// Returns the PUSCH of the UE allocated last, or nullptr if there is none.
+  const ul_sched_info* find_pusch(rnti_t rnti) const
+  {
+    if (not last_pusch_slot.valid() or last_pusch_slot < current_slot) {
+      return nullptr;
+    }
+    return find_ue_pusch(rnti, res_grid[last_pusch_slot].result_reader().ul().puschs());
+  }
+
+  unsigned dci_antenna_ports(rnti_t rnti) const
+  {
+    return find_ue_ul_pdcch(rnti, res_grid[0].result_reader().dl())->dci.as_c_rnti_f0_1().antenna_ports;
+  }
+
+  /// Returns the TBS that the UE derives from the parameters of a PUSCH, as per TS 38.214, Section 6.1.4.2.
+  static units::bytes ue_derived_tbs(const pusch_information& pusch)
+  {
+    // The UE of the test has no xOverhead configured, and DCI format 0_1 has no TB scaling field.
+    return tbs_calculator_calculate(tbs_calculator_configuration{
+        .nof_symb_sh      = pusch.symbols.length(),
+        .nof_dmrs_prb     = calculate_nof_dmrs_per_rb(pusch.dmrs),
+        .nof_oh_prb       = 0,
+        .mcs_descr        = pusch_mcs_get_config(pusch.mcs_table, pusch.mcs_index, pusch.transform_precoding, false),
+        .nof_layers       = pusch.nof_layers,
+        .tb_scaling_field = 0,
+        .n_prb            = pusch.rbs.type1().length()});
+  }
+
+  /// Adds a UE with a codebook-based PUSCH of up to two layers, sounded on two SRS ports.
+  const ue& add_two_layer_ul_ue()
+  {
+    sched_ue_creation_request_message req =
+        sched_config_helper::create_default_sched_ue_creation_request(cell_cfg.params);
+    req.ue_index                                = to_du_ue_index(0);
+    req.crnti                                   = to_rnti(0x4601);
+    ue_cell_config& ue_cell                     = *(*req.cfg.cells)[0].ded;
+    ue_cell.serv_cell_cfg.init_dl_bwp.pdcch_cfg = cell_cfg.bwp_res[to_bwp_id(0)].dl().ded_pdcchs[0];
+
+    const tx_scheme_codebook tx_cfg{.max_rank = 2, .codebook_subset = tx_scheme_codebook_subset::non_coherent};
+    ue_cell.init_bwp().ul.pusch.tx_cfg                             = tx_cfg;
+    ue_cell.serv_cell_cfg.ul_config->init_ul_bwp.pusch_cfg->tx_cfg = tx_cfg;
+    ue_cell.init_bwp().ul.srs.nof_ports                            = srs_config::srs_resource::nof_srs_ports::ports2;
+    for (auto& srs_res : ue_cell.serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg->srs_res_list) {
+      srs_res.nof_ports = srs_config::srs_resource::nof_srs_ports::ports2;
+    }
+    return add_ue(req);
+  }
+
+  slot_point last_pusch_slot;
+};
+
+TEST_P(ue_grid_allocator_ul_dmrs_ports_test, single_user_pusch_uses_dmrs_port_0_without_data_in_any_cdm_group)
+{
+  const ue& u = add_ue(to_du_ue_index(0), {});
+
+  ASSERT_TRUE(run_until([&]() { allocate_ul_newtx_grant_on_ports(slice_ues[u.ue_index], std::nullopt); },
+                        [&]() { return find_pusch(u.crnti) != nullptr; }));
+  const pusch_information& pusch = find_pusch(u.crnti)->pusch_cfg;
+  ASSERT_EQ(pusch.nof_layers, 1);
+  ASSERT_EQ(pusch.dmrs.dmrs_ports, get_su_pusch_dmrs_ports(1));
+  ASSERT_EQ(pusch.dmrs.num_dmrs_cdm_grps_no_data, 2);
+  // TS 38.212 Table 7.3.1.1.2-8, value 2.
+  ASSERT_EQ(dci_antenna_ports(u.crnti), 2);
+  ASSERT_EQ(pusch.tb_size_bytes, ue_derived_tbs(pusch));
+}
+
+TEST_P(ue_grid_allocator_ul_dmrs_ports_test, single_user_pusch_with_dmrs_max_length_2_uses_single_symbol_dmrs)
+{
+  sched_ue_creation_request_message ue_creation_req =
+      sched_config_helper::create_default_sched_ue_creation_request(cell_cfg.params);
+  ue_creation_req.ue_index            = to_du_ue_index(0);
+  ue_creation_req.crnti               = to_rnti(0x4601);
+  serving_cell_config& serv_cell_cfg  = (*ue_creation_req.cfg.cells)[0].ded->serv_cell_cfg;
+  serv_cell_cfg.init_dl_bwp.pdcch_cfg = cell_cfg.bwp_res[to_bwp_id(0)].dl().ded_pdcchs[0];
+  serv_cell_cfg.ul_config->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs->max_length = dmrs_max_length::len2;
+  const ue& u                                                                           = add_ue(ue_creation_req);
+
+  ASSERT_TRUE(run_until([&]() { allocate_ul_newtx_grant_on_ports(slice_ues[u.ue_index], std::nullopt); },
+                        [&]() { return find_pusch(u.crnti) != nullptr; }));
+  const pusch_information& pusch = find_pusch(u.crnti)->pusch_cfg;
+  ASSERT_EQ(pusch.nof_layers, 1);
+  ASSERT_EQ(pusch.dmrs.dmrs_ports, get_su_pusch_dmrs_ports(1));
+  ASSERT_EQ(pusch.dmrs.num_dmrs_cdm_grps_no_data, 2);
+  // TS 38.212 Table 7.3.1.1.2-12, value 2, which has a single front-load symbol.
+  ASSERT_EQ(dci_antenna_ports(u.crnti), 2);
+  ASSERT_EQ(pusch.tb_size_bytes, ue_derived_tbs(pusch));
+}
+
+TEST_P(ue_grid_allocator_ul_dmrs_ports_test, pusch_and_dci_use_the_dmrs_ports_of_the_grant)
+{
+  const ue& u = add_ue(to_du_ue_index(0), {});
+
+  // The UE is paired with a UE on DM-RS port 0.
+  dmrs_port_mask dmrs_ports(DMRS_MAX_NPORTS);
+  dmrs_ports.set(1);
+  ASSERT_TRUE(
+      run_until([&]() { allocate_ul_newtx_grant_on_ports(slice_ues[u.ue_index], dmrs_port_selection{dmrs_ports, 2}); },
+                [&]() { return find_pusch(u.crnti) != nullptr; }));
+  const pusch_information& pusch = find_pusch(u.crnti)->pusch_cfg;
+  ASSERT_EQ(pusch.nof_layers, 1);
+  ASSERT_EQ(pusch.dmrs.dmrs_ports, dmrs_ports);
+  ASSERT_EQ(pusch.dmrs.num_dmrs_cdm_grps_no_data, 2);
+  // TS 38.212 Table 7.3.1.1.2-8, value 3.
+  ASSERT_EQ(dci_antenna_ports(u.crnti), 3);
+  ASSERT_EQ(pusch.tb_size_bytes, ue_derived_tbs(pusch));
+}
+
+// The UE derives the TBS of a reTx from the DM-RS overhead signalled in its DCI, hence the reTx keeps the CDM groups
+// without data of the original transmission.
+TEST_P(ue_grid_allocator_ul_dmrs_ports_test, retx_keeps_the_dmrs_ports_and_cdm_groups_of_the_original_transmission)
+{
+  const ue& u = add_ue(to_du_ue_index(0), {});
+
+  // The UE transmits on DM-RS port 1 with data in CDM group 1.
+  dmrs_port_mask dmrs_ports(DMRS_MAX_NPORTS);
+  dmrs_ports.set(1);
+  ASSERT_TRUE(
+      run_until([&]() { allocate_ul_newtx_grant_on_ports(slice_ues[u.ue_index], dmrs_port_selection{dmrs_ports, 1}); },
+                [&]() { return find_pusch(u.crnti) != nullptr; }));
+  ASSERT_TRUE(nack_and_allocate_ul_retx(u));
+
+  const pusch_information& retx = find_pusch(u.crnti)->pusch_cfg;
+  ASSERT_EQ(retx.dmrs.dmrs_ports, dmrs_ports);
+  ASSERT_EQ(retx.dmrs.num_dmrs_cdm_grps_no_data, 1);
+  // TS 38.212 Table 7.3.1.1.2-8, value 1.
+  ASSERT_EQ(dci_antenna_ports(u.crnti), 1);
+  ASSERT_EQ(retx.tb_size_bytes, ue_derived_tbs(retx));
+
+  // With the CDM groups without data of a single-user transmission, the UE would derive another TBS.
+  pusch_information su_pusch              = retx;
+  su_pusch.dmrs.num_dmrs_cdm_grps_no_data = 2;
+  ASSERT_NE(retx.tb_size_bytes, ue_derived_tbs(su_pusch));
+}
+
+TEST_P(ue_grid_allocator_ul_dmrs_ports_test, retx_keeps_the_dmrs_ports_of_a_two_layer_transmission)
+{
+  const ue& u = add_two_layer_ul_ue();
+
+  // The UE transmits two layers on the DM-RS ports of CDM group 1, other than the default ones.
+  dmrs_port_mask dmrs_ports(DMRS_MAX_NPORTS);
+  dmrs_ports.set(2);
+  dmrs_ports.set(3);
+  ASSERT_TRUE(
+      run_until([&]() { allocate_ul_newtx_grant_on_ports(slice_ues[u.ue_index], dmrs_port_selection{dmrs_ports, 2}); },
+                [&]() { return find_pusch(u.crnti) != nullptr; }));
+  const pusch_information& newtx = find_pusch(u.crnti)->pusch_cfg;
+  ASSERT_EQ(newtx.nof_layers, 2);
+  ASSERT_EQ(newtx.dmrs.dmrs_ports, dmrs_ports);
+  // TS 38.212 Table 7.3.1.1.2-9, value 2.
+  ASSERT_EQ(dci_antenna_ports(u.crnti), 2);
+  ASSERT_EQ(newtx.tb_size_bytes, ue_derived_tbs(newtx));
+
+  ASSERT_TRUE(nack_and_allocate_ul_retx(u));
+  const pusch_information& retx = find_pusch(u.crnti)->pusch_cfg;
+  ASSERT_EQ(retx.nof_layers, 2);
+  ASSERT_EQ(retx.dmrs.dmrs_ports, dmrs_ports);
+  ASSERT_EQ(retx.dmrs.num_dmrs_cdm_grps_no_data, 2);
+  ASSERT_EQ(dci_antenna_ports(u.crnti), 2);
+  ASSERT_EQ(retx.tb_size_bytes, ue_derived_tbs(retx));
+}
+
+INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
+                         ue_grid_allocator_ul_dmrs_ports_test,
                          testing::Values(duplex_mode::FDD, duplex_mode::TDD));
 
 // An NTN cell with a UE whose HARQ processes split between DL HARQ feedback enabled and disabled, so that the

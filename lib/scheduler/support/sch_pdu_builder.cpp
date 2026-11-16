@@ -37,8 +37,7 @@ static void populate_pdsch_pwr_offsets(pdsch_information& pdsch, const cell_conf
 pusch_config_params ocudu::get_pusch_config_f0_0_tc_rnti(const cell_configuration&                    cell_cfg,
                                                          const pusch_time_domain_resource_allocation& pusch_td_cfg)
 {
-  constexpr pusch_mcs_table mcs_table  = pusch_mcs_table::qam64;
-  constexpr unsigned        nof_layers = 1;
+  constexpr pusch_mcs_table mcs_table = pusch_mcs_table::qam64;
   // As per TS 38.214, Section 6.1.4.2, nof_oh_prb by \c xOverhead, defined in \c PUSCH-ServingCellConfig, TS 38.331; it
   // is in the dedicated resources, configured the after DCI Format 0-0 TC-RNTI is used. Hence, nof_oh_prb is here set
   // as 0.
@@ -59,7 +58,6 @@ pusch_config_params ocudu::get_pusch_config_f0_0_tc_rnti(const cell_configuratio
   pusch.symbols = pusch_td_cfg.symbols;
 
   pusch.mcs_table              = mcs_table;
-  pusch.nof_layers             = nof_layers;
   pusch.tp_pi2bpsk_present     = tp_pi2bpsk_present;
   pusch.use_transform_precoder = cell_cfg.use_msg3_transform_precoder();
   pusch.tb_scaling_field       = tb_scaling_field;
@@ -77,8 +75,7 @@ pusch_config_params ocudu::get_pusch_config_f0_0_c_rnti(const cell_configuration
                                                         const unsigned                               nof_harq_ack_bits,
                                                         bool                                         is_csi_report_slot)
 {
-  const pusch_mcs_table mcs_table  = pusch_mcs_table::qam64;
-  constexpr unsigned    nof_layers = 1;
+  const pusch_mcs_table mcs_table = pusch_mcs_table::qam64;
   // As per TS 38.214, Section 5.1.3.2 and 6.1.4.2, and TS 38.212, Section 7.3.1.1 and 7.3.1.2, TB scaling filed is only
   // used for DCI Format 1-0 (in the DL). Therefore, for the PUSCH this is set to 0.
   constexpr unsigned tb_scaling_field = 0;
@@ -92,7 +89,6 @@ pusch_config_params ocudu::get_pusch_config_f0_0_c_rnti(const cell_configuration
   pusch.symbols = pusch_td_cfg.symbols;
 
   pusch.mcs_table              = mcs_table;
-  pusch.nof_layers             = nof_layers;
   pusch.tp_pi2bpsk_present     = tp_pi2bpsk_present;
   pusch.use_transform_precoder = cell_cfg.use_msg3_transform_precoder();
   pusch.tb_scaling_field       = tb_scaling_field;
@@ -123,9 +119,10 @@ pusch_config_params ocudu::get_pusch_config_f0_0_c_rnti(const cell_configuration
 
 pusch_config_params ocudu::get_pusch_config_f0_1_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
                                                         const pusch_time_domain_resource_allocation& pusch_td_cfg,
-                                                        unsigned                                     nof_layers,
-                                                        const unsigned                               nof_harq_ack_bits,
-                                                        bool                                         is_csi_report_slot)
+                                                        const dmrs_port_mask&                        dmrs_ports,
+                                                        std::optional<unsigned> nof_cdm_groups_without_data,
+                                                        const unsigned          nof_harq_ack_bits,
+                                                        bool                    is_csi_report_slot)
 {
   const pusch_mcs_table mcs_table = ue_cell_cfg.init_bwp().ul.ded()->pusch_cfg->mcs_table;
   // As per TS 38.214, Section 5.1.3.2 and 6.1.4.2, and TS 38.212, Section 7.3.1.1 and 7.3.1.2, TB scaling filed is only
@@ -144,12 +141,12 @@ pusch_config_params ocudu::get_pusch_config_f0_1_c_rnti(const ue_cell_configurat
                                         ue_cell_cfg.cell_cfg_common.params.dmrs_typeA_pos,
                                         ue_cell_cfg.init_bwp().ul.ded()->pusch_cfg->pusch_mapping_type_a_dmrs.value(),
                                         ue_cell_cfg.use_pusch_transform_precoding_dci_0_1(),
-                                        get_su_pusch_dmrs_ports(nof_layers));
+                                        dmrs_ports,
+                                        nof_cdm_groups_without_data);
 
   pusch.symbols = pusch_td_cfg.symbols;
 
   pusch.mcs_table              = mcs_table;
-  pusch.nof_layers             = nof_layers;
   pusch.tp_pi2bpsk_present     = tp_pi2bpsk_present;
   pusch.use_transform_precoder = ue_cell_cfg.use_pusch_transform_precoding_dci_0_1();
   pusch.tb_scaling_field       = tb_scaling_field;
@@ -504,7 +501,7 @@ void ocudu::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch,
 
   // As per TS 38.211, Section 6.3.1.1, n_ID is set to Physical Cell ID for TC-RNTI.
   pusch.n_id       = cell_cfg.params.pci;
-  pusch.nof_layers = pusch_cfg.nof_layers;
+  pusch.nof_layers = pusch_cfg.nof_layers();
   pusch.dmrs       = pusch_cfg.dmrs;
   // TS 38.211, Section 6.4.1.1.1.2, n^RS_ID is set to to Physical Cell ID for TC-RNTI.
   pusch.pusch_dmrs_id = cell_cfg.params.pci;
@@ -560,7 +557,7 @@ void ocudu::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
   pusch.pusch_dmrs_id = cell_cfg.params.pci;
 
   // TBS.
-  pusch.nof_layers    = pusch_cfg.nof_layers;
+  pusch.nof_layers    = pusch_cfg.nof_layers();
   pusch.tb_size_bytes = tbs_bytes;
   pusch.nof_cb        = 0;
 
@@ -633,7 +630,7 @@ void ocudu::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
   pusch.dmrs = pusch_cfg.dmrs;
 
   // TBS.
-  pusch.nof_layers    = pusch_cfg.nof_layers;
+  pusch.nof_layers    = pusch_cfg.nof_layers();
   pusch.tb_size_bytes = mcs_tbs_info.tbs;
   // TODO: Set based on CobeBook config.
   pusch.nof_cb = 0;
@@ -687,7 +684,7 @@ void ocudu::build_pusch_cs_rnti(pusch_information&           pusch,
   // to Section 6.4.1.1.1.2, TS 38.211).
   pusch.pusch_dmrs_id = cell_cfg.params.pci;
   pusch.dmrs          = pusch_cfg.dmrs;
-  pusch.nof_layers    = pusch_cfg.nof_layers;
+  pusch.nof_layers    = pusch_cfg.nof_layers();
   pusch.tb_size_bytes = mcs_tbs_info.tbs;
   // Only 1 Codeword supported.
   pusch.nof_cb = 1U;

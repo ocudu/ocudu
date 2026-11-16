@@ -1210,7 +1210,7 @@ ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_interva
           pusch_cfg.symbols,
           pusch_cfg.nof_oh_prb,
           pusch_cfg.tb_scaling_field,
-          pusch_cfg.nof_layers,
+          pusch_cfg.nof_layers(),
           pusch_cfg.tp_pi2bpsk_present ? "yes" : "no",
           pusch_cfg.nof_harq_ack_bits,
           pusch_cfg.nof_csi_part1_bits,
@@ -1303,7 +1303,7 @@ ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_interva
                             grant.h_ul,
                             dai,
                             pusch_cfg.dmrs,
-                            ue_cc.channel_state_manager().get_recommended_pusch_tpmi(pusch_cfg.nof_layers),
+                            ue_cc.channel_state_manager().get_recommended_pusch_tpmi(pusch_cfg.nof_layers()),
                             tpc_command,
                             grant.cfg.pusch_cfg.aperiodic_csi
                                 ? std::optional<bool>(grant.cfg.pusch_cfg.nof_csi_part1_bits != 0)
@@ -1482,20 +1482,22 @@ void ue_cell_grid_allocator::post_process_results()
   ul_grants.clear();
 }
 
-void ue_cell_grid_allocator::dl_newtx_grant_builder::set_dmrs_ports(const dmrs_port_mask& dmrs_ports,
-                                                                    unsigned              nof_cdm_groups_without_data)
-{
-  dl_grant_info& grant                       = parent->dl_grants[grant_index];
-  grant.cfg.dmrs_ports                       = dmrs_ports;
-  grant.cfg.nof_dmrs_cdm_groups_without_data = nof_cdm_groups_without_data;
-}
-
 ue_cell_grid_allocator::dl_repetition_occasion_list
-ue_cell_grid_allocator::dl_newtx_grant_builder::set_pdsch_params(const vrb_alloc& alloc_vrbs, bool enable_interleaving)
+ue_cell_grid_allocator::dl_newtx_grant_builder::set_pdsch_params(const vrb_alloc& alloc_vrbs,
+                                                                 bool             enable_interleaving,
+                                                                 const std::optional<dmrs_port_selection>& dmrs)
 {
+  dl_grant_info& grant = parent->dl_grants[grant_index];
+  if (dmrs.has_value()) {
+    ocudu_assert(grant.user->get_cc().cfg().search_space(grant.cfg.ss_id).get_dl_dci_format() == dci_dl_format::f1_1,
+                 "Only DCI f1_1 signals the PDSCH DM-RS ports");
+    grant.cfg.dmrs_ports                       = dmrs->ports;
+    grant.cfg.nof_dmrs_cdm_groups_without_data = dmrs->nof_cdm_groups_without_data;
+  }
+
   // Transfer the PDSCH parameters to the parent DL grant.
   dl_repetition_occasion_list committed_repetition_slots =
-      parent->set_pdsch_params(parent->dl_grants[grant_index], alloc_vrbs, enable_interleaving);
+      parent->set_pdsch_params(grant, alloc_vrbs, enable_interleaving);
 
   // Set PDSCH parameters and set parent as nullptr to avoid further modifications.
   parent = nullptr;
@@ -1503,11 +1505,23 @@ ue_cell_grid_allocator::dl_newtx_grant_builder::set_pdsch_params(const vrb_alloc
 }
 
 ue_cell_grid_allocator::ul_repetition_occasion_list
-ue_cell_grid_allocator::ul_newtx_grant_builder::set_pusch_params(const vrb_interval& alloc_vrbs)
+ue_cell_grid_allocator::ul_newtx_grant_builder::set_pusch_params(const vrb_interval&                       alloc_vrbs,
+                                                                 const std::optional<dmrs_port_selection>& dmrs)
 {
+  ul_grant_info& grant = parent->ul_grants[grant_index];
+  if (dmrs.has_value()) {
+    const ue_cell_configuration& ue_cell_cfg = grant.user->get_cc().cfg();
+    ocudu_assert(ue_cell_cfg.search_space(grant.cfg.ss_id).get_ul_dci_format() == dci_ul_format::f0_1,
+                 "Only DCI f0_1 signals the PUSCH DM-RS ports");
+    set_pusch_dmrs_ports(grant.cfg.pusch_cfg.dmrs,
+                         ue_cell_cfg.init_bwp().ul.ded()->pusch_cfg->pusch_mapping_type_a_dmrs.value(),
+                         grant.cfg.pusch_cfg.use_transform_precoder,
+                         dmrs->ports,
+                         dmrs->nof_cdm_groups_without_data);
+  }
+
   // Transfer the PUSCH parameters to the parent UL grant.
-  ul_repetition_occasion_list committed_repetition_slots =
-      parent->set_pusch_params(parent->ul_grants[grant_index], alloc_vrbs);
+  ul_repetition_occasion_list committed_repetition_slots = parent->set_pusch_params(grant, alloc_vrbs);
 
   // Set PUSCH parameters and set parent as nullptr to avoid further modifications.
   parent = nullptr;

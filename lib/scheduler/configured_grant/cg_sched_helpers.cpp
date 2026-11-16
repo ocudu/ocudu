@@ -67,9 +67,8 @@ pusch_config_params ocudu::build_cg_pusch_cfg_params(const ue_cell_configuration
                                                          get_su_pusch_dmrs_ports(nof_layers));
 
   // Build PUSCH configuration parameters for TBS computation.
-  pusch_params.dmrs       = dmrs;
-  pusch_params.mcs_table  = cg_cfg.mcs_table;
-  pusch_params.nof_layers = nof_layers;
+  pusch_params.dmrs      = dmrs;
+  pusch_params.mcs_table = cg_cfg.mcs_table;
   // TODO: Import p_pi2bpsk_present from PUSCH Config once it will have been added there.
   pusch_params.tp_pi2bpsk_present = false;
   // Transform precoding not currently supported for CG. The mcs_table_transform_precoder field is separate.

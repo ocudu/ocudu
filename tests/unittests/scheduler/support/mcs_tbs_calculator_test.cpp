@@ -5,6 +5,7 @@
 
 #include "../test_utils/config_generators.h"
 #include "lib/scheduler/config/du_cell_group_config_pool.h"
+#include "lib/scheduler/support/dmrs_helpers.h"
 #include "lib/scheduler/support/mcs_tbs_calculator.h"
 #include "lib/scheduler/support/sch_pdu_builder.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
@@ -182,7 +183,8 @@ public:
     pusch_cfg(get_pusch_config_f0_1_c_rnti(
         ue_cell_cfg,
         cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list[time_resource],
-        1,
+        get_su_pusch_dmrs_ports(1),
+        std::nullopt,
         7,
         true))
   {
@@ -229,7 +231,8 @@ public:
     pusch_cfg(get_pusch_config_f0_1_c_rnti(
         ue_cell_cfg,
         cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list[time_resource],
-        1,
+        get_su_pusch_dmrs_ports(1),
+        std::nullopt,
         7,
         true))
   {
@@ -293,7 +296,8 @@ public:
     pusch_cfg(get_pusch_config_f0_1_c_rnti(
         ue_cell_cfg,
         cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list[time_resource],
-        1,
+        get_su_pusch_dmrs_ports(1),
+        std::nullopt,
         2,
         false))
   {
@@ -324,7 +328,8 @@ public:
     pusch_cfg(get_pusch_config_f0_1_c_rnti(
         ue_cell_cfg,
         cell_cfg.params.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list[time_resource],
-        1,
+        get_su_pusch_dmrs_ports(1),
+        std::nullopt,
         0,
         false))
   {

@@ -38,7 +38,7 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params& pusch_cfg
                                  .dmrs_symbol_mask   = pusch_cfg.dmrs.dmrs_symb_pos,
                                  .nof_cdm_groups_without_data =
                                      static_cast<unsigned>(pusch_cfg.dmrs.num_dmrs_cdm_grps_no_data),
-                                 .nof_layers  = pusch_cfg.nof_layers,
+                                 .nof_layers  = pusch_cfg.nof_layers(),
                                  .contains_dc = contains_dc};
 
   const uci_on_pusch* uci_cfg =
@@ -180,7 +180,7 @@ static compute_ul_mcs_tbs_error is_pusch_effective_rate_valid(const pusch_config
                                                            ulsch_info.nof_harq_ack_re,
                                                            nof_prbs,
                                                            mcs_info.modulation,
-                                                           config.nof_layers);
+                                                           config.nof_layers());
     if (min_nof_encoded_bits > ulsch_info.nof_harq_ack_bits.value()) {
       return compute_ul_mcs_tbs_error::insufficient_nof_rm_harq_ack;
     }
@@ -193,7 +193,7 @@ static compute_ul_mcs_tbs_error is_pusch_effective_rate_valid(const pusch_config
                                                            ulsch_info.nof_csi_part1_re,
                                                            nof_prbs,
                                                            mcs_info.modulation,
-                                                           config.nof_layers);
+                                                           config.nof_layers());
     if (min_nof_encoded_bits > ulsch_info.nof_csi_part1_bits.value()) {
       return compute_ul_mcs_tbs_error::insufficient_nof_rm_csi1;
     }
@@ -284,7 +284,7 @@ expected<sch_mcs_tbs, compute_ul_mcs_tbs_error> ocudu::compute_ul_mcs_tbs(const 
                                                             .nof_dmrs_prb     = dmrs_prbs,
                                                             .nof_oh_prb       = pusch_cfg.nof_oh_prb,
                                                             .mcs_descr        = mcs_info,
-                                                            .nof_layers       = pusch_cfg.nof_layers,
+                                                            .nof_layers       = pusch_cfg.nof_layers(),
                                                             .tb_scaling_field = pusch_cfg.tb_scaling_field,
                                                             .n_prb            = nof_prbs});
 
@@ -305,7 +305,7 @@ expected<sch_mcs_tbs, compute_ul_mcs_tbs_error> ocudu::compute_ul_mcs_tbs(const 
                                                                       .nof_dmrs_prb     = dmrs_prbs,
                                                                       .nof_oh_prb       = pusch_cfg.nof_oh_prb,
                                                                       .mcs_descr        = mcs_info,
-                                                                      .nof_layers       = pusch_cfg.nof_layers,
+                                                                      .nof_layers       = pusch_cfg.nof_layers(),
                                                                       .tb_scaling_field = pusch_cfg.tb_scaling_field,
                                                                       .n_prb            = nof_prbs});
 
@@ -337,7 +337,7 @@ std::optional<units::bytes> ocudu::compute_ul_tbs(const pusch_config_params& pus
                                                             .nof_dmrs_prb     = dmrs_prbs,
                                                             .nof_oh_prb       = pusch_cfg.nof_oh_prb,
                                                             .mcs_descr        = mcs_info,
-                                                            .nof_layers       = pusch_cfg.nof_layers,
+                                                            .nof_layers       = pusch_cfg.nof_layers(),
                                                             .tb_scaling_field = pusch_cfg.tb_scaling_field,
                                                             .n_prb            = nof_prbs});
 
@@ -366,7 +366,7 @@ bool ocudu::is_pusch_effective_rate_valid(const pusch_config_params& pusch_cfg,
                                                             .nof_dmrs_prb     = dmrs_prbs,
                                                             .nof_oh_prb       = pusch_cfg.nof_oh_prb,
                                                             .mcs_descr        = mcs_info,
-                                                            .nof_layers       = pusch_cfg.nof_layers,
+                                                            .nof_layers       = pusch_cfg.nof_layers(),
                                                             .tb_scaling_field = pusch_cfg.tb_scaling_field,
                                                             .n_prb            = nof_prbs});
 
@@ -387,7 +387,7 @@ units::bytes ocudu::compute_ul_tbs_unsafe(const pusch_config_params& pusch_cfg, 
                                                                .nof_dmrs_prb     = dmrs_prbs,
                                                                .nof_oh_prb       = pusch_cfg.nof_oh_prb,
                                                                .mcs_descr        = mcs_info,
-                                                               .nof_layers       = pusch_cfg.nof_layers,
+                                                               .nof_layers       = pusch_cfg.nof_layers(),
                                                                .tb_scaling_field = pusch_cfg.tb_scaling_field,
                                                                .n_prb            = nof_prbs});
 }
