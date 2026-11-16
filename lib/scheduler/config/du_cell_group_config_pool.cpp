@@ -154,11 +154,16 @@ static ue_bwp_config make_ue_bwp_config(const ue_bwp_config& bwp_cfg, const ue_r
 {
   ue_bwp_config cfg = bwp_cfg;
 
-  cfg.ul.pucch.res_set_cfg_id     = rrm_cfg.pucch.res_set_cfg_id;
-  cfg.ul.pucch.sr_res_id          = rrm_cfg.pucch.sr_res_id;
-  cfg.ul.pucch.sr_offset          = rrm_cfg.pucch.sr_offset;
-  cfg.ul.pucch.rep_f1_3_4_enabled = rrm_cfg.pucch.rep_f1_3_4_enabled;
-  cfg.ul.pucch.rep_f0_2_enabled   = rrm_cfg.pucch.rep_f0_2_enabled;
+  cfg.dl.pdsch.max_nof_layers         = rrm_cfg.pdsch.max_nof_layers;
+  cfg.dl.pdsch.nof_harqs              = rrm_cfg.pdsch.nof_harqs;
+  cfg.dl.pdsch.harq_feedback_disabled = rrm_cfg.pdsch.harq_feedback_disabled;
+  cfg.ul.pusch.nof_harqs              = rrm_cfg.pusch.nof_harqs;
+  cfg.ul.pusch.harq_mode              = rrm_cfg.pusch.harq_mode;
+  cfg.ul.pucch.res_set_cfg_id         = rrm_cfg.pucch.res_set_cfg_id;
+  cfg.ul.pucch.sr_res_id              = rrm_cfg.pucch.sr_res_id;
+  cfg.ul.pucch.sr_offset              = rrm_cfg.pucch.sr_offset;
+  cfg.ul.pucch.rep_f1_3_4_enabled     = rrm_cfg.pucch.rep_f1_3_4_enabled;
+  cfg.ul.pucch.rep_f0_2_enabled       = rrm_cfg.pucch.rep_f0_2_enabled;
   cfg.ul.csi.periodic_report.reset();
   if (rrm_cfg.csi.periodic_report.has_value()) {
     cfg.ul.csi.periodic_report.emplace(ue_periodic_csi_config{.pucch_res_id = rrm_cfg.csi.periodic_report->res_id,
@@ -180,15 +185,6 @@ ue_cell_config_ptr du_cell_config_pool::update_ue(const sched_ue_cell_config& ue
   } else {
     // Common and dedicated config.
     const serving_cell_config& serv_cell_cfg = ue_cell.ded->serv_cell_cfg;
-    if (serv_cell_cfg.ul_config.has_value() and serv_cell_cfg.ul_config.value().pusch_serv_cell_cfg.has_value()) {
-      ret.pusch_serv_cell_cfg.emplace(
-          pusch_serv_cell_pool.create(serv_cell_cfg.ul_config.value().pusch_serv_cell_cfg.value()));
-    }
-    if (serv_cell_cfg.pdsch_serv_cell_cfg.has_value()) {
-      ret.pdsch_serv_cell_cfg = pdsch_serv_cell_pool.create(serv_cell_cfg.pdsch_serv_cell_cfg.value());
-    }
-    ret.tag_id = serv_cell_cfg.tag_id;
-
     add_bwp(
         ret,
         cell_bwps[0]->add_ded_cfg(&serv_cell_cfg.init_dl_bwp,

@@ -3059,18 +3059,18 @@ static bool calculate_bwp_ul_dedicated_diff(asn1::rrc_nr::bwp_ul_ded_s&  out,
 }
 
 static void calculate_pusch_serving_cell_cfg_diff(asn1::rrc_nr::pusch_serving_cell_cfg_s& out,
-                                                  const pusch_serving_cell_config&        src,
-                                                  const pusch_serving_cell_config&        dest)
+                                                  const ue_pusch_rrm_config&              src,
+                                                  const ue_pusch_rrm_config&              dest)
 {
-  if (dest.nof_harq_proc != pusch_serving_cell_config::nof_harq_proc_for_pusch::n16) {
+  if (dest.nof_harqs != MAX_NOF_HARQS_NON_NTN) {
     out.nrof_harq_processes_for_pusch_r17_present = true;
   }
 
-  if (not dest.ul_harq_mode.all()) {
+  if (not dest.harq_mode.all()) {
     out.ul_harq_mode_r17.set_present();
     auto& ul_harq_mode_b = out.ul_harq_mode_r17->set_setup();
-    ul_harq_mode_b.from_number(dest.ul_harq_mode.to_uint64());
-  } else if (not src.ul_harq_mode.all()) {
+    ul_harq_mode_b.from_number(dest.harq_mode.to_uint64());
+  } else if (not src.harq_mode.all()) {
     out.ul_harq_mode_r17.set_present();
     out.ul_harq_mode_r17->set_release();
   } else {
@@ -3089,130 +3089,74 @@ static bool calculate_uplink_config_diff(asn1::rrc_nr::ul_cfg_s&      out,
   out.init_ul_bwp_present = calculate_bwp_ul_dedicated_diff(
       out.init_ul_bwp, src.init_ul_bwp, dest.init_ul_bwp, cell_pucch, src_rrm, dest_rrm);
 
-  if ((dest.pusch_serv_cell_cfg.has_value() && not src.pusch_serv_cell_cfg.has_value()) ||
-      (dest.pusch_serv_cell_cfg.has_value() && src.pusch_serv_cell_cfg.has_value() &&
-       dest.pusch_serv_cell_cfg != src.pusch_serv_cell_cfg)) {
+  // PUSCH-ServingCellConfig.
+  if (src_rrm == nullptr or not(src_rrm->pusch == dest_rrm.pusch)) {
     out.pusch_serving_cell_cfg_present = true;
     calculate_pusch_serving_cell_cfg_diff(out.pusch_serving_cell_cfg.set_setup(),
-                                          src.pusch_serv_cell_cfg.has_value() ? src.pusch_serv_cell_cfg.value()
-                                                                              : pusch_serving_cell_config{},
-                                          dest.pusch_serv_cell_cfg.value());
-  } else if (src.pusch_serv_cell_cfg.has_value() && not dest.pusch_serv_cell_cfg.has_value()) {
-    out.pusch_serving_cell_cfg_present = true;
-    out.pusch_serving_cell_cfg.set_release();
+                                          src_rrm != nullptr ? src_rrm->pusch : ue_pusch_rrm_config{},
+                                          dest_rrm.pusch);
   }
   // TODO: Remaining.
 
   return out.init_ul_bwp_present || out.pusch_serving_cell_cfg_present;
 }
 
-static void calculate_pdsch_serving_cell_cfg_diff(asn1::rrc_nr::pdsch_serving_cell_cfg_s& out,
-                                                  const pdsch_serving_cell_config&        src,
-                                                  const pdsch_serving_cell_config&        dest)
+/// Checks whether the PDSCH-ServingCellConfig of the UE changes.
+static bool pdsch_serving_cell_cfg_changed(const ue_rrm_config* src_rrm, const ue_rrm_config& dest_rrm)
 {
-  if ((dest.code_block_group_tx.has_value() && not src.code_block_group_tx.has_value()) ||
-      (dest.code_block_group_tx.has_value() && src.code_block_group_tx.has_value() &&
-       dest.code_block_group_tx != src.code_block_group_tx)) {
-    out.code_block_group_tx_present       = true;
-    auto& cbg_grp_tx                      = out.code_block_group_tx.set_setup();
-    cbg_grp_tx.code_block_group_flush_ind = dest.code_block_group_tx.value().code_block_group_flush_indicator;
-    switch (dest.code_block_group_tx.value().max_cbg_per_tb) {
-      case pdsch_code_block_group_transmission::max_code_block_groups_per_tb::n2:
-        cbg_grp_tx.max_code_block_groups_per_transport_block =
-            pdsch_code_block_group_tx_s::max_code_block_groups_per_transport_block_opts::n2;
-        break;
-      case pdsch_code_block_group_transmission::max_code_block_groups_per_tb::n4:
-        cbg_grp_tx.max_code_block_groups_per_transport_block =
-            pdsch_code_block_group_tx_s::max_code_block_groups_per_transport_block_opts::n4;
-        break;
-      case pdsch_code_block_group_transmission::max_code_block_groups_per_tb::n6:
-        cbg_grp_tx.max_code_block_groups_per_transport_block =
-            pdsch_code_block_group_tx_s::max_code_block_groups_per_transport_block_opts::n6;
-        break;
-      case pdsch_code_block_group_transmission::max_code_block_groups_per_tb::n8:
-        cbg_grp_tx.max_code_block_groups_per_transport_block =
-            pdsch_code_block_group_tx_s::max_code_block_groups_per_transport_block_opts::n8;
-        break;
-      default:
-        ocudu_assertion_failure("Invalid xOverhead={}", fmt::underlying(dest.x_ov_head));
-    }
-  } else if (src.code_block_group_tx.has_value() && not dest.code_block_group_tx.has_value()) {
-    out.code_block_group_tx_present = true;
-    out.code_block_group_tx.set_release();
-  }
+  return src_rrm == nullptr or not(src_rrm->pdsch == dest_rrm.pdsch);
+}
 
-  if (dest.x_ov_head != x_overhead::not_set) {
-    out.xoverhead_present = true;
-    switch (dest.x_ov_head) {
-      case x_overhead::xoh6:
-        out.xoverhead = pdsch_serving_cell_cfg_s::xoverhead_opts::xoh6;
-        break;
-      case x_overhead::xoh12:
-        out.xoverhead = pdsch_serving_cell_cfg_s::xoverhead_opts::xoh12;
-        break;
-      case x_overhead::xoh18:
-        out.xoverhead = pdsch_serving_cell_cfg_s::xoverhead_opts::xoh18;
-        break;
-      default:
-        ocudu_assertion_failure("Invalid xOverhead={}", fmt::underlying(dest.x_ov_head));
-    }
-  }
-
-  if (dest.nof_harq_proc != pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n8) {
+static void calculate_pdsch_serving_cell_cfg_diff(asn1::rrc_nr::pdsch_serving_cell_cfg_s& out,
+                                                  const ue_pdsch_rrm_config&              src,
+                                                  const ue_pdsch_rrm_config&              dest)
+{
+  if (dest.nof_harqs != 8) {
     out.nrof_harq_processes_for_pdsch_present = true;
-    switch (dest.nof_harq_proc) {
-      case pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n2:
+    switch (dest.nof_harqs) {
+      case 2:
         out.nrof_harq_processes_for_pdsch = pdsch_serving_cell_cfg_s::nrof_harq_processes_for_pdsch_opts::n2;
         break;
-      case pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n4:
+      case 4:
         out.nrof_harq_processes_for_pdsch = pdsch_serving_cell_cfg_s::nrof_harq_processes_for_pdsch_opts::n4;
         break;
-      case pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n6:
+      case 6:
         out.nrof_harq_processes_for_pdsch = pdsch_serving_cell_cfg_s::nrof_harq_processes_for_pdsch_opts::n6;
         break;
-      case pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n10:
+      case 10:
         out.nrof_harq_processes_for_pdsch = pdsch_serving_cell_cfg_s::nrof_harq_processes_for_pdsch_opts::n10;
         break;
-      case pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n12:
+      case 12:
         out.nrof_harq_processes_for_pdsch = pdsch_serving_cell_cfg_s::nrof_harq_processes_for_pdsch_opts::n12;
         break;
-      case pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n16:
+      case 16:
         out.nrof_harq_processes_for_pdsch = pdsch_serving_cell_cfg_s::nrof_harq_processes_for_pdsch_opts::n16;
         break;
-      case pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n32:
+      case 32:
         out.nrof_harq_processes_for_pdsch_present       = false;
         out.nrof_harq_processes_for_pdsch_v1700_present = true;
         break;
       default:
-        ocudu_assertion_failure("Invalid max. nof.HARQ process for PDSCH={}", fmt::underlying(dest.nof_harq_proc));
+        ocudu_assertion_failure("Invalid max. nof.HARQ process for PDSCH={}", dest.nof_harqs);
     }
   }
 
-  if (dest.dl_harq_feedback_disabled.any()) {
-    if (src.dl_harq_feedback_disabled != dest.dl_harq_feedback_disabled) {
+  if (dest.harq_feedback_disabled.any()) {
+    if (src.harq_feedback_disabled != dest.harq_feedback_disabled) {
       out.dl_harq_feedback_disabled_r17.set_present();
       auto& dl_harq_feedback_disabled = out.dl_harq_feedback_disabled_r17->set_setup();
-      dl_harq_feedback_disabled.from_number(dest.dl_harq_feedback_disabled.to_uint64());
+      dl_harq_feedback_disabled.from_number(dest.harq_feedback_disabled.to_uint64());
     }
-  } else if (src.dl_harq_feedback_disabled.any()) {
+  } else if (src.harq_feedback_disabled.any()) {
     out.dl_harq_feedback_disabled_r17.set_present();
     out.dl_harq_feedback_disabled_r17->set_release();
   } else {
     out.dl_harq_feedback_disabled_r17.reset();
   }
-  if (dest.pucch_cell.has_value()) {
-    out.pucch_cell_present = true;
-    out.pucch_cell         = dest.pucch_cell.value();
-  }
 
-  if (dest.max_mimo_layers.has_value()) {
+  if (dest.max_nof_layers.has_value()) {
     out.max_mimo_layers_present = true;
-    out.max_mimo_layers         = dest.max_mimo_layers.value();
-  }
-
-  if (dest.processing_type_2_enabled.has_value()) {
-    out.processing_type2_enabled_present = true;
-    out.processing_type2_enabled         = dest.processing_type_2_enabled.value();
+    out.max_mimo_layers         = *dest.max_nof_layers;
   }
 }
 
@@ -3239,17 +3183,11 @@ static bool calculate_serving_cell_config_diff(asn1::rrc_nr::serving_cell_cfg_s&
   }
 
   // PDSCH-ServingCellConfig.
-  if ((dest.pdsch_serv_cell_cfg.has_value() && not src.pdsch_serv_cell_cfg.has_value()) ||
-      (dest.pdsch_serv_cell_cfg.has_value() && src.pdsch_serv_cell_cfg.has_value() &&
-       dest.pdsch_serv_cell_cfg != src.pdsch_serv_cell_cfg)) {
+  if (pdsch_serving_cell_cfg_changed(src_ue != nullptr ? &src_ue->rrm : nullptr, dest_ue.rrm)) {
     out.pdsch_serving_cell_cfg_present = true;
     calculate_pdsch_serving_cell_cfg_diff(out.pdsch_serving_cell_cfg.set_setup(),
-                                          src.pdsch_serv_cell_cfg.has_value() ? src.pdsch_serv_cell_cfg.value()
-                                                                              : pdsch_serving_cell_config{},
-                                          dest.pdsch_serv_cell_cfg.value());
-  } else if (src.pdsch_serv_cell_cfg.has_value() && not dest.pdsch_serv_cell_cfg.has_value()) {
-    out.pdsch_serving_cell_cfg_present = true;
-    out.pdsch_serving_cell_cfg.set_release();
+                                          src_ue != nullptr ? src_ue->rrm.pdsch : ue_pdsch_rrm_config{},
+                                          dest_ue.rrm.pdsch);
   }
 
   // CSI-MeasConfig.
@@ -3265,7 +3203,7 @@ static bool calculate_serving_cell_config_diff(asn1::rrc_nr::serving_cell_cfg_s&
   }
 
   // TAG-ID.
-  out.tag_id = dest.tag_id.value();
+  out.tag_id = DEFAULT_TAG_ID.value();
 
   return out.init_dl_bwp_present || out.ul_cfg_present || out.pdsch_serving_cell_cfg_present ||
          out.csi_meas_cfg_present;

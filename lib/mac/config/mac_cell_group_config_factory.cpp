@@ -27,7 +27,7 @@ mac_cell_group_config config_helpers::make_initial_mac_cell_group_config(const m
   }
 
   mcg_cfg.tag_config.emplace_back(
-      time_alignment_group{.tag_id = time_alignment_group::id_t{0}, .ta_timer = time_alignment_timer::infinity});
+      time_alignment_group{.tag_id = DEFAULT_TAG_ID, .ta_timer = time_alignment_timer::infinity});
 
   mcg_cfg.phr_cfg.emplace();
   mcg_cfg.phr_cfg.value().periodic_timer         = phr_periodic_timer::sf10;

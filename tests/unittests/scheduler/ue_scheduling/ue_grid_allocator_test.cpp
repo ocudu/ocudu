@@ -392,7 +392,7 @@ TEST_P(ue_grid_allocator_default_cfg_test, ue_pdsch_uses_the_tbs_lbrm_the_ue_der
   (*ue_creation_req.cfg.cells)[0].ded->serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = ocudu::pdsch_mcs_table::qam256;
   ue_creation_req.ue_index                                                            = to_du_ue_index(0);
   ue_creation_req.crnti                                                               = to_rnti(0x4601);
-  const unsigned max_mimo_layers = *(*ue_creation_req.cfg.cells)[0].ded->init_bwp().dl.pdsch.max_nof_layers;
+  const unsigned max_mimo_layers = *(*ue_creation_req.cfg.cells)[0].ded->rrm.pdsch.max_nof_layers;
 
   const ue& u = add_ue(ue_creation_req);
 
@@ -1541,10 +1541,10 @@ protected:
     req.crnti                                                    = to_rnti(0x4601);
     (*req.cfg.cells)[0].ded->serv_cell_cfg.init_dl_bwp.pdcch_cfg = cell_cfg.bwp_res[to_bwp_id(0)].dl().ded_pdcchs[0];
 
-    auto& pdsch_cell_cfg         = (*req.cfg.cells)[0].ded->serv_cell_cfg.pdsch_serv_cell_cfg.value();
-    pdsch_cell_cfg.nof_harq_proc = pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n2;
+    ue_pdsch_rrm_config& pdsch = (*req.cfg.cells)[0].ded->rrm.pdsch;
+    pdsch.nof_harqs            = 2;
     // Process 0 carries the feedback and process 1 has it disabled.
-    pdsch_cell_cfg.dl_harq_feedback_disabled.set(1);
+    pdsch.harq_feedback_disabled.set(1);
 
     req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(srb_lcid));
     req.cfg.lc_config_list->back().allowed_dl_harq_feedback = dl_harq_feedback::enabled;
@@ -1691,7 +1691,7 @@ protected:
     (*req.cfg.cells)[0].ded->serv_cell_cfg.init_dl_bwp.pdcch_cfg = cell_cfg.bwp_res[to_bwp_id(0)].dl().ded_pdcchs[0];
 
     // A bit set to one identifies a process in mode A, so only process 0 operates in that mode.
-    auto& ul_harq_mode = (*req.cfg.cells)[0].ded->serv_cell_cfg.ul_config->pusch_serv_cell_cfg->ul_harq_mode;
+    auto& ul_harq_mode = (*req.cfg.cells)[0].ded->rrm.pusch.harq_mode;
     ul_harq_mode       = harq_ul_mode_mask(ul_harq_mode.size());
     ul_harq_mode.set(0);
 

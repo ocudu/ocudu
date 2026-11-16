@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "ocudu/ran/harq_id.h"
 #include "ocudu/scheduler/rrm/cell_pucch_resources.h"
 #include <optional>
 
@@ -51,12 +52,49 @@ struct ue_csi_rrm_config {
   bool operator==(const ue_csi_rrm_config& other) const { return periodic_report == other.periodic_report; }
 };
 
+/// PDSCH parameters that the RRM allocates to a UE.
+struct ue_pdsch_rrm_config {
+  /// Number of DL HARQ processes. See TS 38.331, \c nrofHARQ-ProcessesForPDSCH.
+  uint8_t nof_harqs = MAX_NOF_HARQS_NON_NTN;
+  /// A bit set to 1 indicates a DL HARQ process with disabled HARQ feedback. See TS 38.331, \c
+  /// downlinkHARQ-FeedbackDisabled.
+  harq_dl_feedback_disabled_mask harq_feedback_disabled = harq_dl_feedback_disabled_mask(MAX_NOF_HARQS);
+  /// Maximum number of PDSCH layers of the UE in the cell. See TS 38.331, \c maxMIMO-Layers. Absent if only the cell
+  /// limits the number of layers.
+  std::optional<uint8_t> max_nof_layers;
+
+  bool operator==(const ue_pdsch_rrm_config& other) const
+  {
+    return nof_harqs == other.nof_harqs and harq_feedback_disabled == other.harq_feedback_disabled and
+           max_nof_layers == other.max_nof_layers;
+  }
+};
+
+/// PUSCH parameters that the RRM allocates to a UE.
+struct ue_pusch_rrm_config {
+  /// Number of UL HARQ processes. See TS 38.331, \c nrofHARQ-ProcessesForPUSCH.
+  uint8_t nof_harqs = MAX_NOF_HARQS_NON_NTN;
+  /// A bit set to 1 indicates a UL HARQ process in mode A, and a bit set to 0 a process in mode B. See TS 38.331, \c
+  /// uplinkHARQ-mode.
+  harq_ul_mode_mask harq_mode = ~harq_ul_mode_mask(MAX_NOF_HARQS);
+
+  bool operator==(const ue_pusch_rrm_config& other) const
+  {
+    return nof_harqs == other.nof_harqs and harq_mode == other.harq_mode;
+  }
+};
+
 /// Resources that the RRM allocates to a UE in a cell.
 struct ue_rrm_config {
   ue_pucch_rrm_config pucch;
   ue_csi_rrm_config   csi;
+  ue_pdsch_rrm_config pdsch;
+  ue_pusch_rrm_config pusch;
 
-  bool operator==(const ue_rrm_config& other) const { return pucch == other.pucch and csi == other.csi; }
+  bool operator==(const ue_rrm_config& other) const
+  {
+    return pucch == other.pucch and csi == other.csi and pdsch == other.pdsch and pusch == other.pusch;
+  }
 };
 
 } // namespace ocudu

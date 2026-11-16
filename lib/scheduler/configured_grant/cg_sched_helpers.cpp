@@ -78,9 +78,7 @@ pusch_config_params ocudu::build_cg_pusch_cfg_params(const ue_cell_configuration
   // used for DCI Format 1-0 (in the DL). Therefore, for the PUSCH this is set to 0.
   pusch_params.tb_scaling_field = 0;
   // As per TS 38.214, Section 6.1.4.2, nof_oh_prb equals xOverhead when configured; otherwise 0.
-  pusch_params.nof_oh_prb = ue_cell_cfg.pusch_serving_cell_cfg() != nullptr
-                                ? static_cast<unsigned>(ue_cell_cfg.pusch_serving_cell_cfg()->x_ov_head)
-                                : static_cast<unsigned>(x_overhead::not_set);
+  pusch_params.nof_oh_prb = ue_cell_cfg.cell_cfg_common.pusch_nof_oh_prb();
   // If aperiodic CSI is configured, we'll trigger it only for dynamic grants.
   pusch_params.aperiodic_csi = false;
 

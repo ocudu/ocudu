@@ -43,12 +43,9 @@ static void set_ul_mimo(ue_cell_config&           cell_cfg,
   }
 }
 
-static void set_max_ul_nof_harqs(serving_cell_config& cell_cfg, unsigned nof_harqs)
+static void set_max_ul_nof_harqs(ue_cell_config& cell_cfg, unsigned nof_harqs)
 {
-  if (cell_cfg.ul_config.has_value() and cell_cfg.ul_config->pusch_serv_cell_cfg.has_value()) {
-    cell_cfg.ul_config->pusch_serv_cell_cfg->nof_harq_proc =
-        static_cast<pusch_serving_cell_config::nof_harq_proc_for_pusch>(nof_harqs);
-  }
+  cell_cfg.rrm.pusch.nof_harqs = static_cast<uint8_t>(nof_harqs);
 }
 
 static void set_ul_dci_harq_num_field_size(serving_cell_config& cell_cfg, unsigned field_size)
@@ -61,11 +58,9 @@ static void set_ul_dci_harq_num_field_size(serving_cell_config& cell_cfg, unsign
   }
 }
 
-static void set_ul_harq_mode(serving_cell_config& cell_cfg, const harq_ul_mode_mask& ul_harq_mode_mask_)
+static void set_ul_harq_mode(ue_cell_config& cell_cfg, const harq_ul_mode_mask& ul_harq_mode_mask_)
 {
-  if (cell_cfg.ul_config.has_value() and cell_cfg.ul_config->pusch_serv_cell_cfg.has_value()) {
-    cell_cfg.ul_config->pusch_serv_cell_cfg->ul_harq_mode = ul_harq_mode_mask_;
-  }
+  cell_cfg.rrm.pusch.harq_mode = ul_harq_mode_mask_;
 }
 
 static void set_pusch_td_alloc_list(serving_cell_config&                               cell_cfg,
@@ -108,9 +103,9 @@ void du_pusch_resource_manager::apply_config(cell_group_config&                 
               select_max_rank(cell_idx, ue_caps),
               select_srs_nof_ports(cell_idx, ue_caps),
               select_tx_codebook_subset(cell_idx, ue_caps));
-  set_max_ul_nof_harqs(pcell_cfg.serv_cell_cfg, select_max_nof_harqs(cell_idx, ue_caps));
+  set_max_ul_nof_harqs(pcell_cfg, select_max_nof_harqs(cell_idx, ue_caps));
   set_ul_dci_harq_num_field_size(pcell_cfg.serv_cell_cfg, select_dci_harq_field_size(cell_idx, ue_caps));
-  set_ul_harq_mode(pcell_cfg.serv_cell_cfg, select_harq_mode(cell_idx, ue_caps));
+  set_ul_harq_mode(pcell_cfg, select_harq_mode(cell_idx, ue_caps));
   set_pusch_td_alloc_list(pcell_cfg.serv_cell_cfg, select_td_alloc_list(cell_idx, ue_caps));
 }
 

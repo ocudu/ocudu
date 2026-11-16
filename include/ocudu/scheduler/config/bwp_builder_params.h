@@ -88,8 +88,6 @@ struct pusch_builder_params {
   /// A bit set to one identifies a HARQ process in modeA and a bit set to zero identifies a HARQ process in modeB.
   /// \remark See TS 38.331, \c uplinkHARQ-mode.
   harq_ul_mode_mask ul_harq_mode = ~harq_ul_mode_mask(MAX_NOF_HARQS);
-  /// Maximum number of code-block-groups (CBGs) per TB. See TS 38.213, clause 9.1. Values: {2, 4, 6, 8}.
-  std::optional<uint8_t> cbg_tx;
   /// \c xOverhead.
   x_overhead x_ov_head{x_overhead::not_set};
   /// \brief Maximum number of PUSCH repetitions offered in the dedicated Rel-16 TDRA list of supporting UEs.

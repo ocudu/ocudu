@@ -56,11 +56,10 @@ protected:
   {
     switch (dci_type) {
       case dci_dl_rnti_config_type::c_rnti_f1_0:
-        return sched_helper::get_pdsch_config_f1_0_c_rnti(cell_cfg, ue_cc.cfg().pdsch_serving_cell_cfg(), pdsch_td_cfg);
+        return sched_helper::get_pdsch_config_f1_0_c_rnti(cell_cfg, pdsch_td_cfg);
       case dci_dl_rnti_config_type::c_rnti_f1_1:
         return sched_helper::get_pdsch_config_f1_1_c_rnti(cell_cfg,
                                                           *ue_cc.cfg().bwp(to_bwp_id(0)).dl.pdsch().ded(),
-                                                          ue_cc.cfg().pdsch_serving_cell_cfg(),
                                                           pdsch_td_cfg,
                                                           ue_cc.channel_state_manager().get_nof_dl_layers());
       default:
@@ -559,12 +558,10 @@ protected:
     return *(*last_ue_req.cfg.cells)[0].ded->serv_cell_cfg.csi_meas_cfg;
   }
 
-  /// Sets the PDSCH layer limit of the UE and its maxMIMO-Layers, as the DU does.
+  /// Sets the PDSCH layer limit of the UE, as the DU does.
   static void set_max_mimo_layers(sched_ue_creation_request_message& ue_req, unsigned max_mimo_layers)
   {
-    ue_cell_config& ue_cell                                    = *(*ue_req.cfg.cells)[0].ded;
-    ue_cell.init_bwp().dl.pdsch.max_nof_layers                 = max_mimo_layers;
-    ue_cell.serv_cell_cfg.pdsch_serv_cell_cfg->max_mimo_layers = max_mimo_layers;
+    (*ue_req.cfg.cells)[0].ded->rrm.pdsch.max_nof_layers = static_cast<uint8_t>(max_mimo_layers);
   }
 
   scheduler_expert_config                  expert_cfg;

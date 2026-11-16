@@ -47,7 +47,6 @@ public:
   dl_mcs_tbs_calculator_test_bench() :
     pdsch_cfg(sched_helper::get_pdsch_config_f1_0_c_rnti(
         cell_cfg,
-        ue_cell_cfg.pdsch_serving_cell_cfg(),
         cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource]))
   {
   }
@@ -91,7 +90,6 @@ protected:
   dl_mcs_tbs_calculator_csi_rs_test() :
     pdsch_cfg(sched_helper::get_pdsch_config_f1_0_c_rnti(
         cell_cfg,
-        ue_cell_cfg.pdsch_serving_cell_cfg(),
         cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0]))
   {
     pdsch_cfg.mcs_table = pdsch_mcs_table::qam256;

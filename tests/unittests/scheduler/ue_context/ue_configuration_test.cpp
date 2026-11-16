@@ -62,19 +62,14 @@ unsigned precomputed_pdsch_layer_configs(unsigned nof_dl_antennas)
     }
   }
 
-  // The RRC maxMIMO-Layers (PDSCH-ServingCellConfig) signalled to the UE should match the resolved maximum number of DL
+  // The PDSCH layer limit of the UE (maxMIMO-Layers signalled to the UE) should match the resolved maximum number of DL
   // layers.
-  const pdsch_serving_cell_config* pdsch_serv_cell = ue_cell_cfg.pdsch_serving_cell_cfg();
-  EXPECT_NE(pdsch_serv_cell, nullptr);
-  if (pdsch_serv_cell != nullptr) {
-    EXPECT_EQ(pdsch_serv_cell->max_mimo_layers, max_configs)
-        << "RRC maxMIMO-Layers must match the resolved max DL layers for nof_dl_antennas=" << nof_dl_antennas;
-    const ue_downlink_bwp_config* ue_dl_bwp = ue_cell_cfg.init_bwp().dl.ue_cfg();
-    EXPECT_NE(ue_dl_bwp, nullptr);
-    if (ue_dl_bwp != nullptr) {
-      EXPECT_EQ(ue_dl_bwp->pdsch.max_nof_layers, pdsch_serv_cell->max_mimo_layers)
-          << "The PDSCH layer limit of the scheduler must match maxMIMO-Layers for nof_dl_antennas=" << nof_dl_antennas;
-    }
+  const ue_downlink_bwp_config* ue_dl_bwp = ue_cell_cfg.init_bwp().dl.ue_cfg();
+  EXPECT_NE(ue_dl_bwp, nullptr);
+  if (ue_dl_bwp != nullptr) {
+    EXPECT_EQ(ue_dl_bwp->pdsch.max_nof_layers, max_configs)
+        << "The PDSCH layer limit of the UE must match the resolved max DL layers for nof_dl_antennas="
+        << nof_dl_antennas;
 
     // The UE derives TBS_LBRM from maxMIMO-Layers, the MCS table and the size of its BWP (TS 38.212, Section 5.4.2.1).
     EXPECT_EQ(ue_cell_cfg.init_bwp().dl.pdsch().ded()->mcs_table, pdsch_mcs_table::qam256);
@@ -132,5 +127,35 @@ TEST(ue_configuration_test, ue_pucch_and_csi_configs_come_from_the_ue_rrm_config
   ASSERT_TRUE(ue_ul.csi.periodic_report.has_value());
   EXPECT_EQ(ue_ul.csi.periodic_report->pucch_res_id, rrm.csi.periodic_report->res_id);
   EXPECT_EQ(ue_ul.csi.periodic_report->offset, rrm.csi.periodic_report->offset);
+  ev.notify_completion();
+}
+
+// The scheduler takes the HARQ processes of the UE from the resources that the RRM allocates to it.
+TEST(ue_configuration_test, ue_harq_configs_come_from_the_ue_rrm_config)
+{
+  scheduler_expert_config  expert_cfg = config_helpers::make_default_scheduler_expert_config();
+  sched_cfg_dummy_notifier metric_notif;
+  sched_config_manager     cfg_mng(scheduler_config{expert_cfg, metric_notif});
+
+  const cell_configuration& cell_cfg =
+      *cfg_mng.add_cell(sched_config_helper::make_default_sched_cell_configuration_request());
+
+  sched_ue_creation_request_message ue_req = sched_config_helper::create_default_sched_ue_creation_request(
+      cell_cfg.params, std::array<lcid_t, 3>{lcid_t::LCID_SRB1, lcid_t::LCID_SRB2, lcid_t::LCID_MIN_DRB});
+  ue_rrm_config& rrm  = ue_req.cfg.cells->front().ded->rrm;
+  rrm.pdsch.nof_harqs = 4;
+  rrm.pusch.nof_harqs = 32;
+  rrm.pdsch.harq_feedback_disabled.set(3);
+  rrm.pusch.harq_mode.reset(1);
+
+  ue_config_update_event ev = cfg_mng.add_ue(ue_req);
+  ASSERT_TRUE(ev.valid());
+  const sched_bwp_config& bwp = ev.next_config().pcell_cfg().init_bwp();
+  ASSERT_NE(bwp.dl.ue_cfg(), nullptr);
+  ASSERT_NE(bwp.ul.ue_cfg(), nullptr);
+  EXPECT_EQ(bwp.dl.ue_cfg()->pdsch.nof_harqs, 4);
+  EXPECT_EQ(bwp.dl.ue_cfg()->pdsch.harq_feedback_disabled, rrm.pdsch.harq_feedback_disabled);
+  EXPECT_EQ(bwp.ul.ue_cfg()->pusch.nof_harqs, 32);
+  EXPECT_EQ(bwp.ul.ue_cfg()->pusch.harq_mode, rrm.pusch.harq_mode);
   ev.notify_completion();
 }

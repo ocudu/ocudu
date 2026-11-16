@@ -172,8 +172,8 @@ void ue_repository::add_ue(const ue_configuration& ue_cfg, const ue_creation_con
   // TA delays are counted in scheduler slots, which the UL slots must match.
   const subcarrier_spacing ul_scs = pcell_cmn.params.ul_cfg_common.init_ul_bwp.generic_params.scs;
   ocudu_sanity_check(ul_scs == pcell_cmn.scs_common(), "The UL SCS must match the common SCS");
-  auto ue_ta_mgr = ta_mgr_sys.add_ue(
-      ue_cfg.pcell_cfg().tag_id(), ul_scs, scs, ue_lc_mng.view(), pcell_cmn.ntn_ul_alloc_delay_slots());
+  auto ue_ta_mgr =
+      ta_mgr_sys.add_ue(DEFAULT_TAG_ID, ul_scs, scs, ue_lc_mng.view(), pcell_cmn.ntn_ul_alloc_delay_slots());
 
   // Setup UE cells.
   ue_cell_lookups.emplace(ue_index);

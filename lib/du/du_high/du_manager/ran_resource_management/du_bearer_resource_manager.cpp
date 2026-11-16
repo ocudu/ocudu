@@ -119,15 +119,9 @@ du_bearer_resource_manager::supported_allowed_harq_mode(const du_ue_resource_con
     return std::nullopt;
   }
 
-  // [Implementation-defined] TS 38.331 gives the mask a meaning only when uplinkHARQ-mode is present, so an absent
-  // PUSCH serving cell config is taken to leave every process in mode A.
-  harq_ul_mode_mask mode_mask = ~harq_ul_mode_mask(MAX_NOF_HARQS);
-  unsigned          nof_harqs = static_cast<unsigned>(pusch_serving_cell_config::nof_harq_proc_for_pusch::n16);
-  const auto&       serv_cell = ue_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg;
-  if (serv_cell.ul_config.has_value() and serv_cell.ul_config->pusch_serv_cell_cfg.has_value()) {
-    mode_mask = serv_cell.ul_config->pusch_serv_cell_cfg->ul_harq_mode;
-    nof_harqs = static_cast<unsigned>(serv_cell.ul_config->pusch_serv_cell_cfg->nof_harq_proc);
-  }
+  const ue_pusch_rrm_config& pusch     = ue_cfg.cell_group.cells.at(SERVING_PCELL_IDX).rrm.pusch;
+  const harq_ul_mode_mask&   mode_mask = pusch.harq_mode;
+  const unsigned             nof_harqs = pusch.nof_harqs;
 
   if (not is_ul_harq_mode_available(mode_mask, nof_harqs, *allowed_harq_mode)) {
     logger.warning("lcid={}: Dropping the allowed HARQ mode {}. Cause: no UL HARQ process of this UE operates in that "
@@ -161,14 +155,9 @@ du_bearer_resource_manager::supported_dl_harq_feedback(const du_ue_resource_conf
     return std::nullopt;
   }
 
-  // An absent PDSCH serving cell config leaves the feedback of every process enabled, as per TS 38.331.
-  harq_dl_feedback_disabled_mask disabled_mask(MAX_NOF_HARQS);
-  auto        nof_harqs = static_cast<unsigned>(pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n16);
-  const auto& serv_cell = ue_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg;
-  if (serv_cell.pdsch_serv_cell_cfg.has_value()) {
-    disabled_mask = serv_cell.pdsch_serv_cell_cfg->dl_harq_feedback_disabled;
-    nof_harqs     = static_cast<unsigned>(serv_cell.pdsch_serv_cell_cfg->nof_harq_proc);
-  }
+  const ue_pdsch_rrm_config&            pdsch         = ue_cfg.cell_group.cells.at(SERVING_PCELL_IDX).rrm.pdsch;
+  const harq_dl_feedback_disabled_mask& disabled_mask = pdsch.harq_feedback_disabled;
+  const unsigned                        nof_harqs     = pdsch.nof_harqs;
 
   if (not is_dl_harq_feedback_available(disabled_mask, nof_harqs, *allowed_dl_harq_feedback)) {
     logger.warning("lcid={}: Dropping the allowed DL HARQ feedback restriction. Cause: no DL HARQ process of this UE "

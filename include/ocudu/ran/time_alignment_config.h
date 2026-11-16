@@ -43,4 +43,7 @@ struct time_alignment_group {
   bool operator!=(const time_alignment_group& rhs) const { return !(rhs == *this); }
 };
 
+/// ID of the only TAG that the DU configures. All the cells of a UE belong to it.
+constexpr time_alignment_group::id_t DEFAULT_TAG_ID{0};
+
 } // namespace ocudu

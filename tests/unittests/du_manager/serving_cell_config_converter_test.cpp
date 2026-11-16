@@ -17,6 +17,7 @@
 #include "ocudu/scheduler/config/rlm_helper.h"
 #include "ocudu/scheduler/config/serving_cell_config_builder.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
+#include <functional>
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -941,8 +942,7 @@ TEST(serving_cell_config_converter_test, test_initial_pdsch_serving_cell_cfg_con
 {
   auto dest_cfg = make_initial_du_ue_resource_config();
 
-  dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
-      pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n8;
+  dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).rrm.pdsch.nof_harqs = 8;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
   odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg, default_cell_rrm());
@@ -950,11 +950,9 @@ TEST(serving_cell_config_converter_test, test_initial_pdsch_serving_cell_cfg_con
   ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg_present);
   ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded_present);
 
-  auto& rrc_sp_cell_cfg_ded  = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
-  auto& dest_sp_cell_cfg_ded = dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg;
+  auto& rrc_sp_cell_cfg_ded = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
 
   ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg_present);
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg_present, dest_sp_cell_cfg_ded.pdsch_serv_cell_cfg.has_value());
   // Since its initial setup and no source cell group config was provided PDSCH serving cell config must be of setup
   // type.
   ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.is_setup());
@@ -970,16 +968,15 @@ TEST(serving_cell_config_converter_test, max_mimo_layers_is_only_encoded_when_co
     auto src_cfg = make_initial_du_ue_resource_config();
 
     odu::du_ue_resource_config dest_cfg{src_cfg};
-    auto&                      dest_pdsch_serving_cell_cfg =
-        dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.pdsch_serv_cell_cfg.value();
-    dest_pdsch_serving_cell_cfg.x_ov_head                 = ocudu::x_overhead::xoh6;
-    dest_pdsch_serving_cell_cfg.max_mimo_layers           = max_mimo_layers;
-    dest_pdsch_serving_cell_cfg.processing_type_2_enabled = true;
+    auto&                      dest_pcell = dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX);
+    // Change a field of the main group of PDSCH-ServingCellConfig, to force the conversion of the PDSCH config.
+    dest_pcell.rrm.pdsch.nof_harqs      = 12;
+    dest_pcell.rrm.pdsch.max_nof_layers = max_mimo_layers;
 
     asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
     odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, default_cell_rrm());
 
-    // Both fields are in an extension addition group of PDSCH-ServingCellConfig, as per TS 38.331, Section 6.3.2.
+    // The field is in an extension addition group of PDSCH-ServingCellConfig, as per TS 38.331, Section 6.3.2.
     byte_buffer   packed;
     asn1::bit_ref bref{packed};
     ASSERT_EQ(asn1::pack(bref, rrc_cell_grp_cfg), asn1::OCUDUASN_SUCCESS);
@@ -993,9 +990,64 @@ TEST(serving_cell_config_converter_test, max_mimo_layers_is_only_encoded_when_co
     if (max_mimo_layers.has_value()) {
       ASSERT_EQ(pdsch_serving_cell_cfg.max_mimo_layers, *max_mimo_layers);
     }
-    ASSERT_TRUE(pdsch_serving_cell_cfg.processing_type2_enabled_present);
-    ASSERT_TRUE(pdsch_serving_cell_cfg.processing_type2_enabled);
   }
+}
+
+/// Each value that the DU signals in the PDSCH-ServingCellConfig and in the PUSCH-ServingCellConfig must trigger the
+/// conversion of its IE on its own, because the values change independently (e.g. after the UE capability update).
+TEST(serving_cell_config_converter_test, serving_cell_cfg_is_sent_when_one_of_its_values_changes)
+{
+  struct change {
+    const char*                          name;
+    std::function<void(ue_cell_config&)> apply;
+    bool                                 pdsch_expected;
+    bool                                 pusch_expected;
+  };
+  const std::vector<change> changes = {
+      {"none", [](ue_cell_config&) {}, false, false},
+      {"nof_dl_harqs", [](ue_cell_config& c) { c.rrm.pdsch.nof_harqs = 12; }, true, false},
+      {"dl_feedback_disabled", [](ue_cell_config& c) { c.rrm.pdsch.harq_feedback_disabled.set(3); }, true, false},
+      {"max_mimo_layers", [](ue_cell_config& c) { c.rrm.pdsch.max_nof_layers = 4; }, true, false},
+      {"nof_ul_harqs", [](ue_cell_config& c) { c.rrm.pusch.nof_harqs = 32; }, false, true},
+      {"ul_mode", [](ue_cell_config& c) { c.rrm.pusch.harq_mode.reset(5); }, false, true},
+  };
+
+  for (const change& chg : changes) {
+    SCOPED_TRACE(chg.name);
+    auto                       src_cfg = make_initial_du_ue_resource_config();
+    odu::du_ue_resource_config dest_cfg{src_cfg};
+    chg.apply(dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX));
+
+    asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
+    odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, default_cell_rrm());
+
+    const auto& rrc_sp_cell_cfg_ded = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
+    EXPECT_EQ(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg_present, chg.pdsch_expected);
+    EXPECT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.pusch_serving_cell_cfg_present, chg.pusch_expected);
+  }
+}
+
+TEST(serving_cell_config_converter_test, test_pusch_serving_cell_cfg_conversion)
+{
+  auto src_cfg = make_initial_du_ue_resource_config();
+
+  odu::du_ue_resource_config dest_cfg{src_cfg};
+  auto&                      dest_pcell = dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX);
+  dest_pcell.rrm.pusch.nof_harqs        = 32;
+  dest_pcell.rrm.pusch.harq_mode.reset(5);
+
+  asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, default_cell_rrm());
+
+  ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg_present);
+  const auto& rrc_ul_cfg = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg;
+  ASSERT_TRUE(rrc_ul_cfg.pusch_serving_cell_cfg_present);
+  ASSERT_TRUE(rrc_ul_cfg.pusch_serving_cell_cfg.is_setup());
+  ASSERT_TRUE(rrc_ul_cfg.pusch_serving_cell_cfg.setup().nrof_harq_processes_for_pusch_r17_present);
+  ASSERT_TRUE(rrc_ul_cfg.pusch_serving_cell_cfg.setup().ul_harq_mode_r17.is_present());
+  ASSERT_TRUE(rrc_ul_cfg.pusch_serving_cell_cfg.setup().ul_harq_mode_r17->is_setup());
+  EXPECT_EQ(rrc_ul_cfg.pusch_serving_cell_cfg.setup().ul_harq_mode_r17->setup().to_number(),
+            dest_pcell.rrm.pusch.harq_mode.to_uint64());
 }
 
 TEST(serving_cell_config_converter_test, test_custom_pdsch_serving_cell_cfg_conversion)
@@ -1003,17 +1055,10 @@ TEST(serving_cell_config_converter_test, test_custom_pdsch_serving_cell_cfg_conv
   auto src_cfg = make_initial_du_ue_resource_config();
 
   odu::du_ue_resource_config dest_cfg{src_cfg};
-  auto&                      dest_pdsch_serving_cell_cfg =
-      dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.pdsch_serv_cell_cfg.value();
-  // Add new/remove configurations. Need not be valid configuration.
-  dest_pdsch_serving_cell_cfg.code_block_group_tx.emplace(pdsch_code_block_group_transmission{
-      .max_cbg_per_tb                   = pdsch_code_block_group_transmission::max_code_block_groups_per_tb::n8,
-      .code_block_group_flush_indicator = true});
-
-  dest_pdsch_serving_cell_cfg.x_ov_head     = ocudu::x_overhead::xoh6;
-  dest_pdsch_serving_cell_cfg.nof_harq_proc = ocudu::pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n12;
-  dest_pdsch_serving_cell_cfg.pucch_cell    = to_serv_cell_index(1);
-  dest_pdsch_serving_cell_cfg.processing_type_2_enabled = false;
+  auto&                      dest_pcell = dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX);
+  // Change the configuration. Need not be valid configuration.
+  dest_pcell.rrm.pdsch.nof_harqs = 12;
+  dest_pcell.rrm.pdsch.harq_feedback_disabled.set(3);
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
   odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, default_cell_rrm());
@@ -1021,42 +1066,14 @@ TEST(serving_cell_config_converter_test, test_custom_pdsch_serving_cell_cfg_conv
   ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg_present);
   ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded_present);
 
-  auto& rrc_sp_cell_cfg_ded  = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
-  auto& dest_sp_cell_cfg_ded = dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg;
+  auto& rrc_sp_cell_cfg_ded = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
 
   ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg_present);
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg_present, dest_sp_cell_cfg_ded.pdsch_serv_cell_cfg.has_value());
   ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.is_setup());
 
-  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().code_block_group_tx_present);
-  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().code_block_group_tx.is_setup());
   ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().max_mimo_layers_present);
   ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().nrof_harq_processes_for_pdsch_present);
-  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().xoverhead_present);
-  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().pucch_cell_present);
-  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().processing_type2_enabled_present);
-}
-
-TEST(serving_cell_config_converter_test, test_pdsch_serving_cell_cfg_release_conversion)
-{
-  auto                       src_cfg = make_initial_du_ue_resource_config();
-  odu::du_ue_resource_config dest_cfg{src_cfg};
-  dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.pdsch_serv_cell_cfg.reset();
-
-  asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, default_cell_rrm());
-
-  ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg_present);
-  ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded_present);
-
-  auto& rrc_sp_cell_cfg_ded  = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
-  auto& dest_sp_cell_cfg_ded = dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg;
-
-  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg_present);
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg_present,
-            not dest_sp_cell_cfg_ded.pdsch_serv_cell_cfg.has_value());
-  // PDSCH Serving Cell Config is released due to absence in dest cell group config.
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.type(), asn1::setup_release_opts::release);
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().dl_harq_feedback_disabled_r17.is_present());
 }
 
 static csi_meas_config make_test_csi_meas_cfg()

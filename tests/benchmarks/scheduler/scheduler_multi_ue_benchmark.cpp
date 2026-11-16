@@ -109,21 +109,17 @@ static void parse_args(int argc, char** argv, bench_params& params)
 /// carry no restriction. Splitting them is what makes the restrictions, and the work of deriving them, apply.
 static void split_ue_harq_modes(sched_ue_config_request& cfg)
 {
-  serving_cell_config& serv_cell = (*cfg.cells)[0].ded->serv_cell_cfg;
+  ue_rrm_config& rrm = (*cfg.cells)[0].ded->rrm;
 
   // A bit set to one disables the DL HARQ feedback of that process, so the second half owes no HARQ-ACK.
-  pdsch_serving_cell_config& pdsch_cfg = serv_cell.pdsch_serv_cell_cfg.value();
-  pdsch_cfg.nof_harq_proc              = pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n32;
-  const unsigned nof_dl                = static_cast<unsigned>(pdsch_cfg.nof_harq_proc);
-  pdsch_cfg.dl_harq_feedback_disabled.fill(false);
-  pdsch_cfg.dl_harq_feedback_disabled.fill(nof_dl / 2, nof_dl);
+  rrm.pdsch.nof_harqs = 32;
+  rrm.pdsch.harq_feedback_disabled.fill(false);
+  rrm.pdsch.harq_feedback_disabled.fill(rrm.pdsch.nof_harqs / 2, rrm.pdsch.nof_harqs);
 
   // A bit set to one identifies a process in mode A, so the first half retransmits and the second does not.
-  pusch_serving_cell_config& pusch_cfg = serv_cell.ul_config->pusch_serv_cell_cfg.value();
-  pusch_cfg.nof_harq_proc              = pusch_serving_cell_config::nof_harq_proc_for_pusch::n32;
-  const unsigned nof_ul                = static_cast<unsigned>(pusch_cfg.nof_harq_proc);
-  pusch_cfg.ul_harq_mode.fill(false);
-  pusch_cfg.ul_harq_mode.fill(0, nof_ul / 2);
+  rrm.pusch.nof_harqs = 32;
+  rrm.pusch.harq_mode.fill(false);
+  rrm.pusch.harq_mode.fill(0, rrm.pusch.nof_harqs / 2);
 
   // The SRBs and the first DRB take the mode that retransmits, the second DRB the one that does not. Both bearers
   // carry data in either direction, so a grant of either mode has channels asking for it.

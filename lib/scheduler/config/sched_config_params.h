@@ -31,14 +31,6 @@ struct ue_cell_res_config {
   slotted_id_vector<search_space_id, const search_space_configuration*> search_spaces;
   /// List of BWPs configured in this cell.
   bwp_config_list bwps;
-  /// \brief \c pdsch-ServingCellConfig, used to configure UE specific PDSCH parameters that are common across the UE's
-  /// BWPs of one serving cell.
-  std::optional<config_ptr<pdsch_serving_cell_config>> pdsch_serv_cell_cfg;
-  /// \brief \c pusch-ServingCellConfig, used to configure UE specific PUSCH parameters that are common across the UE's
-  /// BWPs of one serving cell.
-  std::optional<config_ptr<pusch_serving_cell_config>> pusch_serv_cell_cfg;
-  /// Timing Advance Group ID to which this cell belongs to.
-  time_alignment_group::id_t tag_id{0};
 
   /// Resets the payload for reuse from the pool. The reference counter is intentionally left untouched.
   void clear()
@@ -47,9 +39,6 @@ struct ue_cell_res_config {
     coresets.clear();
     search_spaces.clear();
     bwps.clear();
-    pdsch_serv_cell_cfg.reset();
-    pusch_serv_cell_cfg.reset();
-    tag_id = time_alignment_group::id_t{0};
   }
 
   /// Determines whether any UE is currently using this config.

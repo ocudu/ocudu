@@ -151,10 +151,9 @@ TEST_F(scheduler_missing_ack_tester, when_no_harq_ack_arrives_then_harq_eventual
   static constexpr rnti_t           rnti      = to_rnti(0x4601);
   sched_ue_creation_request_message ue_create_req =
       sched_config_helper::create_default_sched_ue_creation_request(bench.cell_cfg(to_du_cell_index(0)).params);
-  ue_create_req.crnti    = rnti;
-  ue_create_req.ue_index = to_du_ue_index(0);
-  (*ue_create_req.cfg.cells)[0].ded->serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
-      (pdsch_serving_cell_config::nof_harq_proc_for_pdsch)nof_harqs;
+  ue_create_req.crnti                                    = rnti;
+  ue_create_req.ue_index                                 = to_du_ue_index(0);
+  (*ue_create_req.cfg.cells)[0].ded->rrm.pdsch.nof_harqs = nof_harqs;
   bench.add_ue(ue_create_req);
 
   // Push enough bytes so that all HARQs get allocated.

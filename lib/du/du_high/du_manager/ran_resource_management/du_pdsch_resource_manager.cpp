@@ -49,22 +49,15 @@ set_pdsch_res_alloc(serving_cell_config& cell_cfg, pdsch_config::resource_alloca
   }
 }
 
-static void set_max_dl_nof_harqs(serving_cell_config& cell_cfg, unsigned nof_harqs)
+static void set_max_dl_nof_harqs(ue_cell_config& cell_cfg, unsigned nof_harqs)
 {
-  if (cell_cfg.pdsch_serv_cell_cfg.has_value()) {
-    cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
-        static_cast<pdsch_serving_cell_config::nof_harq_proc_for_pdsch>(nof_harqs);
-  }
+  cell_cfg.rrm.pdsch.nof_harqs = static_cast<uint8_t>(nof_harqs);
 }
 
 static void set_max_mimo_layers(ue_cell_config& cell_cfg, unsigned max_mimo_layers)
 {
-  // The scheduler reads the limit from the UE BWP configuration, and RRC signals it in \c maxMIMO-Layers of
-  // \c PDSCH-ServingCellConfig (TS 38.331).
-  cell_cfg.init_bwp().dl.pdsch.max_nof_layers = max_mimo_layers;
-  if (cell_cfg.serv_cell_cfg.pdsch_serv_cell_cfg.has_value()) {
-    cell_cfg.serv_cell_cfg.pdsch_serv_cell_cfg->max_mimo_layers = max_mimo_layers;
-  }
+  // RRC signals the limit in \c maxMIMO-Layers of \c PDSCH-ServingCellConfig (TS 38.331).
+  cell_cfg.rrm.pdsch.max_nof_layers = static_cast<uint8_t>(max_mimo_layers);
 }
 
 static void set_dl_dci_harq_field_size(serving_cell_config& cell_cfg, unsigned field_size)
@@ -77,11 +70,9 @@ static void set_dl_dci_harq_field_size(serving_cell_config& cell_cfg, unsigned f
   }
 }
 
-static void set_dl_harq_feedback_disabled(serving_cell_config& cell_cfg, const harq_dl_feedback_disabled_mask& mask)
+static void set_dl_harq_feedback_disabled(ue_cell_config& cell_cfg, const harq_dl_feedback_disabled_mask& mask)
 {
-  if (cell_cfg.pdsch_serv_cell_cfg.has_value()) {
-    cell_cfg.pdsch_serv_cell_cfg->dl_harq_feedback_disabled = mask;
-  }
+  cell_cfg.rrm.pdsch.harq_feedback_disabled = mask;
 }
 
 static void set_pdsch_td_alloc_list(serving_cell_config&                               cell_cfg,
@@ -129,10 +120,11 @@ void du_pdsch_resource_manager::apply_config(cell_group_config&                 
   set_pdsch_interleaving(serv_cell, select_interleaving(cell_idx, ue_caps));
   set_pdsch_res_alloc(
       serv_cell, select_res_alloc(cell_idx, ue_caps), cell_cfg_list[cell_idx].ran.init_bwp.pdsch.rbg_sz);
-  set_max_dl_nof_harqs(serv_cell, select_max_nof_harqs(cell_idx, ue_caps));
+  set_max_dl_nof_harqs(cell_grp_cfg.cells.at(SERVING_PCELL_IDX), select_max_nof_harqs(cell_idx, ue_caps));
   set_max_mimo_layers(cell_grp_cfg.cells.at(SERVING_PCELL_IDX), select_max_mimo_layers(cell_idx, ue_caps));
   set_dl_dci_harq_field_size(serv_cell, select_dci_harq_field_size(cell_idx, ue_caps));
-  set_dl_harq_feedback_disabled(serv_cell, select_disabled_harq_feedback(cell_idx, ue_caps));
+  set_dl_harq_feedback_disabled(cell_grp_cfg.cells.at(SERVING_PCELL_IDX),
+                                select_disabled_harq_feedback(cell_idx, ue_caps));
   set_pdsch_td_alloc_list(serv_cell, select_td_alloc_list(cell_idx, ue_caps));
 }
 

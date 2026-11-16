@@ -204,24 +204,10 @@ public:
     return cell_cfg_common.bwp_res[to_bwp_id(0)].dl().csi.value().report(init_bwp().ul.ue_cfg()->csi.codebook);
   }
 
-  /// PDSCH parameters common to all BWPs.
-  const pdsch_serving_cell_config* pdsch_serving_cell_cfg() const
-  {
-    return cell_ded->pdsch_serv_cell_cfg.has_value() ? &*cell_ded->pdsch_serv_cell_cfg.value() : nullptr;
-  }
-
   /// \brief Transport block size for limited buffer rate matching of the UE PDSCHs.
   ///
   /// Parameter \f$TBS_{LBRM}\f$ of TS 38.212, Section 5.4.2.1, derived from the UE configuration.
   units::bytes pdsch_tbs_lbrm() const { return pdsch_tbs_lbrm_value; }
-
-  /// PUSCH parameters common to all BWPs.
-  const pusch_serving_cell_config* pusch_serving_cell_cfg() const
-  {
-    return cell_ded->pusch_serv_cell_cfg.has_value() ? &*cell_ded->pusch_serv_cell_cfg.value() : nullptr;
-  }
-
-  time_alignment_group::id_t tag_id() const { return cell_ded->tag_id; }
 
   /// Determines the use of transform precoding for DCI Format 0_1 for C-RNTI.
   bool use_pusch_transform_precoding_dci_0_1() const

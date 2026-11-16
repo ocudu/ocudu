@@ -84,8 +84,13 @@ struct cell_pucch_res_config {
 /// \brief Cell-wide UL resources available in a given BWP.
 struct cell_ul_bwp_res_config {
   cell_pucch_res_config pucch;
+  /// Overhead that the PUSCH scheduling assumes, as per TS 38.214, Section 6.1.4.2 (\c xOverhead).
+  x_overhead pusch_x_ov_head = x_overhead::not_set;
 
-  bool operator==(const cell_ul_bwp_res_config& other) const { return pucch == other.pucch; }
+  bool operator==(const cell_ul_bwp_res_config& other) const
+  {
+    return pucch == other.pucch and pusch_x_ov_head == other.pusch_x_ov_head;
+  }
 };
 
 /// \brief List of all configured RAN resources associated with a given cell and BWP.

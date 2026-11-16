@@ -72,6 +72,9 @@ public:
   /// Used to place the uplink measurement gap window, see \ref is_inside_ul_meas_gap. Refreshed as the satellite moves.
   std::optional<std::chrono::microseconds> ntn_ref_location_ul_ta;
 
+  /// Number of PRBs of overhead that the PUSCH scheduling assumes, as per TS 38.214, Section 6.1.4.2 (\c xOverhead).
+  unsigned pusch_nof_oh_prb() const { return static_cast<unsigned>(bwp_res[to_bwp_id(0)].ul().pusch_x_ov_head); }
+
   subcarrier_spacing scs_common() const { return params.dl_cfg_common.init_dl_bwp.generic_params.scs; }
 
   /// \name NTN clock conversions

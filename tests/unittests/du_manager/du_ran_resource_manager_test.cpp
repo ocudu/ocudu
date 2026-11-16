@@ -392,6 +392,39 @@ TEST_P(du_ran_resource_manager_tester, when_the_ue_has_dl_harq_processes_without
   EXPECT_EQ(*ue_res->value().srbs[srb_id_t::srb1].mac_cfg.allowed_dl_harq_feedback, dl_harq_feedback::enabled);
 }
 
+/// The RRM allocates the HARQ processes of the UE in its ue_rrm_config, from the cell masks and the UE capabilities.
+TEST_P(du_ran_resource_manager_tester,
+       when_the_ue_reports_ntn_capabilities_then_the_ue_rrm_config_has_the_cell_harq_masks)
+{
+  cell_cfg_list[0].ran.dl_carrier.band = nr_band::n256;
+  const unsigned nof_harqs             = std::min<unsigned>(cell_cfg_list[0].ran.init_bwp.pdsch.max_harq_procs,
+                                                ue_capability_summary::default_max_harq_process_num);
+  cell_cfg_list[0].ran.init_bwp.pdsch.dl_harq_feedback_disabled.fill(nof_harqs / 2, nof_harqs, true);
+  cell_cfg_list[0].ran.init_bwp.pusch.ul_harq_mode.fill(nof_harqs / 2, nof_harqs, false);
+  ue_capability_summary ue_caps;
+  ue_caps.ntn_supported                       = true;
+  ue_caps.ul_harq_mode_b_supported            = true;
+  ue_caps.disabled_dl_harq_feedback_supported = true;
+  ue_caps.bands[nr_band::n256]                = {};
+
+  const du_ue_index_t           ue_idx1 = to_du_ue_index(0);
+  ue_ran_resource_configurator* ue_res  = create_ue(ue_idx1);
+  ASSERT_NE(ue_res, nullptr);
+
+  // Before the UE capabilities, the UE has no process with disabled feedback and no process in mode B.
+  const ue_rrm_config& rrm = ue_res->value().cell_group.cells.at(SERVING_PCELL_IDX).rrm;
+  ASSERT_TRUE(rrm.pdsch.harq_feedback_disabled.none());
+  ASSERT_TRUE(rrm.pusch.harq_mode.all());
+
+  ASSERT_FALSE(ue_res->update(to_du_cell_index(0), srb1_creation_req(ue_idx1)).failed());
+  ASSERT_FALSE(ue_res->update(to_du_cell_index(0), gbr_drb_creation_req(ue_idx1, true), nullptr, &ue_caps).failed());
+
+  EXPECT_EQ(rrm.pdsch.nof_harqs, nof_harqs);
+  EXPECT_EQ(rrm.pusch.nof_harqs, nof_harqs);
+  EXPECT_EQ(rrm.pdsch.harq_feedback_disabled, cell_cfg_list[0].ran.init_bwp.pdsch.dl_harq_feedback_disabled);
+  EXPECT_EQ(rrm.pusch.harq_mode, cell_cfg_list[0].ran.init_bwp.pusch.ul_harq_mode);
+}
+
 TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_use_different_sr_offsets)
 {
   const unsigned sr_period = get_config_sr_period();

@@ -25,8 +25,11 @@ The refactor puts each parameter at one level. Each level has a structure that h
 
 ### Do not add to `serving_cell_config`
 
-`serving_cell_config` is a copy of the RRC structure. The refactor moves one area at a time out of it. The PUCCH is
-moved. The DU now builds the PUCCH-Config from the RRM structures (see below).
+`serving_cell_config` is a copy of the RRC structure. The refactor moves one area at a time out of it. The PUCCH and the
+serving cell parameters of the PDSCH and the PUSCH are moved. The DU builds the PUCCH-Config from the RRM structures
+(see below). The HARQ processes of a UE are in `ue_pdsch_rrm_config` and `ue_pusch_rrm_config` (`ue_rrm_config`), and
+the scheduler copies them to `ue_pdsch_config` and `ue_pusch_config`. The DU builds the PDSCH-ServingCellConfig and the
+PUSCH-ServingCellConfig from them. The TAG ID is the constant `DEFAULT_TAG_ID`.
 
 - Do not read `serving_cell_config` in scheduler code.
 - Do not add a field to `serving_cell_config` for a parameter that only the scheduler reads. Add the parameter to the
@@ -212,9 +215,8 @@ Ask the user before you make one of these decisions:
 
 - The future of `cell_config_builder_params` and `cell_config_builder_params_extended`.
 - The correct place for the UE capability code (`ue_capability_manager`).
-- The correct level for `tag_id`, `pdsch_serv_cell_cfg`, `pusch_serv_cell_cfg` and `csi_meas_cfg`. For `csi_meas_cfg`,
-  the RRM structure must not hold an RRC-shaped `csi_meas_config`. The CSI report that the scheduler and the DU need
-  must be a smaller structure.
+- The correct level for `csi_meas_cfg`. The RRM structure must not hold an RRC-shaped `csi_meas_config`. The CSI report
+  that the scheduler and the DU need must be a smaller structure.
 - The place of `pucch_resource_generator.cpp`. It is in `lib/scheduler/config` because the PUCCH guardband code calls it
   to find the PRBs of the PUCCH. It moves to `lib/scheduler/rrm` when the guardband code does not need it.
 - The rule that selects `lib/scheduler/config` or `include/ocudu/scheduler/config` for a new structure.

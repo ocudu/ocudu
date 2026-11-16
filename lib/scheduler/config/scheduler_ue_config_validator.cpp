@@ -17,7 +17,8 @@
 using namespace ocudu;
 using namespace config_validators;
 
-static validator_result validate_cg_cfg(const serving_cell_config& serv_cell_cfg, const cell_configuration& cell_cfg)
+static validator_result
+validate_cg_cfg(const serving_cell_config& serv_cell_cfg, const ue_rrm_config& rrm, const cell_configuration& cell_cfg)
 {
   const uplink_config& ul_cfg         = serv_cell_cfg.ul_config.value();
   const auto&          bwp_ul_ded_cfg = ul_cfg.init_ul_bwp;
@@ -64,8 +65,7 @@ static validator_result validate_cg_cfg(const serving_cell_config& serv_cell_cfg
 
   // The CG scheduler requires all UL HARQ processes to operate in mode A, i.e. \c ul_harq_mode must keep its default
   // value (all-ones mask).
-  VERIFY(not ul_cfg.pusch_serv_cell_cfg.has_value() or
-             ul_cfg.pusch_serv_cell_cfg->ul_harq_mode == ~harq_ul_mode_mask(MAX_NOF_HARQS),
+  VERIFY(rrm.pusch.harq_mode == ~harq_ul_mode_mask(MAX_NOF_HARQS),
          "Configured Grant requires the default uplinkHARQ-mode (all UL HARQ processes in mode A)");
 
   if (cell_cfg.params.tdd_cfg.has_value()) {
@@ -212,7 +212,7 @@ static validator_result validate_ue_cells(span<const sched_ue_cell_config> cells
       HANDLE_ERROR(validate_pusch_cfg(serv_cell_cfg.ul_config.value(), cell_cfg.params.init_bwp.csi.has_value()));
 
       if (serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value()) {
-        HANDLE_ERROR(validate_cg_cfg(serv_cell_cfg, cell_cfg));
+        HANDLE_ERROR(validate_cg_cfg(serv_cell_cfg, cell.ded->rrm, cell_cfg));
       }
     }
   }

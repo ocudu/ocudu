@@ -41,14 +41,13 @@ ue_cell::ue_cell(du_ue_index_t                ue_index_,
                  ocudulog::basic_logger&      logger_) :
   ue_index(ue_index_),
   cell_index(ue_cell_cfg_.cell_cfg_common.cell_index),
-  harqs(
-      cell_harq_pool.add_ue(ue_index,
-                            crnti_val,
-                            ue_cell_cfg_.pdsch_serving_cell_cfg() != nullptr
-                                ? std::min(static_cast<unsigned>(ue_cell_cfg_.pdsch_serving_cell_cfg()->nof_harq_proc),
-                                           static_cast<unsigned>(MAX_NOF_HARQS_NON_NTN))
-                                : DEFAULT_NOF_DL_HARQS,
-                            DEFAULT_NOF_UL_HARQS)),
+  harqs(cell_harq_pool.add_ue(
+      ue_index,
+      crnti_val,
+      ue_cell_cfg_.init_bwp().dl.ue_cfg() != nullptr
+          ? std::min<unsigned>(ue_cell_cfg_.init_bwp().dl.ue_cfg()->pdsch.nof_harqs, MAX_NOF_HARQS_NON_NTN)
+          : DEFAULT_NOF_DL_HARQS,
+      DEFAULT_NOF_UL_HARQS)),
   crnti_(crnti_val),
   cell_cfg(ue_cell_cfg_.cell_cfg_common),
   ue_cfg(&ue_cell_cfg_),
@@ -80,16 +79,16 @@ void ue_cell::handle_reconfiguration_request(const ue_cell_configuration& ue_cel
 
   // Reconfigure HARQ entity and increase nof HARQ processes if needed. A UE without dedicated configuration keeps its
   // HARQ processes.
-  const pdsch_serving_cell_config* pdsch_serv_cell = ue_cell_cfg.pdsch_serving_cell_cfg();
-  const pusch_serving_cell_config* pusch_serv_cell = ue_cell_cfg.pusch_serving_cell_cfg();
-  if (pdsch_serv_cell != nullptr and pusch_serv_cell != nullptr) {
+  const ue_downlink_bwp_config* ue_dl = ue_cell_cfg.init_bwp().dl.ue_cfg();
+  const ue_uplink_bwp_config*   ue_ul = ue_cell_cfg.init_bwp().ul.ue_cfg();
+  if (ue_dl != nullptr and ue_ul != nullptr) {
     const auto*    ul_ded = ue_cell_cfg.init_bwp().ul.ded();
     const unsigned nof_cg_reserved_harq =
         (ul_ded != nullptr and ul_ded->cg_cfg.has_value()) ? ul_ded->cg_cfg->nof_harq_processes : 0U;
-    harqs.reconfigure(static_cast<unsigned>(pdsch_serv_cell->nof_harq_proc),
-                      static_cast<unsigned>(pusch_serv_cell->nof_harq_proc),
-                      pdsch_serv_cell->dl_harq_feedback_disabled,
-                      pusch_serv_cell->ul_harq_mode,
+    harqs.reconfigure(ue_dl->pdsch.nof_harqs,
+                      ue_ul->pusch.nof_harqs,
+                      ue_dl->pdsch.harq_feedback_disabled,
+                      ue_ul->pusch.harq_mode,
                       nof_cg_reserved_harq);
   }
 

@@ -57,22 +57,8 @@ sched_helper::get_pdsch_config_f1_0_c_rnti(const cell_configuration&            
 }
 
 pdsch_config_params
-sched_helper::get_pdsch_config_f1_0_c_rnti(const cell_configuration&                    cell_cfg_common,
-                                           const pdsch_serving_cell_config*             pdsch_serv_cfg,
-                                           const pdsch_time_domain_resource_allocation& pdsch_td_cfg)
-{
-  pdsch_config_params params = get_pdsch_config_f1_0_c_rnti(cell_cfg_common, pdsch_td_cfg);
-  if (pdsch_serv_cfg != nullptr) {
-    // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
-    params.nof_oh_prb = static_cast<unsigned>(pdsch_serv_cfg->x_ov_head);
-  }
-  return params;
-}
-
-pdsch_config_params
 sched_helper::get_pdsch_config_f1_1_c_rnti(const cell_configuration&                    cell_cfg_common,
                                            const pdsch_config&                          pdsch_cfg,
-                                           const pdsch_serving_cell_config*             pdsch_serv_cfg,
                                            const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
                                            unsigned                                     nof_layers)
 {
@@ -92,10 +78,9 @@ sched_helper::get_pdsch_config_f1_1_c_rnti(const cell_configuration&            
                                         pdsch_cfg.pdsch_mapping_type_a_dmrs.value(),
                                         get_su_pdsch_dmrs_ports(nof_layers));
 
-  // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
-  // NOTE: x_overhead::not_set is mapped to 0.
-  pdsch.nof_oh_prb                   = pdsch_serv_cfg != nullptr ? static_cast<unsigned>(pdsch_serv_cfg->x_ov_head)
-                                                                 : static_cast<unsigned>(x_overhead::not_set);
+  // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0. The
+  // DU does not configure xOverhead.
+  pdsch.nof_oh_prb                   = 0;
   pdsch.symbols                      = pdsch_td_cfg.symbols;
   pdsch.mcs_table                    = pdsch_cfg.mcs_table;
   pdsch.tb_scaling_field             = tb_scaling_field;

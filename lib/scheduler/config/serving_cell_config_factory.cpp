@@ -184,21 +184,6 @@ static pusch_config make_default_pusch_config(const ran_cell_config& cell_cfg, c
   return cfg;
 }
 
-static pusch_serving_cell_config make_default_pusch_serving_cell_config(const pusch_builder_params& pusch_params)
-{
-  pusch_serving_cell_config cfg{};
-  if (pusch_params.cbg_tx) {
-    cfg.cbg_tx.emplace();
-    cfg.cbg_tx->max_cgb_per_tb = static_cast<
-        pusch_serving_cell_config::pusch_code_block_group_transmission::max_code_block_groups_per_transport_block>(
-        *pusch_params.cbg_tx);
-  }
-  cfg.x_ov_head     = pusch_params.x_ov_head;
-  cfg.nof_harq_proc = static_cast<pusch_serving_cell_config::nof_harq_proc_for_pusch>(pusch_params.max_harq_procs);
-  cfg.ul_harq_mode  = pusch_params.ul_harq_mode;
-  return cfg;
-}
-
 static srs_config make_default_srs_config(const ran_cell_config& cell_cfg, const ue_bwp_config& ue_bwp_cfg)
 {
   srs_config cfg{};
@@ -309,9 +294,6 @@ static uplink_config make_default_ue_uplink_config(const ran_cell_config& cell_c
   // > PUSCH config.
   ul_config.init_ul_bwp.pusch_cfg.emplace(make_default_pusch_config(cell_cfg, ue_bwp_cfg));
 
-  // > pusch-ServingCellConfig.
-  ul_config.pusch_serv_cell_cfg.emplace(make_default_pusch_serving_cell_config(cell_cfg.init_bwp.pusch));
-
   // > SRS config.
   ul_config.init_ul_bwp.srs_cfg.emplace(make_default_srs_config(cell_cfg, ue_bwp_cfg));
 
@@ -326,15 +308,6 @@ static uplink_config make_default_ue_uplink_config(const ran_cell_config& cell_c
   }
 
   return ul_config;
-}
-
-static pdsch_serving_cell_config make_default_pdsch_serving_cell_config(const pdsch_builder_params& pdsch_params)
-{
-  pdsch_serving_cell_config cfg;
-  cfg.nof_harq_proc = static_cast<pdsch_serving_cell_config::nof_harq_proc_for_pdsch>(pdsch_params.max_harq_procs);
-  cfg.dl_harq_feedback_disabled = pdsch_params.dl_harq_feedback_disabled;
-
-  return cfg;
 }
 
 static serving_cell_config make_default_serving_cell_config(const ran_cell_config& cell_cfg,
@@ -357,10 +330,6 @@ static serving_cell_config make_default_serving_cell_config(const ran_cell_confi
   // > UL Config.
   serv_cell.ul_config.emplace(make_default_ue_uplink_config(cell_cfg, ue_bwp_cfg));
 
-  // > pdsch-ServingCellConfig.
-  serv_cell.pdsch_serv_cell_cfg.emplace(make_default_pdsch_serving_cell_config(cell_cfg.init_bwp.pdsch));
-  serv_cell.pdsch_serv_cell_cfg->max_mimo_layers = ue_bwp_cfg.dl.pdsch.max_nof_layers;
-
   // > CSI-MeasConfig.
   serv_cell.csi_meas_cfg = build_csi_meas_config(cell_cfg, generate_cell_pucch_res_list(cell_cfg), ue_rrm_cfg);
 
@@ -375,6 +344,17 @@ static ue_rrm_config make_default_ue_rrm_cfg(const ran_cell_config& cell_cfg)
               .res_set_cfg_id = pucch_resource_set_config_id(0),
               .sr_res_id      = pucch_sr_resource_id(0),
               .sr_offset = cell_cfg.tdd_cfg.has_value() ? find_next_tdd_full_ul_slot(*cell_cfg.tdd_cfg).value() : 0U,
+          },
+      .pdsch =
+          {
+              .nof_harqs              = cell_cfg.init_bwp.pdsch.max_harq_procs,
+              .harq_feedback_disabled = cell_cfg.init_bwp.pdsch.dl_harq_feedback_disabled,
+              .max_nof_layers         = static_cast<uint8_t>(cell_cfg.init_bwp.pdsch.max_nof_layers),
+          },
+      .pusch =
+          {
+              .nof_harqs = cell_cfg.init_bwp.pusch.max_harq_procs,
+              .harq_mode = cell_cfg.init_bwp.pusch.ul_harq_mode,
           },
   };
   if (cell_cfg.init_bwp.csi.has_value() and cell_cfg.init_bwp.csi->csi_report_slot_offset.has_value()) {

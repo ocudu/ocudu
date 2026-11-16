@@ -59,8 +59,10 @@ cell_bwp_res_config ocudu::make_cell_bwp_res_config(const ran_cell_config& cell_
   const unsigned pucch_res_common = cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common;
   return cell_bwp_res_config{
       .dl = make_cell_dl_bwp_res_config(cell_cfg),
-      .ul = {.pucch = {
-                 .common    = config_helpers::generate_cell_common_pucch_res_list(pucch_res_common, bwp_size_rbs),
-                 .dedicated = rrm_cfg.pucch.res,
-             }}};
+      .ul = {.pucch =
+                 {
+                     .common    = config_helpers::generate_cell_common_pucch_res_list(pucch_res_common, bwp_size_rbs),
+                     .dedicated = rrm_cfg.pucch.res,
+                 },
+             .pusch_x_ov_head = cell_cfg.init_bwp.pusch.x_ov_head}};
 }

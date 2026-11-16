@@ -213,98 +213,12 @@ struct bwp_uplink_dedicated {
   }
 };
 
-/// \brief Used to configure UE specific PUSCH parameters that are common across the UE's BWPs of one serving cell.
-/// \remark See TS 38.331, PUSCH-ServingCellConfig.
-struct pusch_serving_cell_config {
-  struct pusch_code_block_group_transmission {
-    /// Maximum number of code-block-groups (CBGs) per TB. See TS 38.213, clause 9.1.
-    enum class max_code_block_groups_per_transport_block { n2 = 2, n4 = 4, n6 = 6, n8 = 8 };
-
-    max_code_block_groups_per_transport_block max_cgb_per_tb;
-
-    bool operator==(const pusch_code_block_group_transmission& other) const
-    {
-      return max_cgb_per_tb == other.max_cgb_per_tb;
-    }
-  };
-
-  /// \c nrofHARQ-ProcessesForPUSCH.
-  enum class nof_harq_proc_for_pusch { n16 = 16, n32 = 32 };
-
-  /// See TS 38.331, \c uplinkHARQ-mode.
-  /// A bit set to one identifies a HARQ process in modeA and a bit set to zero identifies a HARQ process in modeB.
-  harq_ul_mode_mask ul_harq_mode = ~harq_ul_mode_mask(MAX_NOF_HARQS);
-
-  /// See TS 38.331, \c nrofHARQ-ProcessesForPUSCH.
-  nof_harq_proc_for_pusch nof_harq_proc{nof_harq_proc_for_pusch::n16};
-
-  std::optional<pusch_code_block_group_transmission> cbg_tx;
-  x_overhead                                         x_ov_head{x_overhead::not_set};
-
-  bool operator==(const pusch_serving_cell_config& other) const
-  {
-    return cbg_tx == other.cbg_tx and x_ov_head == other.x_ov_head and nof_harq_proc == other.nof_harq_proc and
-           ul_harq_mode == other.ul_harq_mode;
-  }
-
-  bool operator!=(const pusch_serving_cell_config& rhs) const { return !(rhs == *this); }
-};
-
 /// Uplink configuration, as per \c UplinkConfig, in \c ServingCellConfig, TS 38.331.
 struct uplink_config {
-  bwp_uplink_dedicated                     init_ul_bwp;
-  std::optional<pusch_serving_cell_config> pusch_serv_cell_cfg;
+  bwp_uplink_dedicated init_ul_bwp;
   // TODO: add remaining fields.
 
-  bool operator==(const uplink_config& other) const
-  {
-    return init_ul_bwp == other.init_ul_bwp and pusch_serv_cell_cfg == other.pusch_serv_cell_cfg;
-  }
-};
-
-/// \c PDSCH-CodeBlockGroupTransmission, as per TS 38.331.
-struct pdsch_code_block_group_transmission {
-  /// \c maxCodeBlockGroupsPerTransportBlock.
-  /// \remark Maximum number of code-block-groups (CBGs) per TB. In case of multiple CW, the maximum CBG is 4.
-  enum class max_code_block_groups_per_tb { n2 = 2, n4 = 4, n6 = 6, n8 = 8 };
-
-  max_code_block_groups_per_tb max_cbg_per_tb;
-  bool                         code_block_group_flush_indicator;
-
-  bool operator==(const pdsch_code_block_group_transmission& rhs) const
-  {
-    return max_cbg_per_tb == rhs.max_cbg_per_tb &&
-           code_block_group_flush_indicator == rhs.code_block_group_flush_indicator;
-  }
-  bool operator!=(const pdsch_code_block_group_transmission& rhs) const { return !(rhs == *this); }
-};
-
-/// \c PDSCH-ServingCellConfig, as per TS 38.331.
-struct pdsch_serving_cell_config {
-  /// \c nrofHARQ-ProcessesForPDSCH.
-  enum class nof_harq_proc_for_pdsch { n2 = 2, n4 = 4, n6 = 6, n8 = 8, n10 = 10, n12 = 12, n16 = 16, n32 = 32 };
-
-  std::optional<pdsch_code_block_group_transmission> code_block_group_tx;
-  x_overhead                                         x_ov_head{x_overhead::not_set};
-  /// See TS 38.331, \c downlinkHARQ-FeedbackDisabled.
-  /// A bit set to 1 indicates HARQ processes with disabled DL HARQ feedback; a bit set to 0 indicate feedback enabled.
-  harq_dl_feedback_disabled_mask dl_harq_feedback_disabled = harq_dl_feedback_disabled_mask(MAX_NOF_HARQS);
-  /// See TS 38.331, \c nrofHARQ-ProcessesForPDSCH.
-  nof_harq_proc_for_pdsch          nof_harq_proc{nof_harq_proc_for_pdsch::n16};
-  std::optional<serv_cell_index_t> pucch_cell;
-  /// See TS 38.331, \c maxMIMO-Layers. Maximum number of layers of the PDSCHs in all the BWPs of the serving cell.
-  /// Values {1,...,8}.
-  std::optional<unsigned> max_mimo_layers;
-  std::optional<bool>     processing_type_2_enabled;
-
-  bool operator==(const pdsch_serving_cell_config& rhs) const
-  {
-    return code_block_group_tx == rhs.code_block_group_tx && x_ov_head == rhs.x_ov_head &&
-           nof_harq_proc == rhs.nof_harq_proc && pucch_cell == rhs.pucch_cell &&
-           max_mimo_layers == rhs.max_mimo_layers && processing_type_2_enabled == rhs.processing_type_2_enabled &&
-           dl_harq_feedback_disabled == rhs.dl_harq_feedback_disabled;
-  }
-  bool operator!=(const pdsch_serving_cell_config& rhs) const { return !(rhs == *this); }
+  bool operator==(const uplink_config& other) const { return init_ul_bwp == other.init_ul_bwp; }
 };
 
 /// \c ServingCellConfig, as per TS 38.331.
@@ -317,18 +231,13 @@ struct serving_cell_config {
   static_vector<bwp_downlink, MAX_NOF_BWPS> dl_bwps;
   /// \c uplinkConfig, containing the UL configuration.
   std::optional<uplink_config> ul_config;
-  /// \c pdsch-ServingCellConfig.
-  std::optional<pdsch_serving_cell_config> pdsch_serv_cell_cfg;
   /// \c CSI-MeasConfig.
   std::optional<csi_meas_config> csi_meas_cfg;
-  /// Timing Advance Group ID to which this cell belongs to.
-  time_alignment_group::id_t tag_id{0};
 
   bool operator==(const serving_cell_config& other) const
   {
     return cell_index == other.cell_index and init_dl_bwp == other.init_dl_bwp and dl_bwps == other.dl_bwps and
-           ul_config == other.ul_config and pdsch_serv_cell_cfg == other.pdsch_serv_cell_cfg and
-           csi_meas_cfg == other.csi_meas_cfg and tag_id == other.tag_id;
+           ul_config == other.ul_config and csi_meas_cfg == other.csi_meas_cfg;
   }
 };
 

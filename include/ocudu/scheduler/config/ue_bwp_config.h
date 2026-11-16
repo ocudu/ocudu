@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "ocudu/ran/harq_id.h"
 #include "ocudu/ran/pusch/tx_scheme_configuration.h"
 #include "ocudu/ran/resource_allocation/rb_interval.h"
 #include "ocudu/ran/rnti.h"
@@ -62,9 +63,15 @@ struct ue_csi_config {
 
 struct ue_pusch_config {
   tx_scheme_codebook tx_cfg;
-  /// Whether to enable TP?
+  /// Number of UL HARQ processes of the UE.
+  uint8_t nof_harqs = MAX_NOF_HARQS_NON_NTN;
+  /// A bit set to 1 identifies a UL HARQ process in mode A, and a bit set to 0 a process in mode B.
+  harq_ul_mode_mask harq_mode = ~harq_ul_mode_mask(MAX_NOF_HARQS);
 
-  bool operator==(const ue_pusch_config& other) const { return tx_cfg == other.tx_cfg; }
+  bool operator==(const ue_pusch_config& other) const
+  {
+    return tx_cfg == other.tx_cfg and nof_harqs == other.nof_harqs and harq_mode == other.harq_mode;
+  }
 };
 
 struct ue_cg_config {
@@ -105,8 +112,16 @@ struct ue_pdsch_config {
   /// Maximum number of PDSCH layers of the UE in the cell, as per TS 38.331, \c maxMIMO-Layers. Absent if only the
   /// cell limits the number of layers.
   std::optional<unsigned> max_nof_layers;
+  /// Number of DL HARQ processes of the UE.
+  uint8_t nof_harqs = MAX_NOF_HARQS_NON_NTN;
+  /// A bit set to 1 identifies a DL HARQ process with disabled HARQ feedback.
+  harq_dl_feedback_disabled_mask harq_feedback_disabled = harq_dl_feedback_disabled_mask(MAX_NOF_HARQS);
 
-  bool operator==(const ue_pdsch_config& other) const { return max_nof_layers == other.max_nof_layers; }
+  bool operator==(const ue_pdsch_config& other) const
+  {
+    return max_nof_layers == other.max_nof_layers and nof_harqs == other.nof_harqs and
+           harq_feedback_disabled == other.harq_feedback_disabled;
+  }
 };
 
 /// UE-specific information of a DL BWP configuration.

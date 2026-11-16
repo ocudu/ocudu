@@ -51,17 +51,13 @@ void search_space_info::update_pdsch_time_domain_list(const ue_cell_configuratio
     switch (get_dl_dci_format()) {
       case dci_dl_format::f1_0: {
         pdsch_cfg_list[i].resize(1);
-        pdsch_cfg_list[i][0] = sched_helper::get_pdsch_config_f1_0_c_rnti(
-            ue_cell_cfg.cell_cfg_common, ue_cell_cfg.pdsch_serving_cell_cfg(), pdsch_td_res);
+        pdsch_cfg_list[i][0] = sched_helper::get_pdsch_config_f1_0_c_rnti(ue_cell_cfg.cell_cfg_common, pdsch_td_res);
       } break;
       case dci_dl_format::f1_1: {
         pdsch_cfg_list[i].resize(ue_cell_cfg.cell_cfg_common.params.init_bwp.pdsch.max_nof_layers);
         for (unsigned j = 0, je = pdsch_cfg_list[i].size(); j != je; ++j) {
-          pdsch_cfg_list[i][j] = sched_helper::get_pdsch_config_f1_1_c_rnti(ue_cell_cfg.cell_cfg_common,
-                                                                            *bwp->dl.pdsch().ded(),
-                                                                            ue_cell_cfg.pdsch_serving_cell_cfg(),
-                                                                            pdsch_td_res,
-                                                                            j + 1);
+          pdsch_cfg_list[i][j] = sched_helper::get_pdsch_config_f1_1_c_rnti(
+              ue_cell_cfg.cell_cfg_common, *bwp->dl.pdsch().ded(), pdsch_td_res, j + 1);
         }
       } break;
       default:
@@ -135,15 +131,14 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
                                            bool                         is_ue_configured_multiple_serving_cells,
                                            search_space_id              ss_id)
 {
-  const search_space_info&                 ss_info                    = ue_cell_cfg.search_space(ss_id);
-  const sched_bwp_config&                  init_bwp                   = ue_cell_cfg.init_bwp();
-  const sched_bwp_config&                  active_bwp                 = *ss_info.bwp;
-  const bwp_configuration&                 active_dl_bwp              = active_bwp.dl.cfg();
-  const bwp_uplink_common&                 init_ul_bwp                = init_bwp.ul.common();
-  const bwp_configuration&                 active_ul_bwp              = active_bwp.ul.cfg();
-  const std::optional<rach_config_common>& opt_rach_cfg               = active_bwp.ul.common().rach_cfg_common;
-  const auto*                              opt_pdsch_cfg              = active_bwp.dl.pdsch().ded();
-  const auto*                              opt_pdsch_serving_cell_cfg = ue_cell_cfg.pdsch_serving_cell_cfg();
+  const search_space_info&                 ss_info       = ue_cell_cfg.search_space(ss_id);
+  const sched_bwp_config&                  init_bwp      = ue_cell_cfg.init_bwp();
+  const sched_bwp_config&                  active_bwp    = *ss_info.bwp;
+  const bwp_configuration&                 active_dl_bwp = active_bwp.dl.cfg();
+  const bwp_uplink_common&                 init_ul_bwp   = init_bwp.ul.common();
+  const bwp_configuration&                 active_ul_bwp = active_bwp.ul.cfg();
+  const std::optional<rach_config_common>& opt_rach_cfg  = active_bwp.ul.common().rach_cfg_common;
+  const auto*                              opt_pdsch_cfg = active_bwp.dl.pdsch().ded();
 
   auto dci_sz_cfg =
       dci_size_config{is_dci_format_monitored_in_ue_ss(ue_cell_cfg, active_bwp.id, true),
@@ -178,9 +173,8 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
   dci_sz_cfg.transform_precoding_enabled  = use_pusch_transform_precoding(
       init_bwp.ul.pusch_ded(), opt_rach_cfg.has_value() and opt_rach_cfg->msg3_transform_precoder);
   if (init_bwp.ul.ded() != nullptr) {
-    const std::optional<pusch_config>& opt_pusch_cfg    = init_bwp.ul.ded()->pusch_cfg;
-    const std::optional<srs_config>&   opt_srs_cfg      = init_bwp.ul.ded()->srs_cfg;
-    const pusch_serving_cell_config*   opt_pusch_sc_cfg = ue_cell_cfg.pusch_serving_cell_cfg();
+    const std::optional<pusch_config>& opt_pusch_cfg = init_bwp.ul.ded()->pusch_cfg;
+    const std::optional<srs_config>&   opt_srs_cfg   = init_bwp.ul.ded()->srs_cfg;
     if (opt_pusch_cfg.has_value()) {
       dci_sz_cfg.pusch_tx_scheme = opt_pusch_cfg->tx_cfg;
       if ((opt_pusch_cfg.value().pusch_mapping_type_a_dmrs.has_value() and
@@ -255,9 +249,6 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
       }
       dci_sz_cfg.nof_srs_resources = srs_res_set->srs_res_id_list.size();
     }
-    if (opt_pusch_sc_cfg != nullptr and opt_pusch_sc_cfg->cbg_tx.has_value()) {
-      dci_sz_cfg.max_cbg_tb_pusch = static_cast<unsigned>(opt_pusch_sc_cfg->cbg_tx.value().max_cgb_per_tb);
-    }
     dci_sz_cfg.pusch_max_layers = 1;
     if (opt_pusch_cfg->tx_cfg.has_value() and
         std::holds_alternative<tx_scheme_codebook>(opt_pusch_cfg.value().tx_cfg.value())) {
@@ -326,15 +317,6 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
   dci_sz_cfg.multiple_scells     = is_ue_configured_multiple_serving_cells;
   dci_sz_cfg.pdsch_tci           = false;
   dci_sz_cfg.cbg_flush_indicator = false;
-  if (opt_pdsch_serving_cell_cfg != nullptr) {
-    dci_sz_cfg.cbg_flush_indicator = false;
-    if (opt_pdsch_serving_cell_cfg->code_block_group_tx.has_value()) {
-      dci_sz_cfg.cbg_flush_indicator =
-          opt_pdsch_serving_cell_cfg->code_block_group_tx.value().code_block_group_flush_indicator;
-      dci_sz_cfg.max_cbg_tb_pdsch =
-          static_cast<unsigned>(opt_pdsch_serving_cell_cfg->code_block_group_tx.value().max_cbg_per_tb);
-    }
-  }
 
   return dci_sz_cfg;
 }
