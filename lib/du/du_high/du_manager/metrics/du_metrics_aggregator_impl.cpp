@@ -63,6 +63,11 @@ void du_manager_metrics_aggregator_impl::aggregate_mac_metrics_report(const mac_
     // Save MAC metrics.
     next_report.mac                = report;
     nof_periods_without_mac_report = 0;
+    // Count the periods from the last MAC report, so that a jitter of the MAC reports does not trigger a report without
+    // MAC metrics.
+    if (idle_timer.is_running()) {
+      idle_timer.run();
+    }
 
     trigger_report();
   }
