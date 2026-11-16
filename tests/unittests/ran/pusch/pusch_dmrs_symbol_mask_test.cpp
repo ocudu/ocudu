@@ -118,7 +118,7 @@ TEST_P(PuschDmrsSymbolMaskFixture, ANormal)
 INSTANTIATE_TEST_SUITE_P(PuschDmrsSymbolMaskTypeASingle,
                          PuschDmrsSymbolMaskFixture,
                          ::testing::Combine(::testing::Values(dmrs_typeA_position::pos2, dmrs_typeA_position::pos3),
-                                            ::testing::Range(5U, 15U),
+                                            ::testing::Range(4U, 15U),
                                             ::testing::Values(dmrs_additional_positions::pos0,
                                                               dmrs_additional_positions::pos1,
                                                               dmrs_additional_positions::pos2,
