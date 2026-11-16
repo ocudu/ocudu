@@ -25,6 +25,35 @@ variables:
 # Template jobs #
 #################
 
+# Fetches MR source/target into refs/ci/mr-{source,target} and sets SOURCE_SHA and FORK_POINT. Works on forks.
+.fetch mr refs:
+  script:
+    - &fetch_branches |
+      cd $CI_PROJECT_DIR
+      git config advice.detachedHead false
+      unshallow_flag() {
+        if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+          echo --unshallow
+        fi
+      }
+      if [ "$CI_PROJECT_PATH" = "$CI_MERGE_REQUEST_PROJECT_PATH" ]; then
+        # job on target
+        git fetch $(unshallow_flag) origin \
+          "+refs/heads/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME:refs/ci/mr-target" \
+          "$CI_MERGE_REQUEST_REF_PATH:refs/ci/mr-source"
+      else
+        # job on the fork
+        git fetch $(unshallow_flag) origin \
+          "+refs/heads/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:refs/ci/mr-source"
+        git remote get-url upstream >/dev/null 2>&1 || \
+          git remote add upstream "$CI_MERGE_REQUEST_PROJECT_URL"
+        git fetch $(unshallow_flag) upstream \
+          "+refs/heads/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME:refs/ci/mr-target"
+      fi
+
+      SOURCE_SHA=$(git rev-parse refs/ci/mr-source)
+      FORK_POINT=$(git merge-base refs/ci/mr-source refs/ci/mr-target)
+
 # Base job
 
 .build_and_unit:
@@ -617,31 +646,7 @@ intermediate commits cached:
     - if: $ON_MR
   script:
     - *script_functions
-    - &fetch_branches |
-      cd $CI_PROJECT_DIR
-      git config advice.detachedHead false
-      unshallow_flag() {
-        if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
-          echo --unshallow
-        fi
-      }
-      if [ "$CI_PROJECT_PATH" = "$CI_MERGE_REQUEST_PROJECT_PATH" ]; then
-        # job on target
-        git fetch $(unshallow_flag) origin \
-          "+refs/heads/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME:refs/ci/mr-target" \
-          "$CI_MERGE_REQUEST_REF_PATH:refs/ci/mr-source"
-      else
-        # job on the fork
-        git fetch $(unshallow_flag) origin \
-          "+refs/heads/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:refs/ci/mr-source"
-        git remote get-url upstream >/dev/null 2>&1 || \
-          git remote add upstream "$CI_MERGE_REQUEST_PROJECT_URL"
-        git fetch $(unshallow_flag) upstream \
-          "+refs/heads/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME:refs/ci/mr-target"
-      fi
-
-      SOURCE_SHA=$(git rev-parse refs/ci/mr-source)
-      FORK_POINT=$(git merge-base refs/ci/mr-source refs/ci/mr-target)
+    - *fetch_branches
     - |
       revs=$(git rev-list --reverse $FORK_POINT..$SOURCE_SHA)
       if [ -z "$revs" ]; then

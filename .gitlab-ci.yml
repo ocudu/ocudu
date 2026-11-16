@@ -459,31 +459,7 @@ clang-tidy incremental:
     CACHE_COMPRESSION_LEVEL: slowest
     CACHE_REQUEST_TIMEOUT: 5 # minutes - 10 by default
   script:
-    - |
-      cd $CI_PROJECT_DIR
-      git config advice.detachedHead false
-      unshallow_flag() {
-        if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
-          echo --unshallow
-        fi
-      }
-      if [ "$CI_PROJECT_PATH" = "$CI_MERGE_REQUEST_PROJECT_PATH" ]; then
-        # job on target
-        git fetch $(unshallow_flag) origin \
-          "+refs/heads/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME:refs/ci/mr-target" \
-          "$CI_MERGE_REQUEST_REF_PATH:refs/ci/mr-source"
-      else
-        # job on the fork
-        git fetch $(unshallow_flag) origin \
-          "+refs/heads/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:refs/ci/mr-source"
-        git remote get-url upstream >/dev/null 2>&1 || \
-          git remote add upstream "$CI_MERGE_REQUEST_PROJECT_URL"
-        git fetch $(unshallow_flag) upstream \
-          "+refs/heads/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME:refs/ci/mr-target"
-      fi
-
-      SOURCE_SHA=$(git rev-parse refs/ci/mr-source)
-      FORK_POINT=$(git merge-base refs/ci/mr-source refs/ci/mr-target)
+    - !reference [.fetch mr refs, script]
     - |
       clean_arg="-r"
       for rev in $FORK_POINT $SOURCE_SHA; do
