@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-
 .version increased:
   stage: ci
   image:
@@ -12,18 +11,17 @@
     FILE_PATH: ""
     VARIABLE_NAME: ""
   script:
-    - UNSHALLOW=$([ "$(git rev-parse --is-shallow-repository)" = "true" ] && echo --unshallow || true)
-    - git fetch $UNSHALLOW origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
-    - NEW_VERSION=$(grep "$VARIABLE_NAME" "$FILE_PATH" | cut -d'"' -f2)
-    - export NEW_VERSION
     - |
-      git checkout $CI_MERGE_REQUEST_DIFF_BASE_SHA
-      if ! grep -q "$VARIABLE_NAME" "$FILE_PATH"; then
-          exit 0
+      # Pipeline-fixed base, so retries after a rebase compare the same revisions
+      BASE_SHA=$CI_MERGE_REQUEST_DIFF_BASE_SHA
+      git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null || git fetch --depth=1 origin "$BASE_SHA"
+      NEW_VERSION=$(grep "$VARIABLE_NAME" "$FILE_PATH" | cut -d'"' -f2)
+      if ! OLD_FILE=$(git show "$BASE_SHA:$FILE_PATH" 2>/dev/null) || \
+         ! printf '%s\n' "$OLD_FILE" | grep -q "$VARIABLE_NAME"; then
+        echo "$VARIABLE_NAME not present at base $BASE_SHA, nothing to compare."
+        exit 0
       fi
-    - OLD_VERSION=$(grep "$VARIABLE_NAME" "$FILE_PATH" | cut -d'"' -f2)
-    - export OLD_VERSION
-    - |
+      OLD_VERSION=$(printf '%s\n' "$OLD_FILE" | grep "$VARIABLE_NAME" | cut -d'"' -f2)
       echo "OLD version: $OLD_VERSION -- NEW version: $NEW_VERSION"
     - |
       if [ "$NEW_VERSION" = "$OLD_VERSION" ]; then

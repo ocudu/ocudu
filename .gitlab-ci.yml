@@ -43,9 +43,6 @@ metrics interface version increased:
   extends: .version increased
   stage: static
   rules:
-    # The template fetches the MR source branch from origin, not available for forks
-    - if: $ON_MR_FORK
-      when: never
     - if: $ON_MR
       changes:
         paths:
@@ -60,9 +57,6 @@ remote control interface version increased:
   extends: .version increased
   stage: static
   rules:
-    # The template fetches the MR source branch from origin, not available for forks
-    - if: $ON_MR_FORK
-      when: never
     - if: $ON_MR
       changes:
         paths:
