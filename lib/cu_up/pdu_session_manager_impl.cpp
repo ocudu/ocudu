@@ -284,7 +284,8 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   new_session.drbs.emplace(
       drb_to_setup.drb_id,
       std::make_unique<drb_context>(drb_to_setup.drb_id,
-                                    new_session.direct_forwarding_path ? xnu_teid_allocator : ngu_teid_allocator));
+                                    new_session.direct_forwarding_path ? xnu_teid_allocator : ngu_teid_allocator,
+                                    new_session.direct_forwarding_path ? xnu_gtpu_rx_demux : ngu_gtpu_rx_demux));
   drb_context* new_drb = new_session.drbs.at(drb_to_setup.drb_id).get();
 
   // Create Qos Flows
@@ -468,20 +469,17 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
       drb_result.data_forwarding_info->dl_data_forwarding = new_drb->ingress_dl_data_forwarding_tnl_info;
 
       // TODO TX GTP-U tunnel should only be created if UL forwarding is enabled.
-      std::string xnu_addr;
-      if (not xnu_session_mngr->get_next_xnu_gateway().get_bind_address(xnu_addr)) {
-        logger.log_error("Could not get Xn-U bind address for target forwarding");
-      }
+      std::string dummy_xnu_addr = "127.0.50.1";
       /// Create GTP-U tunnel for DL data forwarding.
       gtpu_tunnel_pdcp_config fwd_cfg = {
           .rx = {.lif         = gtpu_logical_interface::xnu,
                  .local_teid  = new_drb->ingress_dl_data_forwarding_tnl_info->gtp_teid,
-                 .pdcp_sn_len = new_drb->pdcp->get_rx_upper_control_interface().get_sn_size()},
+                 .pdcp_sn_len = new_drb->pdcp->get_tx_upper_control_interface().get_sn_size()},
           .tx = {.lif         = gtpu_logical_interface::xnu,
                  .peer_teid   = {},
-                 .peer_addr   = xnu_addr,
+                 .peer_addr   = dummy_xnu_addr,
                  .peer_port   = GTPU_PORT,
-                 .pdcp_sn_len = new_drb->pdcp->get_tx_upper_control_interface().get_sn_size()}};
+                 .pdcp_sn_len = new_drb->pdcp->get_rx_upper_control_interface().get_sn_size()}};
       auto gtpu_fwd_cfg        = gtpu_tunnel_pdcp_creation_message{.ue_index  = ue_index,
                                                                    .cfg       = fwd_cfg,
                                                                    .gtpu_pcap = &xnu_gtpu_pcap,

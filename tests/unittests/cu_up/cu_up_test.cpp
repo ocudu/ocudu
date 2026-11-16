@@ -157,17 +157,17 @@ protected:
     upf_addr_str = "127.0.0.1";
 
     // Set default UDP configs
-    ngu_cu_up_udp_cfg.if_name      = "ngu";       // Random free port selected by the OS.
+    ngu_cu_up_udp_cfg.if_name      = "ngu";
     ngu_cu_up_udp_cfg.bind_port    = 0;           // Random free port selected by the OS.
     ngu_cu_up_udp_cfg.bind_address = "127.0.0.2"; // NG-U bind address
-                                                  //
+
     // Set default UDP configs
-    xnu_cu_up_udp_cfg.if_name      = "xnu";       // Random free port selected by the OS.
+    xnu_cu_up_udp_cfg.if_name      = "xnu";
     xnu_cu_up_udp_cfg.bind_port    = 0;           // Random free port selected by the OS.
     xnu_cu_up_udp_cfg.bind_address = "127.0.0.3"; // Xn-U bind address
   }
 
-  cu_up_config get_default_cu_up_config()
+  static cu_up_config get_default_cu_up_config()
   {
     // create config
     cu_up_config cfg;
@@ -295,7 +295,7 @@ protected:
     byte_buffer         t_pdu_buf1   = byte_buffer::create(t_pdu_span1).value();
     nru_msg1.t_pdu                   = byte_buffer_chain::create(std::move(t_pdu_buf1)).value();
     nru_dl_data_delivery_status ddds = {};
-    ddds.desired_buffer_size_for_drb = 1 << 20; // 1MBi RLC SDU size
+    ddds.desired_buffer_size_for_drb = 1 << 20; // 1MBi RLC SDU queue size
     nru_msg1.data_delivery_status    = ddds;
 
     f1u_bearer.handle_pdu(std::move(nru_msg1));
@@ -336,9 +336,6 @@ protected:
     // Setup bearer
     e1ap_bearer_context_setup_response response =
         cu_up->get_cu_up_manager()->handle_bearer_context_setup_request(bearer_context_setup);
-    for (auto& item : response.pdu_session_resource_setup_list) {
-      fmt::println("psi={}", item.pdu_session_id);
-    }
   }
 
   struct upf_info_t {

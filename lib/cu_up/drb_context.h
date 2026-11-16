@@ -25,8 +25,10 @@ namespace ocuup {
 
 /// \brief DRB context with map to all QoS flows.
 struct drb_context {
-  drb_context(const drb_id_t& drb_id_, gtpu_teid_pool& dl_data_forwarding_teid_allocator_) :
-    drb_id(drb_id_), dl_data_forwarding_teid_allocator(dl_data_forwarding_teid_allocator_)
+  drb_context(const drb_id_t&  drb_id_,
+              gtpu_teid_pool&  dl_data_forwarding_teid_allocator_,
+              gtpu_demux_ctrl& fwd_demux_) :
+    drb_id(drb_id_), dl_data_forwarding_teid_allocator(dl_data_forwarding_teid_allocator_), fwd_demux(fwd_demux_)
   {
   }
   ~drb_context() { stop(); }
@@ -35,6 +37,7 @@ struct drb_context {
   {
     if (!stopped) {
       if (ingress_dl_data_forwarding_tnl_info.has_value()) {
+        fwd_demux.remove_tunnel(ingress_dl_data_forwarding_tnl_info->gtp_teid);
         (void)dl_data_forwarding_teid_allocator.release_teid(ingress_dl_data_forwarding_tnl_info->gtp_teid);
       }
       if (pdcp) {
@@ -76,6 +79,10 @@ struct drb_context {
   /// Pool that the TEID of the DL data forwarding tunnel came from: the Xn-U pool for a direct path, and
   /// the NG-U pool for an indirect one.
   gtpu_teid_pool& dl_data_forwarding_teid_allocator;
+
+  /// Demux that the TEID of the DL data forwarding tunnel came from: the Xn-U demux for a direct path, and
+  /// the NG-U demux for an indirect one.
+  gtpu_demux_ctrl& fwd_demux;
 
   std::unique_ptr<f1u_cu_up_gateway_bearer>  f1u_gw_bearer;
   std::unique_ptr<f1u_bearer>                f1u;

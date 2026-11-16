@@ -29,11 +29,20 @@ public:
   /// Gets the NG-U bind port (helper function for testing).
   std::optional<uint16_t> get_ngu_bind_port() const // TODO include index?
   {
+    if (ngu_sessions.empty()) {
+      report_error("Getting bind port, but NG-U gateway is not setup");
+    }
     return ngu_sessions[0]->get_bind_port();
   }
 
   /// Gets the NG-U bind port (helper function for testing).
-  std::optional<uint16_t> get_xnu_bind_port() const { return xnu_sessions[0]->get_bind_port(); }
+  std::optional<uint16_t> get_xnu_bind_port() const
+  {
+    if (xnu_sessions.empty()) {
+      report_error("Getting bind port, but Xn-U gateway is not setup");
+    }
+    return xnu_sessions[0]->get_bind_port();
+  }
 
   /// Gets the CU-UP manager (helper function for testing).
   cu_up_manager* get_cu_up_manager() const { return cu_up_mng.get(); }

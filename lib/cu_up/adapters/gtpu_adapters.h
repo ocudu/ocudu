@@ -70,7 +70,7 @@ private:
 class gtpu_forwarding_pdcp_adapter : public gtpu_tunnel_pdcp_rx_lower_layer_notifier
 {
 public:
-  gtpu_forwarding_pdcp_adapter()           = default;
+  gtpu_forwarding_pdcp_adapter() : logger(ocudulog::fetch_basic_logger("GTPU", false)) {}
   ~gtpu_forwarding_pdcp_adapter() override = default;
 
   void connect_pdcp(pdcp_tx_upper_data_interface& pdcp_handler_) { pdcp_handler = &pdcp_handler_; }
@@ -79,7 +79,7 @@ public:
   void on_new_sdu(byte_buffer tpdu, uint32_t pdcp_pdu_number) override
   {
     if (!pdcp_handler) {
-      ocudulog::fetch_basic_logger("GTPU", false).debug("Dropped DL forwarded GTP-U SDU. PDCP DRB not connected.");
+      logger.debug("Dropped DL forwarded GTP-U SDU. PDCP DRB not connected.");
       return;
     }
     // TODO. Pass PDU to PDCP.
@@ -87,6 +87,7 @@ public:
 
 private:
   pdcp_tx_upper_data_interface* pdcp_handler = nullptr;
+  ocudulog::basic_logger&       logger;
 };
 
 } // namespace ocudu::ocuup

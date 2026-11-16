@@ -504,7 +504,7 @@ int main(int argc, char** argv)
                       .f1u_teid_allocator     = *cu_f1u_teid_allocator,
                       .f1u_gateway            = *cu_f1u_conn,
                       .ngu_gtpu_pcap          = *cu_up_dlt_pcaps.ngu,
-                      .xnu_gtpu_pcap          = *cu_up_dlt_pcaps.ngu,
+                      .xnu_gtpu_pcap          = *cu_up_dlt_pcaps.xnu,
                       .timers                 = app_timers,
                       .io_brk                 = *epoll_broker,
   };

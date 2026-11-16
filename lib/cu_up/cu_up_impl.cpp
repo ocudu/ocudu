@@ -111,7 +111,7 @@ cu_up::cu_up(const cu_up_config& config_, cu_up_dependencies dependencies) :
   report_error_if_not(batch_q.has_value(), "Could not create GTP-U echo tunnel.");
   echo_batched_queue = std::move(*batch_q);
 
-  // Connect GTP-U DEMUX to adapter.
+  // Connect NG-U GTP-U DEMUX to adapter.
   ngu_gw_data_gtpu_demux_adapter = std::make_unique<network_gateway_data_gtpu_demux_adapter>(*ngu_demux);
 
   // Establish new NG-U session and connect the instantiated session to the GTP-U DEMUX adapter, so that the latter

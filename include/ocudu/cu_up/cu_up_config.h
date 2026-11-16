@@ -132,7 +132,7 @@ struct cu_up_dependencies {
   timer_manager& timers;
   /// NG-U PCAP.
   dlt_pcap& ngu_gtpu_pcap;
-  /// PCAP.
+  /// Xn-U PCAP.
   dlt_pcap& xnu_gtpu_pcap;
   /// Logger.
   ocudulog::basic_logger& logger;
