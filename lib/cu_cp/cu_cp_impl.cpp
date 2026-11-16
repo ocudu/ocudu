@@ -1345,8 +1345,21 @@ cu_cp_impl::handle_new_pdu_session_resource_modify_request(const ngap_pdu_sessio
 {
   cu_cp_ue* ue = ue_mng.find_du_ue(request.ue_index);
   ocudu_assert(ue != nullptr, "ue={}: Could not find DU UE", request.ue_index);
-  ocudu_assert(
-      ue->get_cu_up_index() != cu_cp_cu_up_index_t::invalid, "ue={}: could not find CU-UP of the UE", request.ue_index);
+
+  // The UE is assigned a CU-UP with its first PDU session. Without one, the AMF requested to modify PDU sessions that
+  // don't exist.
+  if (ue->get_cu_up_index() == cu_cp_cu_up_index_t::invalid) {
+    logger.warning("ue={}: Failing PDUSessionResourceModifyRequest. Cause: UE has no PDU session", request.ue_index);
+    ngap_pdu_session_resource_modify_response response;
+    response.ue_index = request.ue_index;
+    for (const auto& item : request.pdu_session_res_modify_items) {
+      ngap_pdu_session_resource_failed_to_modify_item failed_item;
+      failed_item.pdu_session_id              = item.pdu_session_id;
+      failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::unknown_pdu_session_id;
+      response.pdu_session_res_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);
+    }
+    return launch_no_op_task(std::move(response));
+  }
 
   return launch_async<pdu_session_resource_modification_routine>(
       request,

@@ -376,6 +376,39 @@ TEST_F(cu_cp_pdu_session_resource_modify_test,
   ASSERT_TRUE(send_pdu_session_modify_request_and_await_pdu_session_modify_response());
 }
 
+TEST_F(cu_cp_pdu_session_resource_modify_test, when_ue_has_no_pdu_session_then_modification_fails)
+{
+  // Register a second UE without setting up a PDU session, so that it isn't assigned a CU-UP.
+  const gnb_du_ue_f1ap_id_t du_ue_id2  = int_to_gnb_du_ue_f1ap_id(1);
+  const amf_ue_id_t         amf_ue_id2 = uint_to_amf_ue_id(1);
+  ASSERT_TRUE(connect_new_ue(du_idx, du_ue_id2, to_rnti(0x4602)));
+  ASSERT_TRUE(authenticate_ue(du_idx, du_ue_id2, amf_ue_id2));
+  ASSERT_TRUE(setup_ue_security_and_ue_capabilities(du_idx, du_ue_id2));
+  ASSERT_TRUE(finish_ue_registration(du_idx, cu_up_idx, du_ue_id2));
+  const ue_context* ue_ctx2 = this->find_ue_context(du_idx, du_ue_id2);
+  ASSERT_NE(ue_ctx2, nullptr);
+
+  // Inject PDU Session Resource Modify Request and await PDU Session Resource Modify Response
+  get_amf().push_tx_pdu(
+      generate_valid_pdu_session_resource_modify_request_message(amf_ue_id2, ue_ctx2->ran_ue_id.value(), psi, {qfi2}));
+  ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_pdu_session_resource_modify_response(ngap_pdu));
+  ASSERT_TRUE(is_expected_pdu_session_resource_modify_response({}, {psi}));
+
+  // The PDU session fails with cause unknown-PDU-session-ID.
+  const auto& failed_item = ngap_pdu.pdu.successful_outcome()
+                                .value.pdu_session_res_modify_resp()
+                                ->pdu_session_res_failed_to_modify_list_mod_res[0];
+  asn1::ngap::pdu_session_res_modify_unsuccessful_transfer_s unsuccessful_transfer;
+  asn1::cbit_ref bref(failed_item.pdu_session_res_modify_unsuccessful_transfer);
+  ASSERT_EQ(asn1::unpack(unsuccessful_transfer, bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(unsuccessful_transfer.cause.type().value, asn1::ngap::cause_c::types_opts::radio_network);
+  ASSERT_EQ(unsuccessful_transfer.cause.radio_network().value,
+            asn1::ngap::cause_radio_network_opts::unknown_pdu_session_id);
+
+  ASSERT_FALSE(this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu)) << "No Bearer Context Modification expected";
+}
+
 TEST_F(cu_cp_pdu_session_resource_modify_test, when_bearer_ctxt_modification_fails_then_pdu_session_modify_fails)
 {
   // Inject PDU Session Resource Modify Request and await Bearer Context Modification Request
