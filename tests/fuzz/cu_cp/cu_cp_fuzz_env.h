@@ -52,8 +52,10 @@
 #include "ocudu/support/executors/task_worker.h"
 #include "ocudu/support/timers.h"
 #include "ocudu/xnap/gateways/xnc_connection_gateway.h"
+#include <algorithm>
 #include <cstdint>
 #include <memory>
+#include <set>
 #include <string_view>
 
 namespace ocudu::ocucp::fuzz {
@@ -291,7 +293,7 @@ class fuzz_du
                                      concurrent_queue_wait_policy::condition_variable>;
 
 public:
-  explicit fuzz_du(cu_cp_f1c_handler& cu_cp_f1c) : dl_pdus(1024), ue_ctxt_mod_requests(16)
+  explicit fuzz_du(cu_cp_f1c_handler& cu_cp_f1c) : dl_pdus(1024), requests(64)
   {
     tx_pdu_notifier = cu_cp_f1c.handle_new_du_connection(std::make_unique<rx_pdu_notifier>(*this));
   }
@@ -309,8 +311,9 @@ public:
   /// Pop the next PDU sent by the CU-CP to the DU. Returns false if empty.
   bool try_pop_dl_pdu(f1ap_message& msg) { return dl_pdus.try_pop(msg); }
 
-  /// Pop the next UE Context Modification Request the DU has not answered yet. Returns false if empty.
-  bool try_pop_ue_context_modification_request(f1ap_message& msg) { return ue_ctxt_mod_requests.try_pop(msg); }
+  /// Pop the next UE Context Modification Request or Release Command the DU has not answered yet. Returns false if
+  /// empty.
+  bool try_pop_request(f1ap_message& msg) { return requests.try_pop(msg); }
 
 private:
   class rx_pdu_notifier : public f1ap_message_notifier
@@ -320,11 +323,13 @@ private:
 
     void on_new_message(const f1ap_message& msg) override
     {
-      // The request is also left in the DL queue, since it can carry the RRCReconfiguration.
+      // The requests are also left in the DL queue, since they can carry an RRC message.
       if (msg.pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg and
-          msg.pdu.init_msg().value.type().value ==
-              asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_mod_request) {
-        parent.ue_ctxt_mod_requests.push_blocking(msg);
+          (msg.pdu.init_msg().value.type().value ==
+               asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_mod_request or
+           msg.pdu.init_msg().value.type().value ==
+               asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd)) {
+        parent.requests.push_blocking(msg);
       }
       parent.dl_pdus.push_blocking(msg);
     }
@@ -335,7 +340,7 @@ private:
 
   std::unique_ptr<f1ap_message_notifier> tx_pdu_notifier;
   pdu_queue                              dl_pdus;
-  pdu_queue                              ue_ctxt_mod_requests;
+  pdu_queue                              requests;
 };
 
 /// Build the UE Context Modification Response a DU sends when it accepts the request, as in TS 38.473
@@ -462,6 +467,9 @@ struct fuzz_state {
   /// Monotonic DU UE F1AP ID, so that a released UE's identifier is never reused.
   uint64_t next_du_ue_id = 0;
 
+  /// DU UE F1AP IDs of the UEs whose UE Context Release the DU completed, until the UE that waits for it collects them.
+  std::set<uint64_t> released_du_ue_ids;
+
   /// RRC AS security configuration matching the one the CU-CP derives for every UE.
   security::sec_128_as_config rrc_sec_cfg = make_rrc_128_as_config();
 
@@ -543,6 +551,25 @@ struct fuzz_state {
     }
   }
 
+  /// Advance the clock by \c nof_ticks milliseconds, so that procedure guard timers expire.
+  ///
+  /// The ticks run in batches, each followed by the tasks the expired timers queued. That keeps a long
+  /// advance cheap, at the cost of running the tasks of timers that expire in one batch only after it.
+  void advance_time(unsigned nof_ticks)
+  {
+    static constexpr unsigned batch_size = 16;
+    while (nof_ticks != 0) {
+      const unsigned batch = std::min(nof_ticks, batch_size);
+      worker.push_task_blocking([this, batch]() {
+        for (unsigned i = 0; i != batch; ++i) {
+          timers.tick();
+        }
+      });
+      run_pending_tasks();
+      nof_ticks -= batch;
+    }
+  }
+
 private:
   /// Upper bound on the request-answer rounds of one drain. A PDU session setup takes four, and the bound only stops a
   /// CU-CP that keeps asking forever from hanging the harness.
@@ -561,7 +588,10 @@ private:
   /// Answer the CU-UP and DU requests the CU-CP sent, so that the procedures waiting on them run to their end. Returns
   /// whether anything was answered.
   ///
-  /// The UE Context Setup and Release Commands are left to the UE, which steps through them itself.
+  /// The UE Context Setup Request is left to the UE, which steps through it itself. Release Commands are answered here
+  /// rather than by the UE, because the CU-CP also releases UEs of its own accord, and late: on a message it rejects,
+  /// or once a procedure that blocks the release times out. A command left unanswered keeps the UE in the CU-CP, and
+  /// the leaked UEs fill the UE pool until every later input is rejected at admission.
   bool answer_peers()
   {
     bool answered = false;
@@ -576,8 +606,14 @@ private:
     }
     if (du != nullptr) {
       f1ap_message f1ap_pdu;
-      while (du->try_pop_ue_context_modification_request(f1ap_pdu)) {
-        du->push_ul_pdu(make_ue_context_modification_response(f1ap_pdu));
+      while (du->try_pop_request(f1ap_pdu)) {
+        if (f1ap_pdu.pdu.init_msg().value.type().value ==
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_mod_request) {
+          du->push_ul_pdu(make_ue_context_modification_response(f1ap_pdu));
+        } else {
+          released_du_ue_ids.insert(f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd()->gnb_du_ue_f1ap_id);
+          du->push_ul_pdu(test_helpers::generate_ue_context_release_complete(f1ap_pdu));
+        }
         answered = true;
       }
     }
@@ -611,6 +647,8 @@ public:
   {
     release(du_ue_id, cu_ue_id);
     drain_dl_pdus();
+    // A release the CU-CP completes after its UE stopped waiting for it leaves its ID behind.
+    state.released_du_ue_ids.clear();
   }
 
   bool is_valid() const { return cu_ue_id.has_value(); }
@@ -651,6 +689,7 @@ public:
     state.du->push_ul_pdu(test_helpers::generate_init_ul_rrc_message_transfer(
         ccch_du_ue_id, to_rnti(0x4602), plmn_identity::test_value(), byte_buffer{}, make_buffer(pdu)));
     state.drain();
+    drain_ngap_pdus();
     release(ccch_du_ue_id, pop_cu_ue_id(ccch_du_ue_id));
     drain_dl_pdus();
   }
@@ -813,27 +852,37 @@ private:
     return found;
   }
 
-  /// Release a UE from the DU side, so that UE contexts do not accumulate across inputs.
+  /// Release a UE from the DU side and wait until the CU-CP has released it, so that UE contexts do not accumulate
+  /// across inputs.
   void release(gnb_du_ue_f1ap_id_t released_du_ue_id, std::optional<gnb_cu_ue_f1ap_id_t> released_cu_ue_id)
   {
-    if (!released_cu_ue_id.has_value()) {
-      return;
+    if (released_cu_ue_id.has_value() and state.released_du_ue_ids.count(to_underlying(released_du_ue_id)) == 0) {
+      state.du->push_ul_pdu(
+          test_helpers::generate_ue_context_release_request(released_cu_ue_id.value(), released_du_ue_id));
+      state.drain();
+      drain_ngap_pdus();
+      await_release(released_du_ue_id);
     }
-    state.du->push_ul_pdu(
-        test_helpers::generate_ue_context_release_request(released_cu_ue_id.value(), released_du_ue_id));
-    state.drain();
+    state.released_du_ue_ids.erase(to_underlying(released_du_ue_id));
+  }
 
-    // A UE the AMF knows about is released over NGAP first. Answer from here rather than from the
-    // AMF stub's notifier, which runs on the CU-CP worker thread inside the CU-CP's own Tx path.
-    ngap_message ngap_pdu;
-    while (state.amf.try_pop_rx_pdu(ngap_pdu)) {
-      if (std::optional<ngap_message> release_cmd = make_release_command(ngap_pdu); release_cmd.has_value()) {
-        state.amf.push_tx_pdu(release_cmd.value());
-        state.drain();
-      }
+  /// Longest wait for the CU-CP to release a UE, in milliseconds. It covers the RRC procedure guard timers, the
+  /// longest of which is the 4 s of the RRCReconfiguration.
+  static constexpr unsigned max_release_wait_ms  = 8192;
+  static constexpr unsigned release_wait_step_ms = 64;
+
+  /// Advance the clock until the DU has completed the release of the UE, or the wait is over.
+  ///
+  /// A procedure in progress, such as an RRCReconfiguration waiting for the UE, holds the release back until it
+  /// ends, which takes until its guard timer expires when the input never answers it.
+  void await_release(gnb_du_ue_f1ap_id_t released_du_ue_id)
+  {
+    for (unsigned waited = 0;
+         state.released_du_ue_ids.count(to_underlying(released_du_ue_id)) == 0 and waited < max_release_wait_ms;
+         waited += release_wait_step_ms) {
+      state.advance_time(release_wait_step_ms);
+      drain_ngap_pdus();
     }
-
-    answer_release_command();
   }
 
   /// Drain DL PDUs until the one carrying the CU-CP UE ID for the given UE is found.
@@ -855,20 +904,6 @@ private:
     return found;
   }
 
-  /// Answer the F1AP UE Context Release Command, completing the release at the DU.
-  void answer_release_command()
-  {
-    f1ap_message pdu;
-    while (state.du->try_pop_dl_pdu(pdu)) {
-      if (pdu.pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg and
-          pdu.pdu.init_msg().value.type().value ==
-              asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd) {
-        state.du->push_ul_pdu(test_helpers::generate_ue_context_release_complete(pdu));
-        state.drain();
-      }
-    }
-  }
-
   void drain_dl_pdus()
   {
     f1ap_message f1ap_pdu;
@@ -880,11 +915,21 @@ private:
     drain_ngap_pdus();
   }
 
-  /// Drain the NGAP queue, picking up the UE's RAN-UE-NGAP-ID on the way.
+  /// Drain the NGAP queue, picking up the UE's RAN-UE-NGAP-ID and answering the UE Context Release Requests on the
+  /// way.
+  ///
+  /// A UE the AMF knows about is released over NGAP first, whether the DU or the CU-CP started the release. The
+  /// requests are answered from here rather than from the AMF stub's notifier, which runs on the CU-CP worker thread
+  /// inside the CU-CP's own Tx path.
   void drain_ngap_pdus()
   {
     ngap_message ngap_pdu;
     while (state.amf.try_pop_rx_pdu(ngap_pdu)) {
+      if (std::optional<ngap_message> release_cmd = make_release_command(ngap_pdu); release_cmd.has_value()) {
+        state.amf.push_tx_pdu(release_cmd.value());
+        state.drain();
+        continue;
+      }
       // The Initial UE Message names the UE over NGAP, which the Initial Context Setup Request has to
       // address to reach this UE.
       if (ngap_pdu.pdu.type().value == asn1::ngap::ngap_pdu_c::types_opts::init_msg and

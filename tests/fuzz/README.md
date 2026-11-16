@@ -389,6 +389,10 @@ builds; only the RRC message inside is mutated. Fuzzing the F1AP wrapper itself 
 
 A UE is created and released for every input, so a crash reproduces from its input file alone. The UE pool is capped at
 8, which turns a UE that fails to be released into an immediate failure to create the next one rather than a slow leak.
+The stub DU and AMF therefore complete every UE Context Release, including those the CU-CP starts of its own accord on a
+message it rejects, and the harness advances the clock until the CU-CP has released the UE, when a procedure in progress
+holds the release back until its guard timer expires. A UE left behind would make every later input fail at admission,
+and the coverage of a corpus replay would then depend on the order of the inputs.
 
 #### Input format of the full-stack fuzzer
 
