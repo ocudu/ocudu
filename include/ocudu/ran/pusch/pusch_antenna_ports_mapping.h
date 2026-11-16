@@ -5,46 +5,65 @@
 
 #pragma once
 
+#include "ocudu/adt/span.h"
 #include "ocudu/ran/dmrs/dmrs.h"
 #include "ocudu/ran/srs/srs_resource_configuration.h"
+#include <optional>
 
 namespace ocudu {
 
-/// PUSCH antenna ports mapping of a row in TS38.212 Tables 7.3.1.1.2-6 to 7.3.1.1.2-23.
+/// Antenna ports mapping information for PUSCH when using DCI format 0_1. See TS 38.212 Tables 7.3.1.1.2-6 to
+/// 7.3.1.1.2-23.
 struct pusch_antenna_ports_mapping {
-  /// Row index, signalled in the DCI format 0_1 antenna ports field.
-  unsigned row_index;
-  /// Number of DM-RS CDM groups without data.
+  /// Number of DMRS CDM group(s) without data.
   unsigned nof_dmrs_cdm_groups_without_data;
-  /// DM-RS port mask, with bit \f$i\f$ set when DM-RS port \f$i\f$ carries a layer.
-  dmrs_port_mask dmrs_ports = dmrs_port_mask(DMRS_MAX_NPORTS);
+  /// DM-RS ports used. Bit \f$p\f$ corresponds to the DM-RS port \f$p\f$.
+  dmrs_port_mask dmrs_ports;
+  /// Number of front-load DM-RS symbols.
+  unsigned nof_front_load_symbols;
+
+  bool operator==(const pusch_antenna_ports_mapping& other) const
+  {
+    return nof_dmrs_cdm_groups_without_data == other.nof_dmrs_cdm_groups_without_data &&
+           dmrs_ports == other.dmrs_ports && nof_front_load_symbols == other.nof_front_load_symbols;
+  }
+  bool operator!=(const pusch_antenna_ports_mapping& other) const { return !(*this == other); }
 };
 
-/// \brief Returns the PUSCH antenna ports mapping in TS38.212 Tables 7.3.1.1.2-6 to 7.3.1.1.2-23.
-/// \param[in] nof_layers         Number of layers.
-/// \param[in] transform_precoder Set to \c true if the transform precoder is used.
-/// \param[in] dmrs_cfg_type      PUSCH DM-RS configuration type.
-/// \param[in] dmrs_max_len       PUSCH DM-RS maximum number of OFDM symbols.
-/// \return The PUSCH antenna ports mapping.
-/// \remark An assertion is triggered if \c nof_layers is not in the range 1 to \ref pusch_constants::MAX_NOF_LAYERS.
-/// \remark An assertion is triggered if \c dmrs_cfg_type is not \ref dmrs_config_type::type1.
-/// \remark An assertion is triggered if \c dmrs_max_len is not \ref dmrs_max_length::len1.
-/// \remark An assertion is triggered if \c transform_precoder is \c true and \c nof_layers is not one.
-pusch_antenna_ports_mapping get_pusch_antenna_port_mapping(unsigned         nof_layers,
-                                                           bool             transform_precoder,
-                                                           dmrs_config_type dmrs_cfg_type,
-                                                           dmrs_max_length  dmrs_max_len);
+/// \brief Gets the PUSCH antenna ports mapping table.
+///
+/// The size of the Antenna ports field of DCI format 0_1 is not given by the size of the table, as the field has the
+/// same size for all the numbers of layers (see TS 38.212 Section 7.3.1.1.2).
+///
+/// \param transform_precoder Set to \c true if the transform precoder is used.
+/// \param dmrs_cfg_type      PUSCH DM-RS configuration type.
+/// \param dmrs_max_len       PUSCH DM-RS maximum number of OFDM symbols.
+/// \param nof_layers         Number of layers of the PUSCH.
+/// \return A constant span view to the TS 38.212 table of Tables 7.3.1.1.2-6 to 7.3.1.1.2-23 associated with the given
+///         parameters. The view is empty if the table is not supported, i.e., for DM-RS type 2, or if the number of
+///         layers is not valid.
+span<const pusch_antenna_ports_mapping> get_pusch_antenna_port_mapping_table(bool             transform_precoder,
+                                                                             dmrs_config_type dmrs_cfg_type,
+                                                                             dmrs_max_length  dmrs_max_len,
+                                                                             unsigned         nof_layers);
 
-/// \brief Returns the PUSCH antenna ports mapping row index in TS 38.212, table 7.3.1.2.2-6 to 7.3.1.2.2-23.
-/// \param[in] nof_layers         Number of layers.
-/// \param[in] transform_precoder Set to \c true if the transform precoder is used.
-/// \param[in] dmrs_cfg_type      PUSCH DM-RS configuration type.
-/// \param[in] dmrs_max_len       PUSCH DM-RS maximum number of OFDM symbols.
-/// \return The PUSCH antenna ports mapping row index.
-unsigned get_pusch_antenna_port_mapping_row_index(unsigned         nof_layers,
-                                                  bool             transform_precoder,
-                                                  dmrs_config_type dmrs_cfg_type,
-                                                  dmrs_max_length  dmrs_max_len);
+/// \brief Finds the row of TS 38.212 Tables 7.3.1.1.2-6 to 7.3.1.1.2-23 that signals the given PUSCH antenna ports
+/// mapping.
+///
+/// The table is selected from the transform precoder, the DM-RS configuration and the number of layers, which is the
+/// number of DM-RS ports.
+///
+/// \param transform_precoder Set to \c true if the transform precoder is used.
+/// \param dmrs_cfg_type      PUSCH DM-RS configuration type.
+/// \param dmrs_max_len       PUSCH DM-RS maximum number of OFDM symbols.
+/// \param mapping            DM-RS ports, number of CDM groups without data and number of front-load symbols to signal.
+///                           The DM-RS ports mask must have \c DMRS_MAX_NPORTS bits.
+/// \return The row index, i.e., the value of the Antenna ports field of DCI format 0_1, or \c std::nullopt if no row
+///         matches the given mapping.
+std::optional<unsigned> find_pusch_antenna_port_mapping_row_index(bool                               transform_precoder,
+                                                                  dmrs_config_type                   dmrs_cfg_type,
+                                                                  dmrs_max_length                    dmrs_max_len,
+                                                                  const pusch_antenna_ports_mapping& mapping);
 
 /// \brief Returns the PUSCH precoding information mapping row index in TS 38.212, table 7.3.1.1.2-2/3/4/5.
 /// \param[in] nof_layers Number of layers.

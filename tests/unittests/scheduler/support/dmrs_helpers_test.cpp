@@ -148,29 +148,44 @@ class dmrs_helpers_pusch_dedicated_test : public ::testing::TestWithParam<unsign
 {};
 
 /// Validates the DM-RS information for DCI format 0_1 without transform precoding for every number of layers.
-TEST_P(dmrs_helpers_pusch_dedicated_test, dmrs_ports_cover_all_layers)
+TEST_P(dmrs_helpers_pusch_dedicated_test, single_user_dmrs_ports_cover_all_layers)
 {
   const unsigned                              nof_layers = GetParam();
   const pusch_time_domain_resource_allocation pusch_td_cfg{
       .k2 = 4, .map_type = sch_mapping_type::typeA, .symbols = ofdm_symbol_range{0, 14}};
-  const dmrs_uplink_config dmrs_cfg{};
-  const pci_t              pci = 1;
+  const pci_t pci = 1;
 
-  const dmrs_information dmrs = make_dmrs_info_dedicated(
-      pusch_td_cfg, pci, dmrs_typeA_position::pos2, dmrs_cfg, nof_layers, /* use_transform_precoder= */ false);
+  std::optional<dmrs_symbol_mask> max_length1_symbols;
+  for (dmrs_max_length max_length : {dmrs_max_length::len1, dmrs_max_length::len2}) {
+    dmrs_uplink_config dmrs_cfg{};
+    dmrs_cfg.max_length = max_length;
 
-  // Rows of TS38.212 Tables 7.3.1.1.2-8 to 7.3.1.1.2-11 with two DM-RS CDM groups without data.
-  static constexpr std::array<unsigned, pusch_constants::MAX_NOF_LAYERS> expected_row_index = {2, 1, 0, 0};
-  ASSERT_EQ(get_pusch_antenna_port_mapping_row_index(
-                nof_layers, /* transform_precoder= */ false, dmrs_config_type::type1, dmrs_max_length::len1),
-            expected_row_index[nof_layers - 1]);
+    const dmrs_information dmrs = make_dmrs_info_dedicated(pusch_td_cfg,
+                                                           pci,
+                                                           dmrs_typeA_position::pos2,
+                                                           dmrs_cfg,
+                                                           /* use_transform_precoder= */ false,
+                                                           get_su_pusch_dmrs_ports(nof_layers));
 
-  dmrs_port_mask expected_ports(DMRS_MAX_NPORTS);
-  expected_ports.fill(0, nof_layers);
-  ASSERT_EQ(dmrs.dmrs_ports, expected_ports);
-  ASSERT_EQ(dmrs.dmrs_ports.count(), nof_layers);
-  ASSERT_EQ(dmrs.num_dmrs_cdm_grps_no_data, 2);
-  ASSERT_EQ(dmrs.config_type, dmrs_config_type::type1);
+    dmrs_port_mask expected_ports(DMRS_MAX_NPORTS);
+    expected_ports.fill(0, nof_layers);
+    ASSERT_EQ(dmrs.dmrs_ports, expected_ports);
+    ASSERT_EQ(dmrs.num_dmrs_cdm_grps_no_data, 2);
+    ASSERT_EQ(dmrs.config_type, dmrs_config_type::type1);
+
+    // Rows of TS 38.212 Tables 7.3.1.1.2-8 to 7.3.1.1.2-11 for maximum length 1 and Tables 7.3.1.1.2-12 to
+    // 7.3.1.1.2-15 for maximum length 2, with two DM-RS CDM groups without data and a single front-load symbol.
+    static constexpr std::array<unsigned, pusch_constants::MAX_NOF_LAYERS> expected_row_index = {2, 1, 0, 0};
+    ASSERT_EQ(find_pusch_antenna_ports_row_index(dmrs, dmrs_cfg, /* use_transform_precoder= */ false),
+              expected_row_index[nof_layers - 1]);
+
+    // The DM-RS is single-symbol for both maximum lengths.
+    if (max_length1_symbols.has_value()) {
+      ASSERT_EQ(dmrs.dmrs_symb_pos, *max_length1_symbols);
+    } else {
+      max_length1_symbols = dmrs.dmrs_symb_pos;
+    }
+  }
 }
 
 INSTANTIATE_TEST_SUITE_P(dmrs_helpers_test,
@@ -184,11 +199,36 @@ TEST(dmrs_helpers_test, pusch_dedicated_transform_precoding_uses_port_0)
       .k2 = 4, .map_type = sch_mapping_type::typeA, .symbols = ofdm_symbol_range{0, 14}};
   const dmrs_uplink_config dmrs_cfg{};
 
-  const dmrs_information dmrs = make_dmrs_info_dedicated(
-      pusch_td_cfg, 1, dmrs_typeA_position::pos2, dmrs_cfg, /* nof_layers= */ 1, /* use_transform_precoder= */ true);
+  const dmrs_information dmrs = make_dmrs_info_dedicated(pusch_td_cfg,
+                                                         1,
+                                                         dmrs_typeA_position::pos2,
+                                                         dmrs_cfg,
+                                                         /* use_transform_precoder= */ true,
+                                                         get_su_pusch_dmrs_ports(1));
 
   dmrs_port_mask expected_ports(DMRS_MAX_NPORTS);
   expected_ports.set(0);
   ASSERT_EQ(dmrs.dmrs_ports, expected_ports);
   ASSERT_EQ(dmrs.num_dmrs_cdm_grps_no_data, 2);
+  // TS 38.212 Table 7.3.1.1.2-6, value 0.
+  ASSERT_EQ(find_pusch_antenna_ports_row_index(dmrs, dmrs_cfg, /* use_transform_precoder= */ true), 0);
+}
+
+/// Validates the DM-RS information of a PUSCH on other ports than the single-user ones.
+TEST(dmrs_helpers_test, pusch_dedicated_dmrs_ports_select_their_row)
+{
+  const pusch_time_domain_resource_allocation pusch_td_cfg{
+      .k2 = 4, .map_type = sch_mapping_type::typeA, .symbols = ofdm_symbol_range{0, 14}};
+  const dmrs_uplink_config dmrs_cfg{};
+
+  dmrs_port_mask dmrs_ports(DMRS_MAX_NPORTS);
+  dmrs_ports.set(2);
+  dmrs_ports.set(3);
+  const dmrs_information dmrs = make_dmrs_info_dedicated(
+      pusch_td_cfg, 1, dmrs_typeA_position::pos2, dmrs_cfg, /* use_transform_precoder= */ false, dmrs_ports);
+
+  ASSERT_EQ(dmrs.dmrs_ports, dmrs_ports);
+  ASSERT_EQ(dmrs.num_dmrs_cdm_grps_no_data, 2);
+  // TS 38.212 Table 7.3.1.1.2-9, value 2.
+  ASSERT_EQ(find_pusch_antenna_ports_row_index(dmrs, dmrs_cfg, /* use_transform_precoder= */ false), 2);
 }

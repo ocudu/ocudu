@@ -8,6 +8,7 @@
 #include "ocudu/ran/csi_rs/csi_rs_config_helpers.h"
 #include "ocudu/ran/csi_rs/csi_rs_pattern.h"
 #include "ocudu/ran/pdcch/pdcch_candidates.h"
+#include "ocudu/ran/pusch/pusch_antenna_ports_mapping.h"
 #include "ocudu/ran/srs/srs_bandwidth_configuration.h"
 #include "ocudu/scheduler/config/bwp_configuration.h"
 #include "ocudu/scheduler/config/sched_cell_config_helpers.h"
@@ -152,6 +153,14 @@ validator_result config_validators::validate_pusch_cfg(const uplink_config& ul_c
   VERIFY(pusch_cfg.pusch_pwr_ctrl.value().p0_alphasets.size() == 1 and
              pusch_cfg.pusch_pwr_ctrl.value().p0_alphasets.front().p0.has_value(),
          "The P0-alphaSet list for PUSCH power control is expected to have size 1 with p0 value configured");
+
+  VERIFY(pusch_cfg.pusch_mapping_type_a_dmrs.has_value(),
+         "Missing configuration for dmrs-UplinkForPUSCH-MappingTypeA in pusch-Config");
+  const dmrs_uplink_config& dmrs_cfg = pusch_cfg.pusch_mapping_type_a_dmrs.value();
+  VERIFY(not get_pusch_antenna_port_mapping_table(false, dmrs_cfg.type, dmrs_cfg.max_length, 1).empty(),
+         "PUSCH is not supported with DM-RS {} and maximum length {}",
+         dmrs_cfg.type,
+         fmt::underlying(dmrs_cfg.max_length));
 
   return {};
 }

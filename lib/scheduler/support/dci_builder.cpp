@@ -433,7 +433,7 @@ void ocudu::build_dci_f0_1_c_rnti(dci_ul_info&                  dci,
                                   uint8_t                       rv,
                                   const ul_harq_process_handle& h_ul,
                                   unsigned                      dai,
-                                  unsigned                      nof_layers,
+                                  const dmrs_information&       dmrs,
                                   unsigned                      tpmi,
                                   uint8_t                       tpc_command,
                                   std::optional<bool>           csi_request,
@@ -453,11 +453,18 @@ void ocudu::build_dci_f0_1_c_rnti(dci_ul_info&                  dci,
   f0_1.ul_sul_indicator        = {};
   f0_1.tpc_command             = tpc_command;
   f0_1.dmrs_seq_initialization = 0;
-  bool use_transform_precoder  = ue_cell_cfg.use_pusch_transform_precoding_dci_0_1();
-  f0_1.antenna_ports           = get_pusch_antenna_port_mapping_row_index(
-      nof_layers, use_transform_precoder, dmrs_config_type::type1, dmrs_max_length::len1);
+
+  const std::optional<unsigned> antenna_ports_row =
+      find_pusch_antenna_ports_row_index(dmrs,
+                                         ue_cell_cfg.init_bwp().ul.ded()->pusch_cfg->pusch_mapping_type_a_dmrs.value(),
+                                         ue_cell_cfg.use_pusch_transform_precoding_dci_0_1());
+  ocudu_assert(antenna_ports_row.has_value(),
+               "DCI f0_1 cannot signal DM-RS ports {:#x} with {} CDM group(s) without data",
+               dmrs.dmrs_ports.to_uint64(),
+               dmrs.num_dmrs_cdm_grps_no_data);
+  f0_1.antenna_ports             = *antenna_ports_row;
   f0_1.precoding_info_nof_layers = get_pusch_precoding_info_row_index(
-      nof_layers,
+      dmrs.dmrs_ports.count(),
       ue_cell_cfg.get_pusch_codebook_config().max_rank.value(),
       static_cast<srs_resource_configuration::one_two_four_enum>(ue_cell_cfg.get_srs_nof_ports()),
       tpmi);
@@ -496,7 +503,8 @@ void ocudu::build_dci_f0_1_cg_activation(dci_ul_info&                 dci,
                                          search_space_id              ss_id,
                                          const vrb_interval&          vrbs,
                                          unsigned                     time_resource,
-                                         sch_mcs_index                mcs_index)
+                                         sch_mcs_index                mcs_index,
+                                         const dmrs_information&      dmrs)
 {
   const search_space_info& ss_info = ue_cell_cfg.search_space(ss_id);
   ocudu_assert(not ss_info.cfg->is_common_search_space(), "SearchSpace must be of type UE-Specific SearchSpace");
@@ -517,15 +525,18 @@ void ocudu::build_dci_f0_1_cg_activation(dci_ul_info&                 dci,
   // NOTE: unlike the C-RNTI builder, this does not consult use_pusch_transform_precoding_dci_0_1(): the whole CG path
   // assumes CP-OFDM, and build_cg_pusch_cfg_params() sizes the grant on the same assumption, so the antenna-port row
   // has to be picked from the same table. validate_cg_cfg() rejects a CG combined with transform precoding.
-  bool use_transform_precoder = false;
-  // Only 1 layer currently supported for Configured Grant.
-  static constexpr uint8_t nof_layers = 1;
-  f0_1.antenna_ports                  = get_pusch_antenna_port_mapping_row_index(
-      nof_layers, use_transform_precoder, dmrs_config_type::type1, dmrs_max_length::len1);
+  static constexpr bool         use_transform_precoder = false;
+  const std::optional<unsigned> antenna_ports_row      = find_pusch_antenna_ports_row_index(
+      dmrs, ue_cell_cfg.init_bwp().ul.ded()->cg_cfg.value().cg_dmrs_cfg, use_transform_precoder);
+  ocudu_assert(antenna_ports_row.has_value(),
+               "DCI f0_1 cannot signal DM-RS ports {:#x} with {} CDM group(s) without data",
+               dmrs.dmrs_ports.to_uint64(),
+               dmrs.num_dmrs_cdm_grps_no_data);
+  f0_1.antenna_ports = *antenna_ports_row;
   // TODO: adapt this to more than 1 antenna.
   constexpr unsigned default_tpmi = 0U;
   f0_1.precoding_info_nof_layers  = get_pusch_precoding_info_row_index(
-      nof_layers,
+      dmrs.dmrs_ports.count(),
       ue_cell_cfg.get_pusch_codebook_config().max_rank.value(),
       static_cast<srs_resource_configuration::one_two_four_enum>(ue_cell_cfg.get_srs_nof_ports()),
       default_tpmi);

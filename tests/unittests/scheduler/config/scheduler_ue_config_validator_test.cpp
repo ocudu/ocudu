@@ -96,6 +96,135 @@ TEST_F(cg_transform_precoding_validator_test, cg_type2_requires_cp_ofdm_dynamic_
   expect_tp_failure(validate(true, false, pusch_config::transform_precoder::not_set, type2));
 }
 
+/// Checks the validation of the DM-RS configuration of a Configured Grant, whose Antenna ports field signals a row of
+/// the table of the CG DM-RS configuration.
+class cg_dmrs_validator_test : public ::testing::Test
+{
+protected:
+  scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
+
+  /// Validates a CG UE whose cg-DMRS-Configuration is \c cg_dmrs and whose dedicated PUSCH DM-RS is \c ded_dmrs.
+  error_type<std::string> validate(const dmrs_uplink_config&  cg_dmrs,
+                                   const dmrs_uplink_config&  ded_dmrs,
+                                   cg_builder_params::cg_type type = cg_builder_params::cg_type::type1)
+  {
+    // A new cell per call, so that a test can validate more than one combination.
+    du_cell_group_config_pool                cfg_pool;
+    sched_cell_configuration_request_message cell_req =
+        sched_config_helper::make_default_sched_cell_configuration_request();
+    cell_req.ran.init_bwp.cg_cfg = cg_builder_params{.type = type};
+
+    const cell_configuration&         cell_cfg = cfg_pool.add_cell(sched_cfg, cell_req);
+    sched_ue_creation_request_message ue_req =
+        sched_config_helper::create_default_sched_ue_creation_request(cell_req.ran);
+
+    ocudu_assert(ue_req.cfg.cells->front().ded.has_value(), "Dedicated configuration is required for this test");
+    auto& ul_cfg                                      = ue_req.cfg.cells->front().ded->serv_cell_cfg.ul_config.value();
+    ul_cfg.init_ul_bwp.cg_cfg->cg_dmrs_cfg.type       = cg_dmrs.type;
+    ul_cfg.init_ul_bwp.cg_cfg->cg_dmrs_cfg.max_length = cg_dmrs.max_length;
+    ul_cfg.init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs->type       = ded_dmrs.type;
+    ul_cfg.init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs->max_length = ded_dmrs.max_length;
+
+    return config_validators::validate_sched_ue_creation_request_message(ue_req, cell_cfg);
+  }
+
+  /// Checks that the validation failed because of the DM-RS, so that a test cannot pass on an unrelated validation
+  /// failure.
+  static void expect_dmrs_failure(const error_type<std::string>& result)
+  {
+    ASSERT_FALSE(result.has_value());
+    ASSERT_NE(result.error().find("DM-RS"), std::string::npos) << result.error();
+  }
+
+  static dmrs_uplink_config make_dmrs(dmrs_config_type type, dmrs_max_length max_length)
+  {
+    dmrs_uplink_config dmrs;
+    dmrs.type       = type;
+    dmrs.max_length = max_length;
+    return dmrs;
+  }
+};
+
+TEST_F(cg_dmrs_validator_test, cg_with_dmrs_type1_is_valid)
+{
+  for (const auto max_length : {dmrs_max_length::len1, dmrs_max_length::len2}) {
+    const dmrs_uplink_config dmrs = make_dmrs(dmrs_config_type::type1, max_length);
+    ASSERT_TRUE(validate(dmrs, dmrs).has_value());
+    ASSERT_TRUE(validate(dmrs, dmrs, cg_builder_params::cg_type::type2).has_value());
+  }
+}
+
+TEST_F(cg_dmrs_validator_test, cg_with_a_dmrs_without_antenna_ports_table_is_invalid)
+{
+  // The scheduler only holds the antenna ports tables of DM-RS type 1. The dynamic PUSCH keeps DM-RS type 1, so that
+  // the CG DM-RS is the one rejected.
+  for (const auto type : {cg_builder_params::cg_type::type1, cg_builder_params::cg_type::type2}) {
+    for (const auto max_length : {dmrs_max_length::len1, dmrs_max_length::len2}) {
+      const error_type<std::string> result = validate(
+          make_dmrs(dmrs_config_type::type2, max_length), make_dmrs(dmrs_config_type::type1, max_length), type);
+      ASSERT_FALSE(result.has_value());
+      ASSERT_NE(result.error().find("Configured Grant is not supported with DM-RS"), std::string::npos)
+          << result.error();
+    }
+  }
+}
+
+TEST_F(cg_dmrs_validator_test, cg_type2_requires_the_dmrs_of_the_dynamic_pusch)
+{
+  // The Antenna ports field of the activation DCI is sized after the dedicated PUSCH DM-RS, which must then match the
+  // CG one.
+  expect_dmrs_failure(validate(make_dmrs(dmrs_config_type::type1, dmrs_max_length::len1),
+                               make_dmrs(dmrs_config_type::type1, dmrs_max_length::len2),
+                               cg_builder_params::cg_type::type2));
+}
+
+/// Checks that the scheduler holds the table of the Antenna ports field of DCI format 0_1 for the DM-RS of the dynamic
+/// PUSCH.
+class pusch_dmrs_validator_test : public ::testing::Test
+{
+protected:
+  scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
+
+  /// Validates a UE whose dedicated PUSCH DM-RS has the given type and maximum length.
+  error_type<std::string> validate(dmrs_config_type type, dmrs_max_length max_length)
+  {
+    // A new cell per call, so that a test can validate more than one combination.
+    du_cell_group_config_pool                cfg_pool;
+    sched_cell_configuration_request_message cell_req =
+        sched_config_helper::make_default_sched_cell_configuration_request();
+
+    const cell_configuration&         cell_cfg = cfg_pool.add_cell(sched_cfg, cell_req);
+    sched_ue_creation_request_message ue_req =
+        sched_config_helper::create_default_sched_ue_creation_request(cell_req.ran);
+
+    ocudu_assert(ue_req.cfg.cells->front().ded.has_value(), "Dedicated configuration is required for this test");
+    dmrs_uplink_config& dmrs =
+        ue_req.cfg.cells->front()
+            .ded->serv_cell_cfg.ul_config->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.value();
+    dmrs.type       = type;
+    dmrs.max_length = max_length;
+
+    return config_validators::validate_sched_ue_creation_request_message(ue_req, cell_cfg);
+  }
+};
+
+TEST_F(pusch_dmrs_validator_test, pusch_with_dmrs_type1_is_valid)
+{
+  for (const auto max_length : {dmrs_max_length::len1, dmrs_max_length::len2}) {
+    ASSERT_TRUE(validate(dmrs_config_type::type1, max_length).has_value());
+  }
+}
+
+TEST_F(pusch_dmrs_validator_test, pusch_with_a_dmrs_without_antenna_ports_table_is_invalid)
+{
+  // The scheduler only holds the antenna ports tables of DM-RS type 1.
+  for (const auto max_length : {dmrs_max_length::len1, dmrs_max_length::len2}) {
+    const error_type<std::string> result = validate(dmrs_config_type::type2, max_length);
+    ASSERT_FALSE(result.has_value());
+    ASSERT_NE(result.error().find("PUSCH is not supported with DM-RS"), std::string::npos) << result.error();
+  }
+}
+
 /// Checks the Type 2 requirement for a UE-specific SearchSpace monitored with DCI format 0_1, which is the only format
 /// the activation DCI is built in.
 class cg_type2_search_space_validator_test : public ::testing::Test

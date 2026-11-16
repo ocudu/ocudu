@@ -128,7 +128,7 @@ void build_dci_f0_1_c_rnti(dci_ul_info&                  dci,
                            uint8_t                       rv,
                            const ul_harq_process_handle& h_ul,
                            unsigned                      total_dai,
-                           unsigned                      nof_layers,
+                           const dmrs_information&       dmrs,
                            unsigned                      tpmi,
                            uint8_t                       tpc_command,
                            std::optional<bool>           csi_request,
@@ -140,6 +140,7 @@ void build_dci_f0_1_cg_activation(dci_ul_info&                 dci,
                                   search_space_id              ss_id,
                                   const vrb_interval&          vrbs,
                                   unsigned                     time_resource,
-                                  sch_mcs_index                mcs_index);
+                                  sch_mcs_index                mcs_index,
+                                  const dmrs_information&      dmrs);
 
 } // namespace ocudu

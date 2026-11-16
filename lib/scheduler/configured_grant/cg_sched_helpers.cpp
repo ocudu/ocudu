@@ -63,8 +63,8 @@ pusch_config_params ocudu::build_cg_pusch_cfg_params(const ue_cell_configuration
                                                          cell_cfg.params.pci,
                                                          cell_cfg.params.dmrs_typeA_pos,
                                                          cg_cfg.cg_dmrs_cfg,
-                                                         nof_layers,
-                                                         use_transform_precoder);
+                                                         use_transform_precoder,
+                                                         get_su_pusch_dmrs_ports(nof_layers));
 
   // Build PUSCH configuration parameters for TBS computation.
   pusch_params.dmrs       = dmrs;

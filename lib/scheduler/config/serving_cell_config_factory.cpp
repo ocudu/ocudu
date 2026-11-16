@@ -268,10 +268,17 @@ static cg_configuration make_default_cg_config(const cg_builder_params& cg_param
 
   // > RRC-configured uplink grant (Type 1 CG).
   cg_configuration::rrc_configured_ul_grant grant{};
-  constexpr unsigned                        nof_layers      = 1U;
-  constexpr bool                            trans_precoding = false;
-  grant.antenna_port                                        = get_pusch_antenna_port_mapping_row_index(
-      nof_layers, trans_precoding, dmrs_config_type::type1, dmrs_max_length::len1);
+  // [Implementation-defined] A CG PUSCH has a single layer on DM-RS port 0 and leaves all the CDM groups without data.
+  constexpr bool trans_precoding = false;
+  dmrs_port_mask cg_dmrs_ports(DMRS_MAX_NPORTS);
+  cg_dmrs_ports.set(0);
+  const std::optional<unsigned> antenna_port = find_pusch_antenna_port_mapping_row_index(
+      trans_precoding,
+      cfg.cg_dmrs_cfg.type,
+      cfg.cg_dmrs_cfg.max_length,
+      {get_max_nof_cdm_groups_without_data(cfg.cg_dmrs_cfg.type), cg_dmrs_ports, 1});
+  ocudu_assert(antenna_port.has_value(), "No antenna ports row for the DM-RS of the CG PUSCH");
+  grant.antenna_port             = *antenna_port;
   grant.dmrs_seq_initialization  = 0;
   grant.precoding_and_nof_layers = 0;
   // The values below will be overwritten when at the moment we create the UE specific config.

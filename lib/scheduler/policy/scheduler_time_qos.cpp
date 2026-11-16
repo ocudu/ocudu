@@ -143,8 +143,8 @@ void rate_estimator::build_ul_max_tbs(const cell_configuration& cell_cfg)
                                                  cell_cfg.params.pci,
                                                  cell_cfg.params.dmrs_typeA_pos,
                                                  dmrs_cfg,
-                                                 nof_layers,
-                                                 use_transform_precoder);
+                                                 use_transform_precoder,
+                                                 get_su_pusch_dmrs_ports(nof_layers));
       tbs_calculator_configuration tbs_cfg                = ul_tbs_cfg_ref;
       tbs_cfg.nof_dmrs_prb                                = calculate_nof_dmrs_per_rb(dmrs);
       tbs_cfg.nof_layers                                  = nof_layers;

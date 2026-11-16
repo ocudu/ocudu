@@ -94,6 +94,10 @@ add_executable(pucch_info_test pucch/pucch_info_test.cpp)
 target_link_libraries(pucch_info_test ocudu_ran GTest::gtest ocudu_gtest_main)
 add_test(pucch_info_test pucch_info_test)
 
+add_executable(pusch_antenna_port_mapping_test pusch/pusch_antenna_port_mapping_test.cpp)
+target_link_libraries(pusch_antenna_port_mapping_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)
+add_test(pusch_antenna_port_mapping_test pusch_antenna_port_mapping_test)
+
 add_executable(pusch_dmrs_symbol_mask_test pusch/pusch_dmrs_symbol_mask_test.cpp)
 target_link_libraries(pusch_dmrs_symbol_mask_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)
 add_test(pusch_dmrs_symbol_mask_test pusch_dmrs_symbol_mask_test)

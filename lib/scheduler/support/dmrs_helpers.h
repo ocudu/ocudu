@@ -11,6 +11,8 @@
 #include "ocudu/ran/pdsch/pdsch_constants.h"
 #include "ocudu/ran/pdsch/pdsch_dmrs_symbol_mask.h"
 #include "ocudu/ran/pusch/pusch_antenna_ports_mapping.h"
+#include "ocudu/ran/pusch/pusch_constants.h"
+#include "ocudu/ran/pusch/pusch_dmrs_symbol_mask.h"
 #include "ocudu/scheduler/result/dmrs_info.h"
 #include "ocudu/support/error_handling.h"
 
@@ -191,9 +193,77 @@ inline dmrs_information make_dmrs_info_common(span<const pdsch_time_domain_resou
   return make_dmrs_info_common(pdsch_time_res, pci, dmrs_typeA_pos);
 }
 
+/// \brief Builds the DM-RS symbol mask of a PUSCH with single front-load DM-RS symbols.
+/// TODO: generalize to other cases (e.g. mapping type B).
+inline dmrs_symbol_mask make_pusch_dmrs_symbol_mask(const pusch_time_domain_resource_allocation& pusch_td_cfg,
+                                                    dmrs_typeA_position                          dmrs_typeA_pos,
+                                                    dmrs_additional_positions                    additional_positions)
+{
+  if (pusch_td_cfg.map_type != sch_mapping_type::typeA) {
+    ocudu_terminate("Mapping type B not supported");
+  }
+
+  pusch_dmrs_symbol_mask_mapping_type_A_single_configuration dmrscfg{};
+  dmrscfg.typeA_pos           = dmrs_typeA_pos;
+  dmrscfg.additional_position = additional_positions;
+  dmrscfg.last_symbol         = pusch_td_cfg.symbols.stop();
+  return pusch_dmrs_symbol_mask_mapping_type_A_single_get(dmrscfg);
+}
+
+/// [Implementation-defined] Returns the DM-RS ports of a single-user PUSCH, i.e., DM-RS ports 0 to \c nof_layers - 1.
+inline dmrs_port_mask get_su_pusch_dmrs_ports(unsigned nof_layers)
+{
+  ocudu_assert(nof_layers > 0 and nof_layers <= pusch_constants::MAX_NOF_LAYERS,
+               "Invalid number of layers={} for a PUSCH",
+               nof_layers);
+  dmrs_port_mask ports(DMRS_MAX_NPORTS);
+  ports.fill(0, nof_layers);
+  return ports;
+}
+
+/// \brief Finds the value of the Antenna ports field of DCI format 0_1 that signals the DM-RS of a PUSCH.
+/// \return The row of TS 38.212 Tables 7.3.1.1.2-6 to 7.3.1.1.2-23, or \c std::nullopt if no row matches the DM-RS.
+inline std::optional<unsigned> find_pusch_antenna_ports_row_index(const dmrs_information&   dmrs,
+                                                                  const dmrs_uplink_config& dmrs_ul_cfg_ded,
+                                                                  bool                      use_transform_precoder)
+{
+  // Double-symbol DM-RS is not supported, hence the DM-RS always uses a single front-load symbol.
+  return find_pusch_antenna_port_mapping_row_index(use_transform_precoder,
+                                                   dmrs.config_type,
+                                                   dmrs_ul_cfg_ded.max_length,
+                                                   {dmrs.num_dmrs_cdm_grps_no_data, dmrs.dmrs_ports, 1});
+}
+
+/// \brief Sets the DM-RS ports of a PUSCH scheduled by DCI format 0_1 or of a configured grant PUSCH.
+///
+/// \param dmrs                        DM-RS information of the PUSCH, whose DM-RS ports are set.
+/// \param dmrs_ul_cfg_ded             DM-RS configuration of the PUSCH.
+/// \param use_transform_precoder      Set to \c true if the PUSCH uses transform precoding.
+/// \param dmrs_ports                  DM-RS ports of the transmission, one per layer.
+/// \param nof_cdm_groups_without_data Number of DM-RS CDM groups without data. If not set, all the CDM groups of the
+///                                    DM-RS type are without data.
+/// \remark An assertion is triggered if DCI format 0_1 cannot signal the DM-RS ports and CDM groups.
+inline void set_pusch_dmrs_ports(dmrs_information&         dmrs,
+                                 const dmrs_uplink_config& dmrs_ul_cfg_ded,
+                                 bool                      use_transform_precoder,
+                                 const dmrs_port_mask&     dmrs_ports,
+                                 std::optional<unsigned>   nof_cdm_groups_without_data = std::nullopt)
+{
+  ocudu_assert(dmrs_ports.any(), "A PUSCH requires at least one DM-RS port");
+
+  // [Implementation-defined] By default, the PUSCH leaves all the CDM groups without data.
+  dmrs.num_dmrs_cdm_grps_no_data =
+      nof_cdm_groups_without_data.value_or(get_max_nof_cdm_groups_without_data(dmrs.config_type));
+  dmrs.dmrs_ports = dmrs_ports;
+
+  ocudu_assert(find_pusch_antenna_ports_row_index(dmrs, dmrs_ul_cfg_ded, use_transform_precoder).has_value(),
+               "DCI f0_1 cannot signal DM-RS ports {:#x} with {} CDM group(s) without data",
+               dmrs.dmrs_ports.to_uint64(),
+               dmrs.num_dmrs_cdm_grps_no_data);
+}
+
 /// Helper factory of a default DM-RS Information object for DCI f0_0 or for when higher layer configuration parameters
 /// are not yet available.
-/// TODO: generalize to other cases (e.g. mapping type B).
 /// \remark See TS 38.214 Section 6.2.2.
 inline dmrs_information make_dmrs_info_common(const pusch_time_domain_resource_allocation& pusch_td_cfg,
                                               pci_t                                        pci,
@@ -201,21 +271,8 @@ inline dmrs_information make_dmrs_info_common(const pusch_time_domain_resource_a
 {
   dmrs_information dmrs{};
 
-  if (pusch_td_cfg.map_type == sch_mapping_type::typeA) {
-    // Get DM-RS symbols.
-    pdsch_dmrs_symbol_mask_mapping_type_A_single_configuration dmrscfg{};
-    dmrscfg.typeA_pos                         = dmrs_typeA_pos;
-    dmrscfg.additional_position               = dmrs_additional_positions::pos2;
-    dmrscfg.last_symbol                       = pusch_td_cfg.symbols.stop();
-    dmrscfg.lte_crs_match_around              = false;
-    dmrscfg.ue_capable_additional_dmrs_dl_alt = false;
-    dmrs.dmrs_symb_pos                        = pdsch_dmrs_symbol_mask_mapping_type_A_single_get(dmrscfg);
-
-  } else {
-    ocudu_terminate("Mapping type B not supported");
-  }
-
-  dmrs.config_type = dmrs_config_type::type1;
+  dmrs.dmrs_symb_pos = make_pusch_dmrs_symbol_mask(pusch_td_cfg, dmrs_typeA_pos, dmrs_additional_positions::pos2);
+  dmrs.config_type   = dmrs_config_type::type1;
   // TODO: See TS 38.211, 7.4.1.1.1.
   dmrs.dmrs_scrambling_id = pci;
   dmrs.low_papr_dmrs      = false;
@@ -229,23 +286,32 @@ inline dmrs_information make_dmrs_info_common(const pusch_time_domain_resource_a
   // PUSCH allocation duration being more than 2 OFDM symbols, and the UE shall assume that the number of DM-RS
   // CDM groups without data is 2 which corresponds to CDM group {0,1} for all other cases.
   dmrs.num_dmrs_cdm_grps_no_data = pusch_td_cfg.symbols.length() <= 2 ? 1 : 2;
-  // Port 1000.
-  dmrs.dmrs_ports.resize(12);
+  // Port 0.
+  dmrs.dmrs_ports.resize(DMRS_MAX_NPORTS);
   dmrs.dmrs_ports.set(0);
 
   return dmrs;
 }
 
-/// \brief Builds the DM-RS information of a PUSCH scheduled by DCI format 0_1 or of a configured grant PUSCH.
+/// \brief Helper factory of the DM-RS Information object of a PUSCH scheduled by DCI format 0_1 or of a configured
+/// grant PUSCH.
 ///
-/// The DM-RS CDM groups without data and the DM-RS ports follow the same row of TS38.212 Tables 7.3.1.1.2-6 to
-/// 7.3.1.1.2-11 as the DCI format 0_1 antenna ports field.
+/// \param pusch_td_cfg                PUSCH time domain resource allocation.
+/// \param pci                         Physical cell identifier, which is the DM-RS scrambling identifier.
+/// \param dmrs_typeA_pos              Position of the first DM-RS symbol for PUSCH mapping type A.
+/// \param dmrs_ul_cfg                 DM-RS configuration of the PUSCH.
+/// \param use_transform_precoder      Set to \c true if the PUSCH uses transform precoding.
+/// \param dmrs_ports                  DM-RS ports of the transmission, one per layer.
+/// \param nof_cdm_groups_without_data Number of DM-RS CDM groups without data. If not set, all the CDM groups of the
+///                                    DM-RS type are without data.
+/// \remark An assertion is triggered if DCI format 0_1 cannot signal the resulting DM-RS ports and CDM groups.
 inline dmrs_information make_dmrs_info_dedicated(const pusch_time_domain_resource_allocation& pusch_td_cfg,
                                                  pci_t                                        pci,
                                                  dmrs_typeA_position                          dmrs_typeA_pos,
                                                  const dmrs_uplink_config&                    dmrs_ul_cfg,
-                                                 unsigned                                     nof_layers,
-                                                 bool                                         use_transform_precoder)
+                                                 bool                                         use_transform_precoder,
+                                                 const dmrs_port_mask&                        dmrs_ports,
+                                                 std::optional<unsigned> nof_cdm_groups_without_data = std::nullopt)
 {
   dmrs_information dmrs{};
 
@@ -256,37 +322,19 @@ inline dmrs_information make_dmrs_info_dedicated(const pusch_time_domain_resourc
                             "supported when DMRS TypeA position is equal to pos2.");
   }
 
-  if (pusch_td_cfg.map_type == sch_mapping_type::typeA) {
-    // Get DM-RS symbols.
-    pdsch_dmrs_symbol_mask_mapping_type_A_single_configuration dmrscfg{};
-    dmrscfg.typeA_pos                         = dmrs_typeA_pos;
-    dmrscfg.additional_position               = dmrs_ul_cfg.additional_positions;
-    dmrscfg.last_symbol                       = pusch_td_cfg.symbols.stop();
-    dmrscfg.lte_crs_match_around              = false;
-    dmrscfg.ue_capable_additional_dmrs_dl_alt = false;
-    dmrs.dmrs_symb_pos                        = pdsch_dmrs_symbol_mask_mapping_type_A_single_get(dmrscfg);
-
-  } else {
-    ocudu_terminate("Mapping type B not supported");
-  }
-
-  dmrs.config_type = dmrs_ul_cfg.type;
+  dmrs.dmrs_symb_pos = make_pusch_dmrs_symbol_mask(pusch_td_cfg, dmrs_typeA_pos, dmrs_ul_cfg.additional_positions);
+  dmrs.config_type   = dmrs_ul_cfg.type;
   // TODO: See TS 38.211, 7.4.1.1.1.
   dmrs.dmrs_scrambling_id = pci;
   dmrs.low_papr_dmrs      = false;
   dmrs.n_scid             = false;
-  // The DCI format 0_1 antenna ports field signals the row of the same mapping, so the UE transmits on these ports.
-  const pusch_antenna_ports_mapping ant_mapping =
-      get_pusch_antenna_port_mapping(nof_layers, use_transform_precoder, dmrs.config_type, dmrs_ul_cfg.max_length);
-  dmrs.num_dmrs_cdm_grps_no_data = ant_mapping.nof_dmrs_cdm_groups_without_data;
-  dmrs.dmrs_ports                = ant_mapping.dmrs_ports;
+  set_pusch_dmrs_ports(dmrs, dmrs_ul_cfg, use_transform_precoder, dmrs_ports, nof_cdm_groups_without_data);
 
   return dmrs;
 }
 
 /// Helper factory of a default DM-RS Information object for DCI f0_0 or for when higher layer configuration parameters
 /// are not yet available.
-/// TODO: generalize to other cases (e.g. mapping type B).
 /// \remark See TS 38.214 Section 6.2.2.
 inline dmrs_information make_dmrs_info_common(const pusch_config_common& pusch_cfg,
                                               uint8_t                    time_resource,

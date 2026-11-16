@@ -598,7 +598,13 @@ bool configured_grant_type2_sched_impl::alloc_activation_dci(cell_slot_resource_
   }
 
   // The DCI size is derived from the SearchSpace it is sent in, so it must be the one the PDCCH was allocated in.
-  build_dci_f0_1_cg_activation(pdcch->dci, ue_cell_cfg, ss_info->cfg->get_id(), vrbs, td_alloc, sch_mcs_index{mcs});
+  build_dci_f0_1_cg_activation(pdcch->dci,
+                               ue_cell_cfg,
+                               ss_info->cfg->get_id(),
+                               vrbs,
+                               td_alloc,
+                               sch_mcs_index{mcs},
+                               build_cg_pusch_cfg_params(ue_cell_cfg, td_alloc).dmrs);
   return true;
 }
 

@@ -7,6 +7,7 @@
 #include "ocudu/adt/interval.h"
 #include "ocudu/ran/pusch/pusch_antenna_ports_mapping.h"
 #include "ocudu/ran/pusch/pusch_constants.h"
+#include <algorithm>
 #include <array>
 
 using namespace ocudu;
@@ -14,42 +15,179 @@ using namespace ocudu;
 // Current range of supported number of layers.
 static constexpr interval<unsigned, true> nof_layers_range(1, pusch_constants::MAX_NOF_LAYERS);
 
-pusch_antenna_ports_mapping ocudu::get_pusch_antenna_port_mapping(unsigned         nof_layers,
-                                                                  bool             transform_precoder,
-                                                                  dmrs_config_type dmrs_cfg_type,
-                                                                  dmrs_max_length  dmrs_max_len)
+/// Creates the DM-RS port mask of a table entry.
+template <typename... Ports>
+static dmrs_port_mask dmrs_ports(Ports... ports)
 {
-  ocudu_assert(nof_layers_range.contains(nof_layers),
-               "The number of layers (i.e., {}) is out of the range {}.",
-               nof_layers,
-               nof_layers_range);
-  ocudu_assert(dmrs_cfg_type == dmrs_config_type::type1, "Only DM-RS type 1 is supported.");
-  ocudu_assert(dmrs_max_len == dmrs_max_length::len1, "Only DM-RS maximum length 1 is supported.");
-
-  if (transform_precoder) {
-    // The PHY supports only DM-RS port 0 with transform precoding, which is row 0 of TS38.212 Table 7.3.1.1.2-6.
-    ocudu_assert(nof_layers == 1, "The number of layers (i.e., {}) with transform precoding must be one.", nof_layers);
-    pusch_antenna_ports_mapping mapping = {.row_index = 0, .nof_dmrs_cdm_groups_without_data = 2};
-    mapping.dmrs_ports.set(0);
-    return mapping;
-  }
-
-  // The PHY supports only two DM-RS CDM groups without data. The selected rows of TS38.212 Tables 7.3.1.1.2-8 to
-  // 7.3.1.1.2-11, one per number of layers, map the layers to DM-RS ports 0 to nof_layers - 1.
-  static constexpr std::array<unsigned, pusch_constants::MAX_NOF_LAYERS> row_index_per_nof_layers = {2, 1, 0, 0};
-
-  pusch_antenna_ports_mapping mapping = {.row_index                        = row_index_per_nof_layers[nof_layers - 1],
-                                         .nof_dmrs_cdm_groups_without_data = 2};
-  mapping.dmrs_ports.fill(0, nof_layers);
-  return mapping;
+  dmrs_port_mask mask(DMRS_MAX_NPORTS);
+  (mask.set(ports), ...);
+  return mask;
 }
 
-unsigned ocudu::get_pusch_antenna_port_mapping_row_index(unsigned         nof_layers,
-                                                         bool             transform_precoder,
-                                                         dmrs_config_type dmrs_cfg_type,
-                                                         dmrs_max_length  dmrs_max_len)
+/// The following entries are taken from Table 7.3.1.1.2-6, TS 38.212, which is applicable when transform precoder is
+/// enabled, dmrs-Type=1, maxLength=1.
+static const std::array<pusch_antenna_ports_mapping, 4> antenna_port_mapping_tp_dmrs_type1_max_length1 = {{
+    {2, dmrs_ports(0), 1},
+    {2, dmrs_ports(1), 1},
+    {2, dmrs_ports(2), 1},
+    {2, dmrs_ports(3), 1},
+}};
+
+/// The following entries are taken from Table 7.3.1.1.2-8, TS 38.212, which is applicable when transform precoder is
+/// disabled, dmrs-Type=1, maxLength=1, rank=1.
+static const std::array<pusch_antenna_ports_mapping, 6> antenna_port_mapping_dmrs_type1_max_length1_rank1 = {{
+    {1, dmrs_ports(0), 1},
+    {1, dmrs_ports(1), 1},
+    {2, dmrs_ports(0), 1},
+    {2, dmrs_ports(1), 1},
+    {2, dmrs_ports(2), 1},
+    {2, dmrs_ports(3), 1},
+}};
+
+/// The following entries are taken from Table 7.3.1.1.2-9, TS 38.212, which is applicable when transform precoder is
+/// disabled, dmrs-Type=1, maxLength=1, rank=2.
+static const std::array<pusch_antenna_ports_mapping, 4> antenna_port_mapping_dmrs_type1_max_length1_rank2 = {{
+    {1, dmrs_ports(0, 1), 1},
+    {2, dmrs_ports(0, 1), 1},
+    {2, dmrs_ports(2, 3), 1},
+    {2, dmrs_ports(0, 2), 1},
+}};
+
+/// The following entries are taken from Table 7.3.1.1.2-10, TS 38.212, which is applicable when transform precoder is
+/// disabled, dmrs-Type=1, maxLength=1, rank=3.
+static const std::array<pusch_antenna_ports_mapping, 1> antenna_port_mapping_dmrs_type1_max_length1_rank3 = {{
+    {2, dmrs_ports(0, 1, 2), 1},
+}};
+
+/// The following entries are taken from Table 7.3.1.1.2-11, TS 38.212, which is applicable when transform precoder is
+/// disabled, dmrs-Type=1, maxLength=1, rank=4.
+static const std::array<pusch_antenna_ports_mapping, 1> antenna_port_mapping_dmrs_type1_max_length1_rank4 = {{
+    {2, dmrs_ports(0, 1, 2, 3), 1},
+}};
+
+/// The following entries are taken from Table 7.3.1.1.2-7, TS 38.212, which is applicable when transform precoder is
+/// enabled, dmrs-Type=1, maxLength=2.
+static const std::array<pusch_antenna_ports_mapping, 12> antenna_port_mapping_tp_dmrs_type1_max_length2 = {{
+    {2, dmrs_ports(0), 1},
+    {2, dmrs_ports(1), 1},
+    {2, dmrs_ports(2), 1},
+    {2, dmrs_ports(3), 1},
+    {2, dmrs_ports(0), 2},
+    {2, dmrs_ports(1), 2},
+    {2, dmrs_ports(2), 2},
+    {2, dmrs_ports(3), 2},
+    {2, dmrs_ports(4), 2},
+    {2, dmrs_ports(5), 2},
+    {2, dmrs_ports(6), 2},
+    {2, dmrs_ports(7), 2},
+}};
+
+/// The following entries are taken from Table 7.3.1.1.2-12, TS 38.212, which is applicable when transform precoder is
+/// disabled, dmrs-Type=1, maxLength=2, rank=1.
+static const std::array<pusch_antenna_ports_mapping, 14> antenna_port_mapping_dmrs_type1_max_length2_rank1 = {{
+    {1, dmrs_ports(0), 1},
+    {1, dmrs_ports(1), 1},
+    {2, dmrs_ports(0), 1},
+    {2, dmrs_ports(1), 1},
+    {2, dmrs_ports(2), 1},
+    {2, dmrs_ports(3), 1},
+    {2, dmrs_ports(0), 2},
+    {2, dmrs_ports(1), 2},
+    {2, dmrs_ports(2), 2},
+    {2, dmrs_ports(3), 2},
+    {2, dmrs_ports(4), 2},
+    {2, dmrs_ports(5), 2},
+    {2, dmrs_ports(6), 2},
+    {2, dmrs_ports(7), 2},
+}};
+
+/// The following entries are taken from Table 7.3.1.1.2-13, TS 38.212, which is applicable when transform precoder is
+/// disabled, dmrs-Type=1, maxLength=2, rank=2.
+static const std::array<pusch_antenna_ports_mapping, 10> antenna_port_mapping_dmrs_type1_max_length2_rank2 = {{
+    {1, dmrs_ports(0, 1), 1},
+    {2, dmrs_ports(0, 1), 1},
+    {2, dmrs_ports(2, 3), 1},
+    {2, dmrs_ports(0, 2), 1},
+    {2, dmrs_ports(0, 1), 2},
+    {2, dmrs_ports(2, 3), 2},
+    {2, dmrs_ports(4, 5), 2},
+    {2, dmrs_ports(6, 7), 2},
+    {2, dmrs_ports(0, 4), 2},
+    {2, dmrs_ports(2, 6), 2},
+}};
+
+/// The following entries are taken from Table 7.3.1.1.2-14, TS 38.212, which is applicable when transform precoder is
+/// disabled, dmrs-Type=1, maxLength=2, rank=3.
+static const std::array<pusch_antenna_ports_mapping, 3> antenna_port_mapping_dmrs_type1_max_length2_rank3 = {{
+    {2, dmrs_ports(0, 1, 2), 1},
+    {2, dmrs_ports(0, 1, 4), 2},
+    {2, dmrs_ports(2, 3, 6), 2},
+}};
+
+/// The following entries are taken from Table 7.3.1.1.2-15, TS 38.212, which is applicable when transform precoder is
+/// disabled, dmrs-Type=1, maxLength=2, rank=4.
+static const std::array<pusch_antenna_ports_mapping, 4> antenna_port_mapping_dmrs_type1_max_length2_rank4 = {{
+    {2, dmrs_ports(0, 1, 2, 3), 1},
+    {2, dmrs_ports(0, 1, 4, 5), 2},
+    {2, dmrs_ports(2, 3, 6, 7), 2},
+    {2, dmrs_ports(0, 2, 4, 6), 2},
+}};
+
+span<const pusch_antenna_ports_mapping> ocudu::get_pusch_antenna_port_mapping_table(bool             transform_precoder,
+                                                                                    dmrs_config_type dmrs_cfg_type,
+                                                                                    dmrs_max_length  dmrs_max_len,
+                                                                                    unsigned         nof_layers)
 {
-  return get_pusch_antenna_port_mapping(nof_layers, transform_precoder, dmrs_cfg_type, dmrs_max_len).row_index;
+  if (dmrs_cfg_type != dmrs_config_type::type1) {
+    // The tables for DM-RS type 2 are not supported.
+    return {};
+  }
+  const bool max_length2 = dmrs_max_len == dmrs_max_length::len2;
+
+  if (transform_precoder) {
+    // Transform precoding is only possible with one layer.
+    if (nof_layers != 1) {
+      return {};
+    }
+    return max_length2 ? span<const pusch_antenna_ports_mapping>(antenna_port_mapping_tp_dmrs_type1_max_length2)
+                       : span<const pusch_antenna_ports_mapping>(antenna_port_mapping_tp_dmrs_type1_max_length1);
+  }
+
+  switch (nof_layers) {
+    case 1:
+      return max_length2 ? span<const pusch_antenna_ports_mapping>(antenna_port_mapping_dmrs_type1_max_length2_rank1)
+                         : span<const pusch_antenna_ports_mapping>(antenna_port_mapping_dmrs_type1_max_length1_rank1);
+    case 2:
+      return max_length2 ? span<const pusch_antenna_ports_mapping>(antenna_port_mapping_dmrs_type1_max_length2_rank2)
+                         : span<const pusch_antenna_ports_mapping>(antenna_port_mapping_dmrs_type1_max_length1_rank2);
+    case 3:
+      return max_length2 ? span<const pusch_antenna_ports_mapping>(antenna_port_mapping_dmrs_type1_max_length2_rank3)
+                         : span<const pusch_antenna_ports_mapping>(antenna_port_mapping_dmrs_type1_max_length1_rank3);
+    case 4:
+      return max_length2 ? span<const pusch_antenna_ports_mapping>(antenna_port_mapping_dmrs_type1_max_length2_rank4)
+                         : span<const pusch_antenna_ports_mapping>(antenna_port_mapping_dmrs_type1_max_length1_rank4);
+    default:
+      return {};
+  }
+}
+
+std::optional<unsigned> ocudu::find_pusch_antenna_port_mapping_row_index(bool             transform_precoder,
+                                                                         dmrs_config_type dmrs_cfg_type,
+                                                                         dmrs_max_length  dmrs_max_len,
+                                                                         const pusch_antenna_ports_mapping& mapping)
+{
+  ocudu_assert(mapping.dmrs_ports.size() == DMRS_MAX_NPORTS,
+               "The DM-RS ports mask has {} bits instead of {}.",
+               mapping.dmrs_ports.size(),
+               DMRS_MAX_NPORTS);
+
+  const auto mapping_table =
+      get_pusch_antenna_port_mapping_table(transform_precoder, dmrs_cfg_type, dmrs_max_len, mapping.dmrs_ports.count());
+  const auto* it = std::find(mapping_table.begin(), mapping_table.end(), mapping);
+  if (it == mapping_table.end()) {
+    return std::nullopt;
+  }
+  return static_cast<unsigned>(std::distance(mapping_table.begin(), it));
 }
 
 unsigned ocudu::get_pusch_precoding_info_row_index(unsigned                                      nof_layers,

@@ -143,8 +143,8 @@ pusch_config_params ocudu::get_pusch_config_f0_1_c_rnti(const ue_cell_configurat
                                         ue_cell_cfg.cell_cfg_common.params.pci,
                                         ue_cell_cfg.cell_cfg_common.params.dmrs_typeA_pos,
                                         ue_cell_cfg.init_bwp().ul.ded()->pusch_cfg->pusch_mapping_type_a_dmrs.value(),
-                                        nof_layers,
-                                        ue_cell_cfg.use_pusch_transform_precoding_dci_0_1());
+                                        ue_cell_cfg.use_pusch_transform_precoding_dci_0_1(),
+                                        get_su_pusch_dmrs_ports(nof_layers));
 
   pusch.symbols = pusch_td_cfg.symbols;
 

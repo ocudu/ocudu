@@ -9,6 +9,7 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/rrc_nr.h"
 #include "ocudu/ran/configured_grant/cg_configuration.h"
+#include "ocudu/ran/pusch/pusch_antenna_ports_mapping.h"
 #include "ocudu/scheduler/config/ran_cell_config_helper.h"
 #include "ocudu/scheduler/config/serving_cell_config_validator.h"
 #include "ocudu/scheduler/config/time_domain_resource_helper.h"
@@ -50,8 +51,24 @@ validate_cg_cfg(const serving_cell_config& serv_cell_cfg, const ue_rrm_config& r
   // The CG path assumes a CP-OFDM waveform (i.e., no transform precoding) throughout.
   VERIFY(not cg_tp_enabled, "Configured Grant is not supported with PUSCH transform precoding enabled");
 
+  // The Antenna ports field of a CG Type 1 grant and of a CG Type 2 activation DCI signals a row of the table of the
+  // CG DM-RS configuration. The scheduler only holds the tables for DM-RS type 1.
+  VERIFY(not get_pusch_antenna_port_mapping_table(false, cg_cfg.cg_dmrs_cfg.type, cg_cfg.cg_dmrs_cfg.max_length, 1)
+                 .empty(),
+         "Configured Grant is not supported with DM-RS {} and maximum length {}",
+         cg_cfg.cg_dmrs_cfg.type,
+         fmt::underlying(cg_cfg.cg_dmrs_cfg.max_length));
+
   const bool type2 = cell_cg_cfg.is_type2();
   if (type2) {
+    // The size of the Antenna ports field of the activation DCI follows the DM-RS configuration of the dedicated
+    // pusch-Config, while its row is taken from the table of the CG DM-RS configuration. Both tables must be the same.
+    VERIFY(bwp_ul_ded_cfg.pusch_cfg.has_value() and bwp_ul_ded_cfg.pusch_cfg->pusch_mapping_type_a_dmrs.has_value(),
+           "Configured Grant Type 2 requires the DM-RS configuration of the dynamic PUSCH");
+    const dmrs_uplink_config& ded_dmrs_cfg = bwp_ul_ded_cfg.pusch_cfg->pusch_mapping_type_a_dmrs.value();
+    VERIFY(ded_dmrs_cfg.type == cg_cfg.cg_dmrs_cfg.type and ded_dmrs_cfg.max_length == cg_cfg.cg_dmrs_cfg.max_length,
+           "Configured Grant Type 2 requires the same DM-RS type and maximum length for the CG and the dynamic PUSCH");
+
     // The DCI format 0_1 size, including the Antenna ports field, follows the dedicated pusch-Config transformPrecoder
     // (or msg3-transformPrecoder when not set), while build_dci_f0_1_cg_activation() picks the antenna-port row from
     // the CP-OFDM table. As TS 38.212, Section 7.3.1.1.2 does not state which table the UE applies to an activation

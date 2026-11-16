@@ -1302,7 +1302,7 @@ ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_interva
                             rv,
                             grant.h_ul,
                             dai,
-                            pusch_cfg.nof_layers,
+                            pusch_cfg.dmrs,
                             ue_cc.channel_state_manager().get_recommended_pusch_tpmi(pusch_cfg.nof_layers),
                             tpc_command,
                             grant.cfg.pusch_cfg.aperiodic_csi

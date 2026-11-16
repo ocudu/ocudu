@@ -6,6 +6,7 @@
 #include "ocudu/ran/pdsch/pdsch_antenna_ports_mapping.h"
 #include "ocudu/ran/pdsch/pdsch_constants.h"
 #include "ocudu/support/math/pow2_utils.h"
+#include "ocudu/support/ocudu_assert.h"
 #include <algorithm>
 #include <array>
 
@@ -263,6 +264,11 @@ std::optional<unsigned> ocudu::find_pdsch_antenna_port_mapping_row_index(dmrs_co
                                                                          dmrs_max_length  dmrs_max_len,
                                                                          const pdsch_antenna_ports_mapping& mapping)
 {
+  ocudu_assert(mapping.dmrs_ports.size() == DMRS_MAX_NPORTS,
+               "The DM-RS ports mask has {} bits instead of {}.",
+               mapping.dmrs_ports.size(),
+               DMRS_MAX_NPORTS);
+
   // See TS 38.211 Table 7.3.1.3-1, the second codeword is enabled when there are more layers than a codeword carries.
   const bool  are_both_cws_enabled = mapping.dmrs_ports.count() > pdsch_constants::MAX_NOF_LAYERS_PER_CODEWORD;
   const auto  mapping_table = get_pdsch_antenna_port_mapping_table(dmrs_cfg_type, dmrs_max_len, are_both_cws_enabled);

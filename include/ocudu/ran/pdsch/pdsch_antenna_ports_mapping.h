@@ -57,7 +57,8 @@ unsigned get_pdsch_antenna_ports_field_size(dmrs_config_type dmrs_cfg_type, dmrs
 ///
 /// \param dmrs_cfg_type PDSCH DM-RS configuration type.
 /// \param dmrs_max_len  PDSCH DM-RS maximum number of OFDM symbols.
-/// \param mapping       DM-RS ports, number of CDM groups without data and number of front-load symbols to signal.
+/// \param mapping       DM-RS ports, number of CDM groups without data and number of front-load symbols to signal. The
+///                      DM-RS ports mask must have \c DMRS_MAX_NPORTS bits.
 /// \return The row index, i.e., the value of the Antenna port(s) field of DCI format 1_1, or \c std::nullopt if no row
 ///         matches the given mapping.
 std::optional<unsigned> find_pdsch_antenna_port_mapping_row_index(dmrs_config_type                   dmrs_cfg_type,
