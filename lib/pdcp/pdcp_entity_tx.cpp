@@ -1665,7 +1665,6 @@ expected<uint32_t> pdcp_entity_tx::estimate_forwareded_sdu_count(uint32_t sn)
     return make_unexpected(default_error_t{});
   }
   return rcvd_count;
-  return rcvd_count;
 }
 
 pdcp_count_info pdcp_entity_tx::get_count() const

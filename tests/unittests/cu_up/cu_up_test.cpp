@@ -364,16 +364,21 @@ protected:
     pdu_session.drb_to_modify_list_ng_ran.emplace(drb_to_mod.drb_id, drb_to_mod);
 
     ng_ran_mod.pdu_session_res_to_modify_list.emplace(pdu_session.pdu_session_id, pdu_session);
-    // Setup bearer
-    async_task<e1ap_bearer_context_modification_response> t =
-        cu_up->get_cu_up_manager()->handle_bearer_context_modification_request(bearer_context_modification);
-    lazy_task_launcher<e1ap_bearer_context_modification_response> t_launcher(t);
 
-    while (!t.ready()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-    ASSERT_TRUE(t.ready());
-    ASSERT_TRUE(t.get().success);
+    // Bearer modification.
+    std::atomic<bool> mod_done{false};
+    ASSERT_TRUE(executor->execute([this, &mod_done, bearer_context_modification]() {
+      bool scheduled = cu_up->get_cu_up_manager()->schedule_cu_up_async_task(
+          launch_async([this, &mod_done, bearer_context_modification](coro_context<async_task<void>>& ctx) {
+            CORO_BEGIN(ctx);
+            CORO_AWAIT(
+                cu_up->get_cu_up_manager()->handle_bearer_context_modification_request(bearer_context_modification));
+            mod_done = true;
+            CORO_RETURN();
+          }));
+      report_fatal_error_if_not(scheduled, "Failed to schedule the E1 reset");
+    }));
+    ASSERT_TRUE(wait_until([&mod_done]() { return mod_done.load(); }, std::chrono::milliseconds{5000}));
   }
 
   struct upf_info_t {

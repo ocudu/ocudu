@@ -53,7 +53,7 @@ protected:
   }
 };
 
-/// Test DRB suspend.
+/// Test regular SDU forwarding.
 TEST_P(pdcp_tx_forward_test, when_forward_sdu_has_valid_sn_pdu_is_forwarded)
 {
   init(GetParam(), pdcp_rb_type::drb);
