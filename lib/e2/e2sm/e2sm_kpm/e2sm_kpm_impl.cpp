@@ -18,6 +18,28 @@ e2sm_kpm_impl::e2sm_kpm_impl(ocudulog::basic_logger& logger_,
 {
 }
 
+/// Whether the action definition holds the format of its REPORT style, as per O-RAN.WG3.TS.E2SM-KPM, Section 7.4. The
+/// style picks the format that is read, so a mismatch would read another alternative of the CHOICE.
+static bool holds_format_of_its_style(const e2sm_kpm_action_definition_s& action_def)
+{
+  using format_type = e2sm_kpm_action_definition_s::action_definition_formats_c_::types_opts;
+  const auto format = action_def.action_definition_formats.type().value;
+  switch (action_def.ric_style_type) {
+    case 1:
+      return format == format_type::action_definition_format1;
+    case 2:
+      return format == format_type::action_definition_format2;
+    case 3:
+      return format == format_type::action_definition_format3;
+    case 4:
+      return format == format_type::action_definition_format4;
+    case 5:
+      return format == format_type::action_definition_format5;
+    default:
+      return false;
+  }
+}
+
 bool e2sm_kpm_impl::action_supported(const asn1::e2ap::ric_action_to_be_setup_item_s& ric_action)
 {
   e2sm_action_definition action_def =
@@ -33,6 +55,13 @@ bool e2sm_kpm_impl::action_supported(const asn1::e2ap::ric_action_to_be_setup_it
       "Admitting action {} (type {})", ric_action.ric_action_id, fmt::underlying(ric_action.ric_action_type.value));
   e2sm_kpm_action_definition_s& e2sm_kpm_action_def =
       std::get<e2sm_kpm_action_definition_s>(action_def.action_definition);
+  if (not holds_format_of_its_style(e2sm_kpm_action_def)) {
+    logger.info("RIC style type {} does not match the action definition format {} -> do not admit action {}",
+                e2sm_kpm_action_def.ric_style_type,
+                e2sm_kpm_action_def.action_definition_formats.type().to_string(),
+                ric_action.ric_action_id);
+    return false;
+  }
 
   switch (e2sm_kpm_action_def.ric_style_type) {
     case 1:
@@ -228,6 +257,12 @@ std::unique_ptr<e2sm_report_service> e2sm_kpm_impl::get_e2sm_report_service(cons
   e2sm_kpm_action_definition_s& e2sm_kpm_action_def =
       std::get<e2sm_kpm_action_definition_s>(action_def.action_definition);
   uint32_t ric_style_type = e2sm_kpm_action_def.ric_style_type;
+  if (not holds_format_of_its_style(e2sm_kpm_action_def)) {
+    logger.info("RIC style type {} does not match the action definition format {}",
+                ric_style_type,
+                e2sm_kpm_action_def.action_definition_formats.type().to_string());
+    return nullptr;
+  }
   switch (ric_style_type) {
     case 1:
       return std::make_unique<e2sm_kpm_report_service_style1>(std::move(e2sm_kpm_action_def), du_meas_provider);

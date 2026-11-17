@@ -376,6 +376,42 @@ TEST_P(e2sm_kpm_indication, measurement_id_action_with_test_condition_is_not_adm
   EXPECT_FALSE(e2sm_kpm_iface->action_supported(generate_e2sm_kpm_ric_action(definition)));
 }
 
+// Each REPORT style uses the Action Definition Format of its own number, as per O-RAN.WG3.TS.E2SM-KPM, Section 7.4.
+TEST_P(e2sm_kpm_indication, action_whose_format_is_not_the_one_of_its_style_is_not_admitted)
+{
+  e2sm_kpm_action_definition_s format1_definition;
+  auto&                        format1 = format1_definition.action_definition_formats.set_action_definition_format1();
+  format1.granul_period                = 10;
+  format1.meas_info_list.resize(1);
+  format1.meas_info_list[0].meas_type.set_meas_name().from_string("DRB.UEThpUl");
+  format1.meas_info_list[0].label_info_list.resize(1);
+  format1.meas_info_list[0].label_info_list[0].meas_label.no_label_present = true;
+  format1.meas_info_list[0].label_info_list[0].meas_label.no_label         = meas_label_s::no_label_opts::true_value;
+
+  e2sm_kpm_action_definition_s format3_definition;
+  auto&                        format3 = format3_definition.action_definition_formats.set_action_definition_format3();
+  format3.granul_period                = 10;
+  format3.meas_cond_list.resize(1);
+  format3.meas_cond_list[0].meas_type.set_meas_name().from_string("DRB.UEThpUl");
+  format3.meas_cond_list[0].matching_cond.resize(1);
+  format3.meas_cond_list[0].matching_cond[0].matching_cond_choice.set_test_cond_info().test_type.set_ul_r_srp() =
+      test_cond_type_c::ul_r_srp_opts::true_value;
+
+  const std::vector<std::pair<int64_t, const e2sm_kpm_action_definition_s*>> mismatches = {{1, &format3_definition},
+                                                                                           {2, &format1_definition},
+                                                                                           {3, &format1_definition},
+                                                                                           {4, &format1_definition},
+                                                                                           {5, &format1_definition}};
+  for (const auto& [style, base] : mismatches) {
+    e2sm_kpm_action_definition_s definition = *base;
+    definition.ric_style_type               = style;
+    auto ric_action                         = generate_e2sm_kpm_ric_action(definition);
+
+    EXPECT_FALSE(e2sm_kpm_iface->action_supported(ric_action)) << "style " << style;
+    EXPECT_EQ(e2sm_kpm_iface->get_e2sm_report_service(ric_action.ric_action_definition), nullptr) << "style " << style;
+  }
+}
+
 TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
 {
   // Measurement values in 5 time slot.
