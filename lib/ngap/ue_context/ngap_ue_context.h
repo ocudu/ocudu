@@ -267,6 +267,7 @@ public:
     ues.at(ran_ue_id).logger.log_debug("Removing NGAP UE context");
 
     ues.at(ran_ue_id).request_pdu_session_timer.stop();
+    ues.at(ran_ue_id).release_request_timer.stop();
 
     if (ues.at(ran_ue_id).ue_ids.amf_ue_id != amf_ue_id_t::invalid) {
       amf_ue_id_to_ran_ue_id.erase(ues.at(ran_ue_id).ue_ids.amf_ue_id);
@@ -291,6 +292,7 @@ public:
 
     it->second.logger.log_debug("Detaching NGAP UE context");
     it->second.request_pdu_session_timer.stop();
+    it->second.release_request_timer.stop();
     ue_index_to_ran_ue_id.erase(it->second.ue_ids.ue_index);
     if (it->second.ue_ids.amf_ue_id != amf_ue_id_t::invalid) {
       amf_ue_id_to_ran_ue_id.erase(it->second.ue_ids.amf_ue_id);

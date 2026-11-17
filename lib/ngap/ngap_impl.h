@@ -189,6 +189,12 @@ private:
   /// \brief Starts the timer that releases the UE locally if the AMF doesn't answer its UE Context Release Request.
   void start_release_request_timer(ngap_ue_context& ue_ctxt);
 
+  /// \brief Handles a UE-associated message of the AMF that answers a pending UE Context Release Request without
+  /// releasing the UE.
+  /// \param[in] ue_ctxt  UE context the message is for.
+  /// \param[in] msg_name Name of the message, for logging.
+  void handle_release_request_answered(ngap_ue_context& ue_ctxt, const char* msg_name);
+
   /// \brief Notify about the reception of an Initial Context Setup Request.
   /// \param[in] msg The received Initial Context Setup Request.
   void handle_initial_context_setup_request(const asn1::ngap::init_context_setup_request_s& request);

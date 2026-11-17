@@ -712,6 +712,52 @@ TEST_F(ngap_ue_context_management_procedure_test,
   ASSERT_TRUE(was_ue_removed());
 }
 
+/// Test that the UE is kept when the AMF answers the UE Context Release Request with DL signalling instead of a UE
+/// Context Release Command, and that the UE can request its release again.
+TEST_F(ngap_ue_context_management_procedure_test,
+       when_amf_answers_ue_context_release_request_with_dl_nas_transport_then_ue_is_kept)
+{
+  // Test preamble.
+  cu_cp_ue_index_t ue_index = this->start_procedure();
+
+  auto& ue = test_ues.at(ue_index);
+
+  // Inject Initial Context Setup Request.
+  ngap_message init_context_setup_request =
+      generate_valid_initial_context_setup_request_message(ue.amf_ue_id.value(), ue.ran_ue_id.value());
+  ngap->handle_message(init_context_setup_request);
+
+  // Trigger UE context release request.
+  cu_cp_ue_context_release_request release_request;
+  release_request.ue_index = ue_index;
+
+  async_task<bool>         t = ngap->handle_ue_context_release_request(release_request);
+  lazy_task_launcher<bool> t_launcher(t);
+  ASSERT_TRUE(t.ready());
+  ASSERT_TRUE(t.get());
+  ASSERT_TRUE(was_ue_context_release_request_sent());
+
+  // The AMF keeps the UE, e.g. due to pending MT signalling, and sends a DL NAS Transport instead.
+  ngap->handle_message(generate_downlink_nas_transport_message(ue.amf_ue_id.value(), ue.ran_ue_id.value()));
+
+  // The UE is not released when the procedure timeout expires.
+  const auto timeout = ngap_configuration{}.procedure_timeout;
+  for (unsigned msec_elapsed = 0; msec_elapsed < timeout.count(); ++msec_elapsed) {
+    this->tick();
+  }
+  ASSERT_FALSE(was_ue_release_requested(ue));
+  ASSERT_FALSE(was_ue_removed());
+
+  // The UE can request its release again.
+  const size_t             nof_sent_msgs = n2_gw.last_ngap_msgs.size();
+  async_task<bool>         t2            = ngap->handle_ue_context_release_request(release_request);
+  lazy_task_launcher<bool> t2_launcher(t2);
+  ASSERT_TRUE(t2.ready());
+  ASSERT_TRUE(t2.get());
+  ASSERT_EQ(n2_gw.last_ngap_msgs.size(), nof_sent_msgs + 1);
+  ASSERT_TRUE(was_ue_context_release_request_sent());
+}
+
 /// Test when UE Context Release Command with inconsistent NGAP ID pair is received,
 /// an error indication is sent.
 TEST_F(ngap_ue_context_management_procedure_test,

@@ -256,6 +256,18 @@ void ngap_impl::start_release_request_timer(ngap_ue_context& ue_ctxt)
   ue_ctxt.release_request_timer.run();
 }
 
+void ngap_impl::handle_release_request_answered(ngap_ue_context& ue_ctxt, const char* msg_name)
+{
+  if (not ue_ctxt.release_requested) {
+    return;
+  }
+  // The AMF keeps the UE instead of releasing it if it is aware of pending MT traffic or signalling (TS 23.502 section
+  // 4.2.6). The UE can request its release again later.
+  ue_ctxt.logger.log_info("Cancelling UEContextReleaseRequest. Cause: The AMF answered with {}", msg_name);
+  ue_ctxt.release_requested = false;
+  ue_ctxt.release_request_timer.stop();
+}
+
 bool ngap_impl::send_initial_ue_message(cu_cp_ue_index_t ue_index, ngap_message& ngap_msg)
 {
   // Create NGAP UE.
@@ -893,6 +905,8 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
     return;
   }
 
+  handle_release_request_answered(ue_ctxt, "DLNASTransport");
+
   auto* ue = ue_ctxt.get_cu_cp_ue();
   ocudu_assert(ue != nullptr,
                "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
@@ -974,6 +988,8 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
                                                                 uint_to_amf_ue_id(request->amf_ue_ngap_id)});
     return;
   }
+
+  handle_release_request_answered(ue_ctxt, "InitialContextSetupRequest");
 
   auto* ue = ue_ctxt.get_cu_cp_ue();
   ocudu_assert(ue != nullptr,
@@ -1093,6 +1109,8 @@ void ngap_impl::handle_ue_context_modification_request(const asn1::ngap::ue_cont
     return;
   }
 
+  handle_release_request_answered(ue_ctxt, "UEContextModificationRequest");
+
   auto* ue = ue_ctxt.get_cu_cp_ue();
   ocudu_assert(ue != nullptr,
                "ue={} ran_ue={} amf_ue={}: UE for UE context modification doesn't exist",
@@ -1156,6 +1174,8 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
     return;
   }
 
+  handle_release_request_answered(ue_ctxt, "PDUSessionResourceSetupRequest");
+
   auto* ue = ue_ctxt.get_cu_cp_ue();
   ocudu_assert(ue != nullptr,
                "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
@@ -1215,6 +1235,8 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
                                                                 uint_to_amf_ue_id(request->amf_ue_ngap_id)});
     return;
   }
+
+  handle_release_request_answered(ue_ctxt, "PDUSessionResourceModifyRequest");
 
   // Check for duplicate messages.
   byte_buffer asn1_request_pdu = pack_into_pdu(request);
@@ -1277,6 +1299,8 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
                                                                 uint_to_amf_ue_id(command->amf_ue_ngap_id)});
     return;
   }
+
+  handle_release_request_answered(ue_ctxt, "PDUSessionResourceReleaseCommand");
 
   auto* ue = ue_ctxt.get_cu_cp_ue();
   ocudu_assert(ue != nullptr,
