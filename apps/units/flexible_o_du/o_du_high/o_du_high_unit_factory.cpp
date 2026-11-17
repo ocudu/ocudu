@@ -18,7 +18,6 @@
 #include "du_high/metrics/du_metrics_producer.h"
 #include "e2/o_du_high_e2_config_translators.h"
 #include "o_du_high_unit_config.h"
-#include "ocudu/adt/format.h"
 #include "ocudu/du/du_high/du_high.h"
 #include "ocudu/du/du_high/du_high_configuration.h"
 #include "ocudu/du/du_high/o_du_high_config.h"
@@ -26,8 +25,6 @@
 #include "ocudu/du/du_update_config_helpers.h"
 #include "ocudu/e2/e2_du_metrics_connector.h"
 #include "ocudu/ocudulog/ocudulog.h"
-#include "ocudu/ran/prach/prach_configuration.h"
-#include "ocudu/ran/prach/prach_frequency_mapping.h"
 #include "ocudu/scheduler/config/pucch_resource_generator.h"
 
 using namespace ocudu;
@@ -75,10 +72,172 @@ void ocudu::announce_du_high_cells(const du_high_unit_config& du_high_unit_cfg)
   fmt::print("\n");
 }
 
-static void validates_derived_du_params(span<const odu::du_cell_config> cells)
+/// Returns true if the DU metrics are enabled, i.e. scheduler or MAC metrics are enabled or there is somewhere to
+/// report the F1AP metrics.
+static bool is_du_metrics_enabled(const du_high_unit_metrics_config& metrics)
 {
-  ocudulog::basic_logger& logger = ocudulog::fetch_basic_logger("DU", false);
+  return metrics.layers_cfg.enable_mac || metrics.layers_cfg.enable_scheduler ||
+         metrics.common_metrics_cfg.enable_json_metrics || metrics.common_metrics_cfg.enable_log_metrics;
+}
 
+/// Adds the RLC metrics consumers to the given channel.
+static void add_rlc_metrics_consumers(app_services::metrics_channel<rlc_metrics_impl>& rlc_metrics_channel,
+                                      app_services::remote_server_metrics_gateway*     remote_metrics_gateway,
+                                      const o_du_high_unit_config&                     o_du_high_unit_cfg,
+                                      e2_du_metrics_notifier&                          e2_notifier)
+{
+  const app_helpers::metrics_config& metrics_config = o_du_high_unit_cfg.du_high_cfg.config.metrics.common_metrics_cfg;
+
+  if (metrics_config.enable_log_metrics) {
+    rlc_metrics_channel.add_consumer(
+        std::make_unique<rlc_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
+  }
+
+  if (metrics_config.enable_json_metrics) {
+    report_error_if_not(remote_metrics_gateway,
+                        "Invalid remote server gateway for sending JSON metrics. Check that remote server is enabled");
+    rlc_metrics_channel.add_consumer(std::make_unique<rlc_metrics_consumer_json>(*remote_metrics_gateway));
+  }
+
+  if (o_du_high_unit_cfg.e2_cfg.base_cfg.enable_unit_e2) {
+    rlc_metrics_channel.add_consumer(std::make_unique<rlc_metrics_consumer_e2>(e2_notifier));
+  }
+}
+
+/// Adds the DU metrics consumers to the given channel and the STDOUT metrics subcommand to the given list.
+static void add_du_metrics_consumers(
+    app_services::metrics_channel<du_metrics_impl>& du_metrics_channel,
+    std::vector<std::unique_ptr<app_services::toggle_stdout_metrics_app_command::metrics_subcommand>>&
+                                                 metrics_subcommands,
+    app_services::remote_server_metrics_gateway* remote_metrics_gateway,
+    const o_du_high_unit_config&                 o_du_high_unit_cfg,
+    e2_du_metrics_notifier&                      e2_notifier)
+{
+  const app_helpers::metrics_config& metrics_config = o_du_high_unit_cfg.du_high_cfg.config.metrics.common_metrics_cfg;
+
+  // Create the consumer for STDOUT. Also create the command for toggle the metrics.
+  auto metrics_stdout = std::make_unique<du_metrics_consumer_stdout>();
+  metrics_subcommands.push_back(std::make_unique<du_high_metrics_subcommand_stdout>(*metrics_stdout));
+  du_metrics_channel.add_consumer(std::move(metrics_stdout));
+
+  if (metrics_config.enable_log_metrics) {
+    du_metrics_channel.add_consumer(
+        std::make_unique<du_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
+  }
+
+  if (metrics_config.enable_json_metrics) {
+    report_error_if_not(remote_metrics_gateway,
+                        "Invalid remote server gateway for sending JSON metrics. Check that remote server is enabled");
+    du_metrics_channel.add_consumer(std::make_unique<du_metrics_consumer_json>(*remote_metrics_gateway));
+  }
+
+  // Connect E2 agent to DU Scheduler UE metrics.
+  if (o_du_high_unit_cfg.e2_cfg.base_cfg.enable_unit_e2) {
+    du_metrics_channel.add_consumer(std::make_unique<du_metrics_consumer_e2>(e2_notifier));
+  }
+}
+
+namespace {
+
+/// O-DU high metrics: the channels and STDOUT subcommands owned by the unit, plus the notifiers handed to the O-DU
+/// high library.
+struct o_du_high_metrics {
+  app_services::metrics_channel_collection                                                          channels;
+  std::vector<std::unique_ptr<app_services::toggle_stdout_metrics_app_command::metrics_subcommand>> metrics_subcommands;
+  odu::du_metrics_notifier* du_notifier  = nullptr;
+  rlc_metrics_notifier*     rlc_notifier = nullptr;
+};
+
+} // namespace
+
+/// Builds the O-DU high metrics channels, consumers and producers.
+static o_du_high_metrics build_o_du_high_metrics(const o_du_high_unit_config&       o_du_high_unit_cfg,
+                                                 const o_du_high_unit_dependencies& dependencies)
+{
+  const du_high_unit_config& du_hi_cfg   = o_du_high_unit_cfg.du_high_cfg.config;
+  e2_du_metrics_notifier&    e2_notifier = dependencies.e2_metric_connectors.get_e2_metric_notifier(0);
+
+  o_du_high_metrics metrics;
+
+  if (is_du_metrics_enabled(du_hi_cfg.metrics)) {
+    auto& channel = app_services::make_channel<du_metrics_impl>(metrics.channels);
+    add_du_metrics_consumers(
+        channel, metrics.metrics_subcommands, dependencies.remote_metrics_gateway, o_du_high_unit_cfg, e2_notifier);
+    metrics.du_notifier = &channel.emplace_producer<du_metrics_producer_impl>(channel);
+  }
+
+  if (du_hi_cfg.metrics.layers_cfg.enable_rlc) {
+    auto& channel = app_services::make_channel<rlc_metrics_impl>(metrics.channels);
+    add_rlc_metrics_consumers(channel, dependencies.remote_metrics_gateway, o_du_high_unit_cfg, e2_notifier);
+    metrics.rlc_notifier = &channel.emplace_producer<rlc_metrics_producer_impl>(channel);
+  }
+
+  return metrics;
+}
+
+/// Builds the O-DU high library dependencies from the unit dependencies.
+static odu::o_du_high_dependencies build_o_du_high_dependencies(const o_du_high_unit_dependencies& dependencies,
+                                                                odu::du_metrics_notifier*          du_notifier,
+                                                                rlc_metrics_notifier*              rlc_notifier,
+                                                                bool                               is_e2_enabled)
+{
+  return odu::o_du_high_dependencies{
+      .sectors            = dependencies.sectors,
+      .du_hi              = odu::du_high_dependencies{.exec_mapper             = &dependencies.execution_mapper,
+                                                      .f1c_client              = &dependencies.f1c_client_handler,
+                                                      .f1u_teid_allocator      = &dependencies.f1u_teid_allocator,
+                                                      .f1u_gw                  = &dependencies.f1u_gw,
+                                                      .phy_adapter             = nullptr,
+                                                      .timer_ctrl              = &dependencies.timer_ctrl,
+                                                      .du_notifier             = du_notifier,
+                                                      .rlc_metrics_notif       = rlc_notifier,
+                                                      .mac_p                   = &dependencies.mac_p,
+                                                      .rlc_p                   = &dependencies.rlc_p,
+                                                      .f1_setup_notifier       = nullptr,
+                                                      .ntn_doppler_handler     = dependencies.ntn_doppler_handler,
+                                                      .phy_cell_op_controllers = {}},
+      .e2_client          = is_e2_enabled ? &dependencies.e2_client_handler : nullptr,
+      .e2_du_metric_iface = is_e2_enabled ? &dependencies.e2_metric_connectors.get_e2_metrics_interface(0) : nullptr};
+}
+
+/// Creates the E2AP configuration if it is enabled.
+static e2ap_config create_e2ap_config(const o_du_high_unit_config& o_du_high_unit_cfg)
+{
+  if (!o_du_high_unit_cfg.e2_cfg.base_cfg.enable_unit_e2) {
+    return e2ap_config{};
+  }
+
+  const du_high_unit_config& du_high_unit_cfg = o_du_high_unit_cfg.du_high_cfg.config;
+
+  return generate_e2_config(o_du_high_unit_cfg.e2_cfg,
+                            du_high_unit_cfg.gnb_id,
+                            du_high_unit_cfg.cells_cfg.front().cell.plmn,
+                            du_high_unit_cfg.gnb_du_id);
+}
+
+/// Creates the application unit commands, taking ownership of the given STDOUT metrics subcommands.
+static application_unit_commands create_application_unit_commands(
+    odu::o_du_high& o_du_hi,
+    std::vector<std::unique_ptr<app_services::toggle_stdout_metrics_app_command::metrics_subcommand>>
+        metrics_subcommands)
+{
+  application_unit_commands commands;
+
+  odu::du_configurator& configurator = o_du_hi.get_du_high().get_du_configurator();
+
+  commands.cmdline.metrics_subcommands = std::move(metrics_subcommands);
+  commands.remote.push_back(std::make_unique<ssb_modify_remote_command>(configurator));
+  commands.remote.push_back(std::make_unique<rrm_policy_ratio_remote_command>(configurator));
+  commands.remote.push_back(std::make_unique<sib_update_remote_command>(configurator));
+
+  return commands;
+}
+
+/// \brief Validates the derived parameters of the given DU cells.
+///
+/// Reports through the given logger and STDOUT when the PRACH opportunities overlap with the PUCCH resources.
+static void validate_derived_du_params(span<const odu::du_cell_config> cells, ocudulog::basic_logger& logger)
+{
   for (const auto& cell_cfg : cells) {
     const rach_config_common& rach_cfg = cell_cfg.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common.value();
 
@@ -114,154 +273,30 @@ static void validates_derived_du_params(span<const odu::du_cell_config> cells)
   }
 }
 
-static rlc_metrics_notifier* build_rlc_du_metrics(app_services::metrics_channel_collection&    metrics,
-                                                  app_services::remote_server_metrics_gateway* remote_metrics_gateway,
-                                                  const o_du_high_unit_config&                 o_du_high_unit_cfg,
-                                                  e2_du_metrics_notifier&                      e2_notifier)
+o_du_high_unit ocudu::make_o_du_high_unit(const o_du_high_unit_config&       o_du_high_unit_cfg,
+                                          const o_du_high_unit_dependencies& dependencies)
 {
-  const du_high_unit_config& du_hi_cfg = o_du_high_unit_cfg.du_high_cfg.config;
+  // Generate the DU high configuration and validate its derived parameters.
+  odu::du_high_configuration du_hi_cfg = generate_du_high_config(o_du_high_unit_cfg.du_high_cfg.config);
+  validate_derived_du_params(du_hi_cfg.ran.cells, dependencies.du_logger);
 
-  // RLC metrics not enabled, do not add metrics configuration.
-  if (!du_hi_cfg.metrics.layers_cfg.enable_rlc) {
-    return nullptr;
-  }
+  // Create the DU high metrics.
+  o_du_high_metrics metrics = build_o_du_high_metrics(o_du_high_unit_cfg, dependencies);
 
-  auto& rlc_metrics_channel = app_services::make_channel<rlc_metrics_impl>(metrics);
+  // Create the O-DU high.
+  std::unique_ptr<odu::o_du_high> o_du_hi = odu::make_o_du_high(
+      odu::o_du_high_config{.du_hi              = std::move(du_hi_cfg),
+                            .e2ap_cfg           = create_e2ap_config(o_du_high_unit_cfg),
+                            .is_rt_mode_enabled = o_du_high_unit_cfg.fapi_cfg.is_rt_mode_enabled},
+      build_o_du_high_dependencies(
+          dependencies, metrics.du_notifier, metrics.rlc_notifier, o_du_high_unit_cfg.e2_cfg.base_cfg.enable_unit_e2));
+  report_error_if_not(o_du_hi, "Invalid O-DU high");
 
-  // Fill the generator.
-  auto                  rlc_metric_gen = std::make_unique<rlc_metrics_producer_impl>(rlc_metrics_channel);
-  rlc_metrics_notifier* out            = rlc_metric_gen.get();
-  rlc_metrics_channel.add_producer(std::move(rlc_metric_gen));
+  // Build the application unit commands.
+  application_unit_commands commands =
+      create_application_unit_commands(*o_du_hi, std::move(metrics.metrics_subcommands));
 
-  const app_helpers::metrics_config& metrics_config = du_hi_cfg.metrics.common_metrics_cfg;
-  // Consumers.
-  if (metrics_config.enable_log_metrics) {
-    rlc_metrics_channel.add_consumer(
-        std::make_unique<rlc_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
-  }
-
-  if (metrics_config.enable_json_metrics) {
-    report_error_if_not(remote_metrics_gateway,
-                        "Invalid remote server gateway for sending JSON metrics. Check that remote server is enabled");
-    rlc_metrics_channel.add_consumer(std::make_unique<rlc_metrics_consumer_json>(*remote_metrics_gateway));
-  }
-
-  if (o_du_high_unit_cfg.e2_cfg.base_cfg.enable_unit_e2) {
-    rlc_metrics_channel.add_consumer(std::make_unique<rlc_metrics_consumer_e2>(e2_notifier));
-  }
-
-  return out;
-}
-
-static odu::du_metrics_notifier*
-build_du_metrics(app_services::metrics_channel_collection& metrics,
-                 std::vector<std::unique_ptr<app_services::toggle_stdout_metrics_app_command::metrics_subcommand>>&
-                                                              metrics_subcommands,
-                 app_services::remote_server_metrics_gateway* remote_metrics_gateway,
-                 const o_du_high_unit_config&                 o_du_high_unit_cfg,
-                 e2_du_metrics_notifier&                      e2_notifier)
-{
-  const du_high_unit_config& du_hi_cfg = o_du_high_unit_cfg.du_high_cfg.config;
-
-  // Scheduler or MAC metrics not enabled and nowhere to report the F1AP metrics, do not create consumers and producers.
-  const app_helpers::metrics_config& metrics_config = du_hi_cfg.metrics.common_metrics_cfg;
-  if (!du_hi_cfg.metrics.layers_cfg.enable_mac && !du_hi_cfg.metrics.layers_cfg.enable_scheduler &&
-      !metrics_config.enable_json_metrics && !metrics_config.enable_log_metrics) {
-    return nullptr;
-  }
-
-  auto& du_metrics_channel = app_services::make_channel<du_metrics_impl>(metrics);
-
-  // Fill the generator.
-  auto                      du_metric_gen = std::make_unique<du_metrics_producer_impl>(du_metrics_channel);
-  odu::du_metrics_notifier* out           = du_metric_gen.get();
-  du_metrics_channel.add_producer(std::move(du_metric_gen));
-
-  // Create the consumer for STDOUT. Also create the command for toggle the metrics.
-  auto metrics_stdout = std::make_unique<du_metrics_consumer_stdout>();
-  metrics_subcommands.push_back(std::make_unique<du_high_metrics_subcommand_stdout>(*metrics_stdout));
-  du_metrics_channel.add_consumer(std::move(metrics_stdout));
-
-  if (metrics_config.enable_log_metrics) {
-    du_metrics_channel.add_consumer(
-        std::make_unique<du_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
-  }
-
-  if (metrics_config.enable_json_metrics) {
-    report_error_if_not(remote_metrics_gateway,
-                        "Invalid remote server gateway for sending JSON metrics. Check that remote server is enabled");
-    du_metrics_channel.add_consumer(std::make_unique<du_metrics_consumer_json>(*remote_metrics_gateway));
-  }
-
-  // Connect E2 agent to DU Scheduler UE metrics.
-  if (o_du_high_unit_cfg.e2_cfg.base_cfg.enable_unit_e2) {
-    du_metrics_channel.add_consumer(std::make_unique<du_metrics_consumer_e2>(e2_notifier));
-  }
-
-  return out;
-}
-
-o_du_high_unit ocudu::make_o_du_high_unit(const o_du_high_unit_config&  o_du_high_unit_cfg,
-                                          o_du_high_unit_dependencies&& dependencies)
-{
-  odu::o_du_high_config       o_du_high_cfg;
-  odu::du_high_configuration& du_hi_cfg        = o_du_high_cfg.du_hi;
-  const du_high_unit_config&  du_high_unit_cfg = o_du_high_unit_cfg.du_high_cfg.config;
-
-  o_du_high_cfg.is_rt_mode_enabled = o_du_high_unit_cfg.fapi_cfg.is_rt_mode_enabled;
-
-  // Generate DU high config from the unit config.
-  generate_du_high_config(du_hi_cfg, du_high_unit_cfg);
-
-  // Validates the derived parameters.
-  validates_derived_du_params(du_hi_cfg.ran.cells);
-
-  odu::du_high_dependencies& du_hi_deps = dependencies.o_du_hi_dependencies.du_hi;
-  du_hi_deps.exec_mapper                = &dependencies.execution_mapper;
-  du_hi_deps.f1c_client                 = &dependencies.f1c_client_handler;
-  du_hi_deps.f1u_teid_allocator         = &dependencies.f1u_teid_allocator;
-  du_hi_deps.f1u_gw                     = &dependencies.f1u_gw;
-  du_hi_deps.phy_adapter                = nullptr;
-  du_hi_deps.timer_ctrl                 = &dependencies.timer_ctrl;
-  du_hi_deps.mac_p                      = &dependencies.mac_p;
-  du_hi_deps.rlc_p                      = &dependencies.rlc_p;
-
-  if (o_du_high_unit_cfg.e2_cfg.base_cfg.enable_unit_e2) {
-    // Connect E2 agent to RLC metric source.
-    dependencies.o_du_hi_dependencies.e2_client = &dependencies.e2_client_handler;
-    o_du_high_cfg.e2ap_cfg                      = generate_e2_config(o_du_high_unit_cfg.e2_cfg,
-                                                du_high_unit_cfg.gnb_id,
-                                                du_high_unit_cfg.cells_cfg.front().cell.plmn,
-                                                du_hi_cfg.ran.gnb_du_id);
-    dependencies.o_du_hi_dependencies.e2_du_metric_iface =
-        &(dependencies.e2_metric_connectors.get_e2_metrics_interface(0));
-  }
-
-  // DU high metrics.
-  o_du_high_unit odu_unit;
-
-  du_hi_deps.du_notifier = build_du_metrics(odu_unit.metrics,
-                                            odu_unit.commands.cmdline.metrics_subcommands,
-                                            dependencies.remote_metrics_gateway,
-                                            o_du_high_unit_cfg,
-                                            dependencies.e2_metric_connectors.get_e2_metric_notifier(0));
-
-  du_hi_deps.rlc_metrics_notif = build_rlc_du_metrics(odu_unit.metrics,
-                                                      dependencies.remote_metrics_gateway,
-                                                      o_du_high_unit_cfg,
-                                                      dependencies.e2_metric_connectors.get_e2_metric_notifier(0));
-
-  // Create O-DU high.
-  odu_unit.o_du_hi = odu::make_o_du_high(o_du_high_cfg, std::move(dependencies.o_du_hi_dependencies));
-  report_error_if_not(odu_unit.o_du_hi, "Invalid O-DU high");
-
-  // Create remote commands.
-  odu_unit.commands.remote.push_back(
-      std::make_unique<ssb_modify_remote_command>(odu_unit.o_du_hi->get_du_high().get_du_configurator()));
-  odu_unit.commands.remote.push_back(
-      std::make_unique<rrm_policy_ratio_remote_command>(odu_unit.o_du_hi->get_du_high().get_du_configurator()));
-  odu_unit.commands.remote.push_back(
-      std::make_unique<sib_update_remote_command>(odu_unit.o_du_hi->get_du_high().get_du_configurator()));
-
-  return odu_unit;
+  // Create the O-DU high unit and return it.
+  return o_du_high_unit{
+      .o_du_hi = std::move(o_du_hi), .commands = std::move(commands), .metrics = std::move(metrics.channels)};
 }

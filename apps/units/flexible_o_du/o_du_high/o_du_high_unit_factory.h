@@ -11,7 +11,6 @@
 #include "ocudu/du/du_high/o_du_high_config.h"
 
 namespace ocudu {
-struct o_du_high_unit_config;
 
 namespace app_services {
 class remote_server_metrics_gateway;
@@ -19,13 +18,10 @@ class remote_server_metrics_gateway;
 
 namespace odu {
 class du_high_executor_mapper;
-struct o_du_high_config;
-struct o_du_high_dependencies;
 class f1c_connection_client;
 class f1u_du_gateway;
 } // namespace odu
 
-class du_high_executor_mapper;
 template <typename ConnectorType, typename NotifierType, typename InterfaceType>
 class e2_metric_connector_manager;
 class e2_du_metrics_connector;
@@ -34,10 +30,7 @@ class e2_du_metrics_interface;
 class e2_connection_client;
 class mac_pcap;
 class rlc_pcap;
-class timer_manager;
 struct du_high_unit_config;
-struct du_high_wrapper_config;
-struct du_high_wrapper_dependencies;
 struct o_du_high_unit_config;
 using e2_du_metrics_connector_manager =
     e2_metric_connector_manager<e2_du_metrics_connector, e2_du_metrics_notifier, e2_du_metrics_interface>;
@@ -54,21 +47,23 @@ struct o_du_high_unit {
 
 /// O-RAN DU high unit dependencies.
 struct o_du_high_unit_dependencies {
-  odu::du_high_executor_mapper&                execution_mapper;
-  odu::f1c_connection_client&                  f1c_client_handler;
-  gtpu_teid_pool&                              f1u_teid_allocator;
-  odu::f1u_du_gateway&                         f1u_gw;
-  mac_clock_controller&                        timer_ctrl;
-  mac_pcap&                                    mac_p;
-  rlc_pcap&                                    rlc_p;
-  e2_connection_client&                        e2_client_handler;
-  e2_du_metrics_connector_manager&             e2_metric_connectors;
-  app_services::remote_server_metrics_gateway* remote_metrics_gateway = nullptr;
-  odu::o_du_high_dependencies                  o_du_hi_dependencies;
+  odu::du_high_executor_mapper&                   execution_mapper;
+  odu::f1c_connection_client&                     f1c_client_handler;
+  gtpu_teid_pool&                                 f1u_teid_allocator;
+  odu::f1u_du_gateway&                            f1u_gw;
+  mac_clock_controller&                           timer_ctrl;
+  mac_pcap&                                       mac_p;
+  rlc_pcap&                                       rlc_p;
+  e2_connection_client&                           e2_client_handler;
+  e2_du_metrics_connector_manager&                e2_metric_connectors;
+  ocudulog::basic_logger&                         du_logger;
+  app_services::remote_server_metrics_gateway*    remote_metrics_gateway = nullptr;
+  std::vector<odu::o_du_high_sector_dependencies> sectors;
+  ocudu_ntn::ntn_doppler_compensation_handler*    ntn_doppler_handler = nullptr;
 };
 
 /// Creates the O-RAN DU high unit with the given configuration.
-o_du_high_unit make_o_du_high_unit(const o_du_high_unit_config&  o_du_high_unit_cfg,
-                                   o_du_high_unit_dependencies&& dependencies);
+o_du_high_unit make_o_du_high_unit(const o_du_high_unit_config&       o_du_high_unit_cfg,
+                                   const o_du_high_unit_dependencies& dependencies);
 
 } // namespace ocudu

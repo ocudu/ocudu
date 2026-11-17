@@ -57,8 +57,7 @@ bool split6_o_du_application_unit_impl::on_configuration_validation() const
   }
 
   // Get the du_high configuration.
-  odu::du_high_configuration du_hi_cfg;
-  generate_du_high_config(du_hi_cfg, unit_cfg.odu_high_cfg.du_high_cfg.config);
+  odu::du_high_configuration du_hi_cfg = generate_du_high_config(unit_cfg.odu_high_cfg.du_high_cfg.config);
 
   return plugin->is_ran_config_supported(du_hi_cfg.ran);
 }
@@ -72,8 +71,7 @@ void split6_o_du_application_unit_impl::on_parsing_configuration_registration(CL
 o_du_unit split6_o_du_application_unit_impl::create_flexible_o_du_unit(const o_du_unit_dependencies& dependencies)
 {
   // Get the du_high configuration.
-  odu::du_high_configuration du_hi_cfg;
-  generate_du_high_config(du_hi_cfg, unit_cfg.odu_high_cfg.du_high_cfg.config);
+  odu::du_high_configuration du_hi_cfg = generate_du_high_config(unit_cfg.odu_high_cfg.du_high_cfg.config);
 
   // Get the du_high FAPI specific configuration.
   fapi_adaptor::split6_o_du_low_fapi_adaptor_configuration fapi_cfg;

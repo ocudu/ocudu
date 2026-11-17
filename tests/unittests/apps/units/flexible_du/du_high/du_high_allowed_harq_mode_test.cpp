@@ -226,8 +226,7 @@ TEST(du_high_allowed_harq_mode_test, the_configured_mode_reaches_the_qos_configu
   du_high_config_bench bench;
   bench.add_qos(uint_to_five_qi(9), "mode_a");
 
-  odu::du_high_configuration du_hi_cfg;
-  generate_du_high_config(du_hi_cfg, bench.derived_config());
+  odu::du_high_configuration du_hi_cfg = generate_du_high_config(bench.derived_config());
 
   ASSERT_TRUE(du_hi_cfg.ran.qos.count(uint_to_five_qi(9)) == 1);
   const auto& qos = du_hi_cfg.ran.qos.at(uint_to_five_qi(9));
@@ -241,8 +240,7 @@ TEST(du_high_allowed_harq_mode_test, an_unset_mode_leaves_the_qos_configuration_
   du_high_config_bench bench;
   bench.add_qos(uint_to_five_qi(9), "");
 
-  odu::du_high_configuration du_hi_cfg;
-  generate_du_high_config(du_hi_cfg, bench.derived_config());
+  odu::du_high_configuration du_hi_cfg = generate_du_high_config(bench.derived_config());
 
   EXPECT_FALSE(du_hi_cfg.ran.qos.at(uint_to_five_qi(9)).allowed_harq_mode.has_value());
 }

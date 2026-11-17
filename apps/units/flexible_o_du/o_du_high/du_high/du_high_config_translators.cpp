@@ -1438,14 +1438,21 @@ static std::map<srb_id_t, odu::du_srb_config> generate_du_srb_config(const du_hi
 
 static mac_expert_config generate_mac_expert_config(const du_high_unit_config& config)
 {
-  mac_expert_config out_cfg = {};
-  for (const auto& cell : config.cells_cfg) {
-    out_cfg.configs.push_back({.max_consecutive_dl_kos  = cell.cell.pdsch_cfg.max_consecutive_kos,
-                               .max_consecutive_ul_kos  = cell.cell.pusch_cfg.max_consecutive_kos,
-                               .max_consecutive_csi_dtx = cell.cell.pucch_cfg.max_consecutive_kos});
-  }
+  auto generate_mac_expert_configurations = [&config]() {
+    std::vector<mac_expert_config::mac_expert_cell_config> configs;
+    configs.reserve(config.cells_cfg.size());
 
-  return out_cfg;
+    for (const auto& cell : config.cells_cfg) {
+      configs.push_back({.max_consecutive_dl_kos  = cell.cell.pdsch_cfg.max_consecutive_kos,
+                         .max_consecutive_ul_kos  = cell.cell.pusch_cfg.max_consecutive_kos,
+                         .max_consecutive_csi_dtx = cell.cell.pucch_cfg.max_consecutive_kos});
+    }
+
+    return configs;
+  };
+
+  return mac_expert_config{.initial_crnti = mac_expert_config::default_initial_crnti,
+                           .configs       = generate_mac_expert_configurations()};
 }
 
 static scheduler_expert_config generate_scheduler_expert_config(const du_high_unit_config& config)
@@ -1608,50 +1615,60 @@ static odu::du_test_mode_config generate_test_mode_config(const du_high_unit_con
   return test_cfg;
 }
 
-void ocudu::generate_du_high_config(odu::du_high_configuration& du_hi_cfg, const du_high_unit_config& du_high_unit_cfg)
+/// Generates the NTN configuration based on the given configuration.
+static std::optional<ocudu_ntn::ntn_configuration_manager_config>
+generate_ntn_configuration(const du_high_unit_config& du_high_unit_cfg)
 {
-  // DU-high configuration.
-  du_hi_cfg.ran.gnb_du_id   = du_high_unit_cfg.gnb_du_id;
-  du_hi_cfg.ran.gnb_du_name = fmt::format("odu{}", fmt::underlying(du_hi_cfg.ran.gnb_du_id));
-  du_hi_cfg.ran.cells       = generate_du_cell_config(du_high_unit_cfg);
-  // The F1AP metrics report the CU-CP connection state, which is always of interest.
-  du_hi_cfg.metrics.enable_f1ap     = true;
-  du_hi_cfg.metrics.enable_mac      = du_high_unit_cfg.metrics.layers_cfg.enable_mac;
-  du_hi_cfg.metrics.enable_rlc      = du_high_unit_cfg.metrics.layers_cfg.enable_rlc;
-  du_hi_cfg.metrics.enable_sched    = du_high_unit_cfg.metrics.layers_cfg.enable_scheduler;
-  du_hi_cfg.metrics.enable_sched_ue = du_high_unit_cfg.metrics.layers_cfg.enable_scheduler_ue;
-  du_hi_cfg.metrics.enable_du_proc  = du_high_unit_cfg.metrics.layers_cfg.enable_du_proc;
-  du_hi_cfg.metrics.period          = std::chrono::milliseconds{du_high_unit_cfg.metrics.du_report_period};
+  std::optional<ocudu_ntn::ntn_configuration_manager_config> ntn;
 
-  du_hi_cfg.f1ap.retry_tnl_connection = du_high_unit_cfg.retry_f1c_connection;
-
-  // Validates the derived parameters.
-  du_hi_cfg.ran.srbs                  = generate_du_srb_config(du_high_unit_cfg);
-  du_hi_cfg.ran.qos                   = generate_du_qos_config(du_high_unit_cfg);
-  du_hi_cfg.ran.mac_cfg               = generate_mac_expert_config(du_high_unit_cfg);
-  du_hi_cfg.ran.mac_cfg.initial_crnti = to_rnti(0x4601);
-  du_hi_cfg.ran.sched_cfg             = generate_scheduler_expert_config(du_high_unit_cfg);
-
-  du_hi_cfg.rlc.drb_rx_window_seg_size      = du_high_unit_cfg.rlc_cfg.drb_rx_window_seg_size;
-  du_hi_cfg.rlc.drb_rx_window_seg_pool_size = du_high_unit_cfg.rlc_cfg.drb_rx_window_seg_pool_size;
-  du_hi_cfg.rlc.drb_tx_window_seg_size      = du_high_unit_cfg.rlc_cfg.drb_tx_window_seg_size;
-  du_hi_cfg.rlc.drb_tx_window_seg_pool_size = du_high_unit_cfg.rlc_cfg.drb_tx_window_seg_pool_size;
-  du_hi_cfg.rlc.srb_rx_window_seg_size      = du_high_unit_cfg.rlc_cfg.srb_rx_window_seg_size;
-  du_hi_cfg.rlc.srb_rx_window_seg_pool_size = du_high_unit_cfg.rlc_cfg.srb_rx_window_seg_pool_size;
-  du_hi_cfg.rlc.srb_tx_window_seg_size      = du_high_unit_cfg.rlc_cfg.srb_tx_window_seg_size;
-  du_hi_cfg.rlc.srb_tx_window_seg_pool_size = du_high_unit_cfg.rlc_cfg.srb_tx_window_seg_pool_size;
-  du_hi_cfg.rlc.pdu_recycler_size           = du_high_unit_cfg.rlc_cfg.pdu_recycler_size;
-
-  // Configure test mode
-  du_hi_cfg.test_cfg = generate_test_mode_config(du_high_unit_cfg);
-
-  // Populate the NTN configuration manager config only when at least one cell configures NTN, so that the optional
-  // reflects whether NTN is actually configured.
+  // Populate the NTN configuration manager config only when at least one cell configures NTN, so that the
+  // optional reflects whether NTN is actually configured.
   if (auto ntn_cfg = generate_ntn_configuration_manager_config(
           du_high_unit_cfg.gnb_id, du_high_unit_cfg.cells_cfg, du_high_unit_cfg.ntn_satellites);
       not ntn_cfg.cells.empty()) {
-    du_hi_cfg.ntn = std::move(ntn_cfg);
+    ntn = std::move(ntn_cfg);
   }
+
+  return ntn;
+}
+
+odu::du_high_configuration ocudu::generate_du_high_config(const du_high_unit_config& du_high_unit_cfg)
+{
+  return odu::du_high_configuration{
+      .rlc =
+          odu::du_high_configuration::rlc_config{
+              .drb_rx_window_seg_size      = du_high_unit_cfg.rlc_cfg.drb_rx_window_seg_size,
+              .drb_rx_window_seg_pool_size = du_high_unit_cfg.rlc_cfg.drb_rx_window_seg_pool_size,
+              .drb_tx_window_seg_size      = du_high_unit_cfg.rlc_cfg.drb_tx_window_seg_size,
+              .drb_tx_window_seg_pool_size = du_high_unit_cfg.rlc_cfg.drb_tx_window_seg_pool_size,
+              .srb_rx_window_seg_size      = du_high_unit_cfg.rlc_cfg.srb_rx_window_seg_size,
+              .srb_rx_window_seg_pool_size = du_high_unit_cfg.rlc_cfg.srb_rx_window_seg_pool_size,
+              .srb_tx_window_seg_size      = du_high_unit_cfg.rlc_cfg.srb_tx_window_seg_size,
+              .srb_tx_window_seg_pool_size = du_high_unit_cfg.rlc_cfg.srb_tx_window_seg_pool_size,
+              .pdu_recycler_size           = du_high_unit_cfg.rlc_cfg.pdu_recycler_size},
+      .ran = odu::du_high_ran_config{.gnb_du_name = fmt::format("odu{}", fmt::underlying(du_high_unit_cfg.gnb_du_id)),
+                                     .gnb_du_id   = du_high_unit_cfg.gnb_du_id,
+                                     .cells       = generate_du_cell_config(du_high_unit_cfg),
+                                     .srbs        = generate_du_srb_config(du_high_unit_cfg),
+                                     .qos         = generate_du_qos_config(du_high_unit_cfg),
+                                     .mac_cfg     = generate_mac_expert_config(du_high_unit_cfg),
+                                     .sched_cfg   = generate_scheduler_expert_config(du_high_unit_cfg)},
+      .f1ap =
+          odu::du_high_configuration::f1ap_config{
+              .retry_tnl_connection      = du_high_unit_cfg.retry_f1c_connection,
+              .f1_setup_response_timeout = odu::du_high_configuration::f1ap_config::default_f1_setup_response_timeout},
+      .metrics =
+          odu::du_high_configuration::metrics_config{
+              .enable_sched            = du_high_unit_cfg.metrics.layers_cfg.enable_scheduler,
+              .enable_sched_ue         = du_high_unit_cfg.metrics.layers_cfg.enable_scheduler_ue,
+              .enable_mac              = du_high_unit_cfg.metrics.layers_cfg.enable_mac,
+              .enable_rlc              = du_high_unit_cfg.metrics.layers_cfg.enable_rlc,
+              .enable_f1ap             = true,
+              .enable_du_proc          = du_high_unit_cfg.metrics.layers_cfg.enable_du_proc,
+              .period                  = std::chrono::milliseconds{du_high_unit_cfg.metrics.du_report_period},
+              .max_nof_sched_ue_events = odu::du_high_configuration::metrics_config::default_max_nof_sched_ue_events},
+      .test_cfg = generate_test_mode_config(du_high_unit_cfg),
+      .ntn      = generate_ntn_configuration(du_high_unit_cfg)};
 }
 
 void ocudu::fill_du_high_worker_manager_config(worker_manager_config&     config,

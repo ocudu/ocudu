@@ -38,21 +38,24 @@ o_du_unit ocudu::create_fapi_dummy_o_du(const o_du_high_unit_config&  odu_high_c
        .clock_mode                 = fapi_dummy_cfg.clock_mode,
        .ul_indication_delay_slots  = fapi_dummy_cfg.ul_indication_delay_slots,
        .max_processing_delay_slots = fapi_dummy_cfg.max_processing_delay_slots},
-      {.logger           = *dependencies.fapi_logger,
-       .clock_executor   = dependencies.workers->get_fapi_dummy_clock_executor(),
-       .sector_executors = dependencies.workers->get_fapi_dummy_sector_executors()});
+      {.logger           = dependencies.fapi_logger,
+       .clock_executor   = dependencies.workers.get_fapi_dummy_clock_executor(),
+       .sector_executors = dependencies.workers.get_fapi_dummy_sector_executors()});
 
-  o_du_high_unit_dependencies odu_hi_unit_dependencies = {dependencies.workers->get_du_high_executor_mapper(),
-                                                          *dependencies.f1c_client_handler,
-                                                          *dependencies.f1u_teid_allocator,
-                                                          *dependencies.f1u_gw,
-                                                          *dependencies.timer_ctrl,
-                                                          *dependencies.mac_p,
-                                                          *dependencies.rlc_p,
-                                                          *dependencies.e2_client_handler,
-                                                          *(odu_unit.e2_metric_connectors),
-                                                          dependencies.remote_metrics_gateway,
-                                                          {}};
+  o_du_high_unit_dependencies odu_hi_unit_dependencies = {.execution_mapper =
+                                                              dependencies.workers.get_du_high_executor_mapper(),
+                                                          .f1c_client_handler     = dependencies.f1c_client_handler,
+                                                          .f1u_teid_allocator     = dependencies.f1u_teid_allocator,
+                                                          .f1u_gw                 = dependencies.f1u_gw,
+                                                          .timer_ctrl             = dependencies.timer_ctrl,
+                                                          .mac_p                  = dependencies.mac_p,
+                                                          .rlc_p                  = dependencies.rlc_p,
+                                                          .e2_client_handler      = dependencies.e2_client_handler,
+                                                          .e2_metric_connectors   = *(odu_unit.e2_metric_connectors),
+                                                          .du_logger              = dependencies.du_logger,
+                                                          .remote_metrics_gateway = dependencies.remote_metrics_gateway,
+                                                          .sectors                = {},
+                                                          .ntn_doppler_handler    = nullptr};
 
   for (unsigned i = 0; i != nof_cells; ++i) {
     auto&                              p5_sector_adaptor   = fapi_dummy->get_sector_adaptor(i).get_p5_sector_adaptor();
@@ -61,15 +64,15 @@ o_du_unit ocudu::create_fapi_dummy_o_du(const o_du_high_unit_config&  odu_high_c
         .p5_gateway           = p5_sector_adaptor.get_p5_requests_gateway(),
         .p7_gateway           = p7_sector_adaptor.get_p7_requests_gateway(),
         .p7_last_req_notifier = p7_sector_adaptor.get_p7_last_request_notifier(),
-        .timer_mng            = dependencies.timer_ctrl->get_timer_manager(),
-        .fapi_ctrl_executor   = dependencies.workers->get_cmd_line_executor(),
-        .mac_ctrl_executor    = dependencies.workers->get_du_high_executor_mapper().du_control_executor(),
-        .fapi_logger          = *dependencies.fapi_logger,
+        .timer_mng            = dependencies.timer_ctrl.get_timer_manager(),
+        .fapi_ctrl_executor   = dependencies.workers.get_cmd_line_executor(),
+        .mac_ctrl_executor    = dependencies.workers.get_du_high_executor_mapper().du_control_executor(),
+        .fapi_logger          = dependencies.fapi_logger,
     };
-    odu_hi_unit_dependencies.o_du_hi_dependencies.sectors.push_back(sector_dependencies);
+    odu_hi_unit_dependencies.sectors.push_back(sector_dependencies);
   }
 
-  o_du_high_unit odu_hi_unit = make_o_du_high_unit(odu_high_cfg, std::move(odu_hi_unit_dependencies));
+  o_du_high_unit odu_hi_unit = make_o_du_high_unit(odu_high_cfg, odu_hi_unit_dependencies);
 
   odu_unit.commands = std::move(odu_hi_unit.commands);
   odu_unit.metrics  = std::move(odu_hi_unit.metrics);

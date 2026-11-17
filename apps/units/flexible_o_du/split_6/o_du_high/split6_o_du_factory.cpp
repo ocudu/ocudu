@@ -22,24 +22,25 @@ o_du_unit ocudu::create_o_du_split6(const split6_o_du_unit_config&              
                                     const o_du_unit_dependencies&                   du_dependencies,
                                     std::unique_ptr<fapi_adaptor::phy_fapi_adaptor> fapi_adaptor)
 {
-  ocudu_assert(du_dependencies.workers != nullptr, "Invalid workers");
-
   o_du_unit odu_unit;
   odu_unit.e2_metric_connectors = std::make_unique<
       e2_metric_connector_manager<e2_du_metrics_connector, e2_du_metrics_notifier, e2_du_metrics_interface>>(
       du_unit_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.size());
 
-  o_du_high_unit_dependencies odu_hi_unit_dependencies = {du_dependencies.workers->get_du_high_executor_mapper(),
-                                                          *du_dependencies.f1c_client_handler,
-                                                          *du_dependencies.f1u_teid_allocator,
-                                                          *du_dependencies.f1u_gw,
-                                                          *du_dependencies.timer_ctrl,
-                                                          *du_dependencies.mac_p,
-                                                          *du_dependencies.rlc_p,
-                                                          *du_dependencies.e2_client_handler,
-                                                          *(odu_unit.e2_metric_connectors),
-                                                          du_dependencies.remote_metrics_gateway,
-                                                          {}};
+  o_du_high_unit_dependencies odu_hi_unit_dependencies = {
+      .execution_mapper       = du_dependencies.workers.get_du_high_executor_mapper(),
+      .f1c_client_handler     = du_dependencies.f1c_client_handler,
+      .f1u_teid_allocator     = du_dependencies.f1u_teid_allocator,
+      .f1u_gw                 = du_dependencies.f1u_gw,
+      .timer_ctrl             = du_dependencies.timer_ctrl,
+      .mac_p                  = du_dependencies.mac_p,
+      .rlc_p                  = du_dependencies.rlc_p,
+      .e2_client_handler      = du_dependencies.e2_client_handler,
+      .e2_metric_connectors   = *(odu_unit.e2_metric_connectors),
+      .du_logger              = du_dependencies.du_logger,
+      .remote_metrics_gateway = du_dependencies.remote_metrics_gateway,
+      .sectors                = {},
+      .ntn_doppler_handler    = nullptr};
 
   // Adjust the dependencies.
   const auto& du_hi_unit_cfg = du_unit_cfg.odu_high_cfg.du_high_cfg.config;
@@ -50,17 +51,17 @@ o_du_unit ocudu::create_o_du_split6(const split6_o_du_unit_config&              
         .p5_gateway           = p5_sector_adaptor.get_p5_requests_gateway(),
         .p7_gateway           = p7_sector_adaptor.get_p7_requests_gateway(),
         .p7_last_req_notifier = p7_sector_adaptor.get_p7_last_request_notifier(),
-        .timer_mng            = du_dependencies.timer_ctrl->get_timer_manager(),
-        .fapi_ctrl_executor   = du_dependencies.workers->get_cmd_line_executor(),
+        .timer_mng            = du_dependencies.timer_ctrl.get_timer_manager(),
+        .fapi_ctrl_executor   = du_dependencies.workers.get_cmd_line_executor(),
         // :TODO: create executor mapper for split 6 and pass correct executor here
-        .mac_ctrl_executor = du_dependencies.workers->get_du_high_executor_mapper().du_control_executor(),
-        .fapi_logger       = *du_dependencies.fapi_logger,
+        .mac_ctrl_executor = du_dependencies.workers.get_du_high_executor_mapper().du_control_executor(),
+        .fapi_logger       = du_dependencies.fapi_logger,
     };
 
-    odu_hi_unit_dependencies.o_du_hi_dependencies.sectors.push_back(sector_dependencies);
+    odu_hi_unit_dependencies.sectors.push_back(sector_dependencies);
   }
 
-  o_du_high_unit odu_hi_unit = make_o_du_high_unit(du_unit_cfg.odu_high_cfg, std::move(odu_hi_unit_dependencies));
+  o_du_high_unit odu_hi_unit = make_o_du_high_unit(du_unit_cfg.odu_high_cfg, odu_hi_unit_dependencies);
 
   odu_unit.commands = std::move(odu_hi_unit.commands);
   odu_unit.metrics  = std::move(odu_hi_unit.metrics);

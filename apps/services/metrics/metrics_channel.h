@@ -101,6 +101,19 @@ public:
     producers.push_back(std::move(producer));
   }
 
+  /// \brief Creates a producer of type \c ProducerType in place and registers it in this channel.
+  ///
+  /// \return A reference to the created producer, which remains valid for as long as the channel exists.
+  template <typename ProducerType, typename... Args>
+  ProducerType& emplace_producer(Args&&... args)
+  {
+    static_assert(std::is_base_of_v<metrics_producer, ProducerType>, "ProducerType must be a metrics producer");
+    auto  producer = std::make_unique<ProducerType>(std::forward<Args>(args)...);
+    auto& ref      = *producer;
+    add_producer(std::move(producer));
+    return ref;
+  }
+
   // See interface for documentation.
   void on_new_metric(MetricType metric) override
   {

@@ -544,17 +544,17 @@ int main(int argc, char** argv)
     metrics_configs.push_back(std::move(metric));
   }
   // Create O-DU dependencies.
-  o_du_unit_dependencies odu_dependencies;
-  odu_dependencies.workers                = &workers;
-  odu_dependencies.f1c_client_handler     = f1c_gw.get();
-  odu_dependencies.f1u_teid_allocator     = du_f1u_teid_allocator.get();
-  odu_dependencies.f1u_gw                 = f1u_conn->get_f1u_du_gateway();
-  odu_dependencies.timer_ctrl             = time_ctrl.get();
-  odu_dependencies.mac_p                  = du_pcaps.mac.get();
-  odu_dependencies.rlc_p                  = du_pcaps.rlc.get();
-  odu_dependencies.e2_client_handler      = e2_gw_du.get();
-  odu_dependencies.remote_metrics_gateway = remote_server_gateway;
-  odu_dependencies.fapi_logger            = &ocudulog::fetch_basic_logger("FAPI");
+  o_du_unit_dependencies odu_dependencies{.workers                = workers,
+                                          .f1c_client_handler     = *f1c_gw,
+                                          .f1u_teid_allocator     = *du_f1u_teid_allocator,
+                                          .f1u_gw                 = *f1u_conn->get_f1u_du_gateway(),
+                                          .timer_ctrl             = *time_ctrl,
+                                          .mac_p                  = *du_pcaps.mac,
+                                          .rlc_p                  = *du_pcaps.rlc,
+                                          .e2_client_handler      = *e2_gw_du,
+                                          .fapi_logger            = ocudulog::fetch_basic_logger("FAPI"),
+                                          .du_logger              = ocudulog::fetch_basic_logger("DU", false),
+                                          .remote_metrics_gateway = remote_server_gateway};
 
   // Create O-DU.
   auto     o_du_unit = o_du_app_unit->create_flexible_o_du_unit(odu_dependencies);

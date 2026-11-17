@@ -181,8 +181,8 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
   o_du_low_unit_dependencies odu_low_dependencies = {.rg_gateway = du_impl->get_upper_ru_dl_rg_adapter(),
                                                      .rx_symbol_request_notifier =
                                                          du_impl->get_upper_ru_ul_request_adapter(),
-                                                     .workers = dependencies.workers->get_du_low_executor_mapper(),
-                                                     .fapi_p5_executor = dependencies.workers->get_cmd_line_executor()};
+                                                     .workers = dependencies.workers.get_du_low_executor_mapper(),
+                                                     .fapi_p5_executor = dependencies.workers.get_cmd_line_executor()};
   o_du_low_unit_factory      odu_low_factory(du_lo.hal_config);
   auto                       odu_lo_unit = odu_low_factory.create(odu_low_cfg, odu_low_dependencies);
 
@@ -190,21 +190,24 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
     o_du.metrics.emplace_back(std::move(e));
   });
 
-  o_du_high_unit_dependencies odu_hi_unit_dependencies = {dependencies.workers->get_du_high_executor_mapper(),
-                                                          *dependencies.f1c_client_handler,
-                                                          *dependencies.f1u_teid_allocator,
-                                                          *dependencies.f1u_gw,
-                                                          *dependencies.timer_ctrl,
-                                                          *dependencies.mac_p,
-                                                          *dependencies.rlc_p,
-                                                          *dependencies.e2_client_handler,
-                                                          *(o_du.e2_metric_connectors),
-                                                          dependencies.remote_metrics_gateway,
-                                                          {}};
+  o_du_high_unit_dependencies odu_hi_unit_dependencies = {.execution_mapper =
+                                                              dependencies.workers.get_du_high_executor_mapper(),
+                                                          .f1c_client_handler     = dependencies.f1c_client_handler,
+                                                          .f1u_teid_allocator     = dependencies.f1u_teid_allocator,
+                                                          .f1u_gw                 = dependencies.f1u_gw,
+                                                          .timer_ctrl             = dependencies.timer_ctrl,
+                                                          .mac_p                  = dependencies.mac_p,
+                                                          .rlc_p                  = dependencies.rlc_p,
+                                                          .e2_client_handler      = dependencies.e2_client_handler,
+                                                          .e2_metric_connectors   = *(o_du.e2_metric_connectors),
+                                                          .du_logger              = dependencies.du_logger,
+                                                          .remote_metrics_gateway = dependencies.remote_metrics_gateway,
+                                                          .sectors                = {},
+                                                          .ntn_doppler_handler    = nullptr};
 
   // Bridge the NTN configuration manager of the DU-high to the RU, which is created further below. The adapter is
   // owned by the flexible O-DU, so it outlives both.
-  odu_hi_unit_dependencies.o_du_hi_dependencies.du_hi.ntn_doppler_handler = &du_impl->get_ru_doppler_adapter();
+  odu_hi_unit_dependencies.ntn_doppler_handler = &du_impl->get_ru_doppler_adapter();
 
   // Adjust the dependencies.
   for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
@@ -221,16 +224,16 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
                                     .get_sector_adaptor(i)
                                     .get_p7_sector_adaptor()
                                     .get_p7_last_request_notifier(),
-        .timer_mng          = dependencies.timer_ctrl->get_timer_manager(),
-        .fapi_ctrl_executor = dependencies.workers->get_cmd_line_executor(),
-        .mac_ctrl_executor  = dependencies.workers->get_du_high_executor_mapper().du_control_executor(),
-        .fapi_logger        = *dependencies.fapi_logger,
+        .timer_mng          = dependencies.timer_ctrl.get_timer_manager(),
+        .fapi_ctrl_executor = dependencies.workers.get_cmd_line_executor(),
+        .mac_ctrl_executor  = dependencies.workers.get_du_high_executor_mapper().du_control_executor(),
+        .fapi_logger        = dependencies.fapi_logger,
     };
 
-    odu_hi_unit_dependencies.o_du_hi_dependencies.sectors.push_back(sector_dependencies);
+    odu_hi_unit_dependencies.sectors.push_back(sector_dependencies);
   }
 
-  o_du_high_unit odu_hi_unit = make_o_du_high_unit(config.odu_high_cfg, std::move(odu_hi_unit_dependencies));
+  o_du_high_unit odu_hi_unit = make_o_du_high_unit(config.odu_high_cfg, odu_hi_unit_dependencies);
 
   // Connect the adaptors.
   for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
@@ -272,7 +275,7 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
                                                               du_lo.expert_phy_cfg.max_processing_delay_slots,
                                                               du_hi.cells_cfg.front().cell.prach_cfg.ports.size(),
                                                               du_lo.expert_phy_cfg.dft_processor_type);
-  flexible_o_du_ru_dependencies ru_dependencies{*dependencies.workers,
+  flexible_o_du_ru_dependencies ru_dependencies{dependencies.workers,
                                                 du_impl->get_upper_ru_ul_adapter(),
                                                 du_impl->get_upper_ru_timing_adapter(),
                                                 du_impl->get_upper_ru_error_adapter()};

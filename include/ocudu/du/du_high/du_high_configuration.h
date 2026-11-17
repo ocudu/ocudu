@@ -67,15 +67,21 @@ struct du_high_configuration {
   };
 
   struct f1ap_config {
+    /// Default value for the F1 setup response timeout.
+    static constexpr std::chrono::milliseconds default_f1_setup_response_timeout{3000};
+
     /// Whether a failed F1-C TNL connection is retried indefinitely on startup, so that the DU does not require the
     /// CU-CP to be reachable when it is started. When disabled, the DU makes a single attempt and closes the
     /// application if it fails. The reconnection that follows a lost F1-C connection is retried either way.
     bool retry_tnl_connection = false;
     /// Time to wait for the CU-CP response to an F1 Setup Request.
-    std::chrono::milliseconds f1_setup_response_timeout{3000};
+    std::chrono::milliseconds f1_setup_response_timeout{default_f1_setup_response_timeout};
   };
 
   struct metrics_config {
+    /// Default value for the maximum number of scheduled UE events.
+    static constexpr unsigned default_max_nof_sched_ue_events = 64;
+
     bool                      enable_sched    = false;
     bool                      enable_sched_ue = true;
     bool                      enable_mac      = false;
@@ -83,7 +89,7 @@ struct du_high_configuration {
     bool                      enable_f1ap     = false;
     bool                      enable_du_proc  = false;
     std::chrono::milliseconds period{1000};
-    unsigned                  max_nof_sched_ue_events = 64;
+    unsigned                  max_nof_sched_ue_events = default_max_nof_sched_ue_events;
   };
 
   rlc_config          rlc;

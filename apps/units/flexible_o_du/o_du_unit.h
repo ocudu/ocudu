@@ -46,16 +46,17 @@ struct o_du_unit {
 
 /// O-RAN DU unit dependencies.
 struct o_du_unit_dependencies {
-  worker_manager*                              workers                = nullptr;
-  odu::f1c_connection_client*                  f1c_client_handler     = nullptr;
-  gtpu_teid_pool*                              f1u_teid_allocator     = nullptr;
-  odu::f1u_du_gateway*                         f1u_gw                 = nullptr;
-  mac_clock_controller*                        timer_ctrl             = nullptr;
-  mac_pcap*                                    mac_p                  = nullptr;
-  rlc_pcap*                                    rlc_p                  = nullptr;
-  e2_connection_client*                        e2_client_handler      = nullptr;
+  worker_manager&                              workers;
+  odu::f1c_connection_client&                  f1c_client_handler;
+  gtpu_teid_pool&                              f1u_teid_allocator;
+  odu::f1u_du_gateway&                         f1u_gw;
+  mac_clock_controller&                        timer_ctrl;
+  mac_pcap&                                    mac_p;
+  rlc_pcap&                                    rlc_p;
+  e2_connection_client&                        e2_client_handler;
+  ocudulog::basic_logger&                      fapi_logger;
+  ocudulog::basic_logger&                      du_logger;
   app_services::remote_server_metrics_gateway* remote_metrics_gateway = nullptr;
-  ocudulog::basic_logger*                      fapi_logger            = nullptr;
 };
 
 } // namespace ocudu

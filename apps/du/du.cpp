@@ -396,19 +396,19 @@ int main(int argc, char** argv)
   buffer_pool_service.add_metrics_to_metrics_service(
       app_metrics, du_cfg.buffer_pool_config.metrics_config, remote_server_gateway);
 
-  o_du_unit_dependencies du_dependencies;
-  du_dependencies.workers                = &workers;
-  du_dependencies.f1c_client_handler     = f1c_gw.get();
-  du_dependencies.f1u_teid_allocator     = du_f1u_teid_allocator.get();
-  du_dependencies.f1u_gw                 = du_f1u_conn.get();
-  du_dependencies.timer_ctrl             = time_ctrl.get();
-  du_dependencies.mac_p                  = du_pcaps.mac.get();
-  du_dependencies.rlc_p                  = du_pcaps.rlc.get();
-  du_dependencies.e2_client_handler      = e2_gw.get();
-  du_dependencies.remote_metrics_gateway = remote_server_gateway;
-  du_dependencies.fapi_logger            = &ocudulog::fetch_basic_logger("FAPI");
+  o_du_unit_dependencies odu_dependencies{.workers                = workers,
+                                          .f1c_client_handler     = *f1c_gw,
+                                          .f1u_teid_allocator     = *du_f1u_teid_allocator,
+                                          .f1u_gw                 = *du_f1u_conn,
+                                          .timer_ctrl             = *time_ctrl,
+                                          .mac_p                  = *du_pcaps.mac,
+                                          .rlc_p                  = *du_pcaps.rlc,
+                                          .e2_client_handler      = *e2_gw,
+                                          .fapi_logger            = ocudulog::fetch_basic_logger("FAPI"),
+                                          .du_logger              = du_logger,
+                                          .remote_metrics_gateway = remote_server_gateway};
 
-  auto du_inst_and_cmds = o_du_app_unit->create_flexible_o_du_unit(du_dependencies);
+  auto du_inst_and_cmds = o_du_app_unit->create_flexible_o_du_unit(odu_dependencies);
 
   // Move app-units metrics to the application metrics.
   std::move(du_inst_and_cmds.metrics.begin(), du_inst_and_cmds.metrics.end(), std::back_inserter(app_metrics));

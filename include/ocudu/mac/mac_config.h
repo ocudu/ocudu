@@ -19,8 +19,11 @@ class mac_clock_controller;
 
 /// \brief Implementation-specific parameters used to tune MAC operation.
 struct mac_expert_config {
+  /// Default value for the initial C-RNTI.
+  static constexpr rnti_t default_initial_crnti = to_rnti(0x4601);
+
   /// Initial C-RNTI to assign to created UEs.
-  rnti_t initial_crnti = to_rnti(0x4601);
+  rnti_t initial_crnti = default_initial_crnti;
   /// \brief Implementation-specific parameters used to tune MAC operation per cell.
   struct mac_expert_cell_config {
     /// \brief Maximum number of consecutive DL KOs before an RLF is reported.
