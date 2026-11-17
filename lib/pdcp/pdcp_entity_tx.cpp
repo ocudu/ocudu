@@ -1421,6 +1421,11 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_count)
     st.tx_next_ack++;
   }
 
+  // Skip COUNTs that were never inserted into the tx_window.
+  while (st.tx_next_ack < st.tx_next && !tx_window.has_sn(st.tx_next_ack)) {
+    st.tx_next_ack++;
+  }
+
   // Update TX_TRANS if it falls out of the tx_window
   st.tx_trans = std::max(st.tx_trans, st.tx_next_ack);
 
