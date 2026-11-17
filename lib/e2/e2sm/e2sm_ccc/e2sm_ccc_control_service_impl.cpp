@@ -59,8 +59,8 @@ bool e2sm_ccc_control_service_style_2::control_request_supported(const e2sm_ric_
   }
 
   const auto& cell_ctrl_list = ctrl_msg->ctrl_msg_format.ctrl_msg_format2().list_of_cells_ctrl;
-  // The schema allows an empty list, and execute_control_request reads the first cell and its first structure, so a
-  // request that carries none of either is not one this service can act on.
+  // The decoder refuses empty lists (O-RAN E2SM-CCC clause 9.2.1.7.2), but execute_control_request reads the first
+  // cell and its first structure, so a request that reaches here without either is rejected.
   if (cell_ctrl_list.size() == 0 or cell_ctrl_list[0].list_of_cfg_structures.size() == 0) {
     return false;
   }

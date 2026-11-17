@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/e2/e2sm/e2sm_ccc/e2sm_ccc_control_action_du_executor.h"
+#include "lib/e2/e2sm/e2sm_ccc/e2sm_ccc_control_service_impl.h"
 #include "ocudu/support/async/async_test_utils.h"
 #include "ocudu/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
@@ -96,11 +97,29 @@ e2sm_ric_control_request make_request(unsigned nof_structures)
   return req;
 }
 
+/// The list of cells that the request carries.
+auto& cells_of(e2sm_ric_control_request& req)
+{
+  auto& msg = std::get<ric_ctrl_msg_s>(req.request_ctrl_msg);
+  return msg.ctrl_msg_format.ctrl_msg_format2().list_of_cells_ctrl;
+}
+
 /// The structure of the given index of the one cell the request carries.
 cfg_structure_write_s& structure_of(e2sm_ric_control_request& req, unsigned index)
 {
-  auto& msg = std::get<ric_ctrl_msg_s>(req.request_ctrl_msg);
-  return msg.ctrl_msg_format.ctrl_msg_format2().list_of_cells_ctrl[0].list_of_cfg_structures[index];
+  return cells_of(req)[0].list_of_cfg_structures[index];
+}
+
+/// Builds a control request of two cells, where the cell of the given index holds no structure and the other holds
+/// one O-RRMPolicyRatio.
+e2sm_ric_control_request make_two_cell_request_with_an_empty_cell(unsigned empty_cell_index)
+{
+  e2sm_ric_control_request req   = make_request(1);
+  auto&                    cells = cells_of(req);
+  cells.resize(2);
+  cells[1] = cells[0];
+  cells[empty_cell_index].list_of_cfg_structures.resize(0);
+  return req;
 }
 
 class e2sm_ccc_control_executor_test : public ::testing::Test
@@ -109,6 +128,31 @@ protected:
   recording_du_configurator                    du_configurator;
   manual_task_worker                           worker{16};
   e2sm_ccc_control_o_rrm_policy_ratio_executor executor{du_configurator, worker};
+};
+
+class e2sm_ccc_control_service_style_2_test : public ::testing::Test
+{
+protected:
+  e2sm_ccc_control_service_style_2_test()
+  {
+    service.add_e2sm_rc_control_action_executor(
+        std::make_unique<e2sm_ccc_control_o_rrm_policy_ratio_executor>(du_configurator, worker));
+  }
+
+  /// Runs the request through the service and checks that it fails without reaching the DU.
+  void assert_request_fails_without_configuring_the_du(const e2sm_ric_control_request& req)
+  {
+    ASSERT_FALSE(service.control_request_supported(req));
+    auto                                          task = service.execute_control_request(req);
+    lazy_task_launcher<e2sm_ric_control_response> launcher(task);
+    ASSERT_TRUE(task.ready());
+    ASSERT_FALSE(task.get().success);
+    ASSERT_TRUE(du_configurator.applied.empty());
+  }
+
+  recording_du_configurator        du_configurator;
+  manual_task_worker               worker{16};
+  e2sm_ccc_control_service_style_2 service;
 };
 
 } // namespace
@@ -143,6 +187,61 @@ TEST_F(e2sm_ccc_control_executor_test, a_structure_of_another_name_leaves_this_e
   structure_of(req, 0).ran_cfg_structure_name.from_string("O-NrCellDu");
 
   ASSERT_FALSE(executor.ric_control_action_supported(req));
+}
+
+// The decoder refuses empty lists, so these checks guard a request that reaches the executor without it.
+TEST_F(e2sm_ccc_control_executor_test, a_request_without_cells_is_rejected)
+{
+  e2sm_ric_control_request req = make_request(1);
+  cells_of(req).resize(0);
+
+  ASSERT_FALSE(executor.ric_control_action_supported(req));
+}
+
+TEST_F(e2sm_ccc_control_executor_test, a_first_cell_without_structures_is_rejected)
+{
+  ASSERT_FALSE(executor.ric_control_action_supported(make_two_cell_request_with_an_empty_cell(0)));
+}
+
+TEST_F(e2sm_ccc_control_executor_test, a_second_cell_without_structures_is_rejected)
+{
+  ASSERT_FALSE(executor.ric_control_action_supported(make_two_cell_request_with_an_empty_cell(1)));
+}
+
+TEST_F(e2sm_ccc_control_executor_test, a_first_structure_whose_values_hold_another_alternative_is_rejected)
+{
+  e2sm_ric_control_request req = make_request(1);
+  structure_of(req, 0).new_values_of_attributes.ran_cfg_structure.set_o_nr_cell_du();
+
+  ASSERT_FALSE(executor.ric_control_action_supported(req));
+}
+
+TEST_F(e2sm_ccc_control_service_style_2_test, a_request_of_one_sound_structure_is_supported)
+{
+  ASSERT_TRUE(service.control_request_supported(make_request(1)));
+}
+
+TEST_F(e2sm_ccc_control_service_style_2_test, a_request_without_cells_fails)
+{
+  e2sm_ric_control_request req = make_request(1);
+  cells_of(req).resize(0);
+
+  assert_request_fails_without_configuring_the_du(req);
+}
+
+TEST_F(e2sm_ccc_control_service_style_2_test, a_cell_without_structures_fails)
+{
+  assert_request_fails_without_configuring_the_du(make_request(0));
+}
+
+TEST_F(e2sm_ccc_control_service_style_2_test, a_first_cell_without_structures_fails)
+{
+  assert_request_fails_without_configuring_the_du(make_two_cell_request_with_an_empty_cell(0));
+}
+
+TEST_F(e2sm_ccc_control_service_style_2_test, a_second_cell_without_structures_fails)
+{
+  assert_request_fails_without_configuring_the_du(make_two_cell_request_with_an_empty_cell(1));
 }
 
 TEST_F(e2sm_ccc_control_executor_test, a_dedicated_ratio_of_zero_is_applied_rather_than_taken_as_absent)
