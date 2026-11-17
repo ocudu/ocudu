@@ -4,7 +4,6 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "../../../lib/phy/upper/uplink_processor_impl.h"
-#include "../../support/task_executor_test_doubles.h"
 #include "../support/prach_buffer_test_doubles.h"
 #include "../support/resource_grid_test_doubles.h"
 #include "channel_processors/prach_detector_test_doubles.h"
@@ -13,6 +12,7 @@
 #include "phy_tap_test_doubles.h"
 #include "rx_buffer_pool_test_doubles.h"
 #include "signal_processors/srs/srs_estimator_test_doubles.h"
+#include "task_executor_test_doubles.h"
 #include "upper_phy_rx_results_notifier_test_doubles.h"
 #include "ocudu/phy/upper/channel_coding/ldpc/ldpc.h"
 #include <gtest/gtest.h>

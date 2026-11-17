@@ -7,7 +7,7 @@
 set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(channel_precoder_test channel_precoder_test.cpp)
-target_include_directories(channel_precoder_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/unittests)
+target_include_directories(channel_precoder_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/test_doubles/utils)
 
 target_link_libraries(
         channel_precoder_test

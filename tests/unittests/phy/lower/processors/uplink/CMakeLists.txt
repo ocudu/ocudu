@@ -8,6 +8,6 @@ add_subdirectory(prach)
 add_subdirectory(puxch)
 
 add_executable(lower_phy_uplink_processor_test lower_phy_uplink_processor_test.cpp)
-target_include_directories(lower_phy_uplink_processor_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/unittests)
+target_include_directories(lower_phy_uplink_processor_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/test_doubles/utils)
 target_link_libraries(lower_phy_uplink_processor_test ocudu_lower_phy_uplink_processor ocudulog GTest::gtest GTest::gtest_main)
 add_test(lower_phy_uplink_processor_test lower_phy_uplink_processor_test)

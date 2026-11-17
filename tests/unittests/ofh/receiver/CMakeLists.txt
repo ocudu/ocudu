@@ -14,6 +14,7 @@ target_link_libraries(ofh_data_flow_uplane_uplink_prach_impl_test ocudu_ofh_rece
 gtest_discover_tests(ofh_data_flow_uplane_uplink_prach_impl_test)
 
 add_executable(ofh_message_receiver_test ofh_message_receiver_test.cpp)
+target_include_directories(ofh_message_receiver_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/test_doubles/utils)
 target_link_libraries(ofh_message_receiver_test ocudu_ofh ocudu_support GTest::gtest GTest::gtest_main)
 gtest_discover_tests(ofh_message_receiver_test)
 

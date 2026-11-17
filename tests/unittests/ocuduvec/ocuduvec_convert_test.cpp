@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-#include "support/compare_sequences.h"
+#include "compare_sequences.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/ocuduvec/conversion.h"
 #include <algorithm>

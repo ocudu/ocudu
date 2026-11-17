@@ -24,7 +24,7 @@ target_link_libraries(ocuduvec_binary_test ocuduvec ocudulog gtest gtest_main)
 add_test(ocuduvec_binary_test ocuduvec_binary_test)
 
 add_executable(ocuduvec_convert_test ocuduvec_convert_test.cpp)
-target_include_directories(ocuduvec_convert_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/unittests)
+target_include_directories(ocuduvec_convert_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/test_doubles/utils)
 target_link_libraries(ocuduvec_convert_test ocuduvec ocudulog gtest gtest_main)
 add_test(ocuduvec_convert_test ocuduvec_convert_test)
 
@@ -41,12 +41,12 @@ target_link_libraries(ocuduvec_modulus_square_test ocuduvec ocudulog gtest gtest
 add_test(ocuduvec_modulus_square_test ocuduvec_modulus_square_test)
 
 add_executable(ocuduvec_prod_test ocuduvec_prod_test.cpp)
-target_include_directories(ocuduvec_prod_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/unittests)
+target_include_directories(ocuduvec_prod_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/test_doubles/utils)
 target_link_libraries(ocuduvec_prod_test ocuduvec ocudulog gtest gtest_main)
 add_test(ocuduvec_prod_test ocuduvec_prod_test)
 
 add_executable(ocuduvec_sc_prod_test ocuduvec_sc_prod_test.cpp)
-target_include_directories(ocuduvec_sc_prod_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/unittests)
+target_include_directories(ocuduvec_sc_prod_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/test_doubles/utils)
 target_link_libraries(ocuduvec_sc_prod_test ocuduvec ocudulog gtest gtest_main)
 add_test(ocuduvec_sc_prod_test ocuduvec_sc_prod_test)
 

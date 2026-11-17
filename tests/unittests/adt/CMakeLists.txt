@@ -87,6 +87,7 @@ target_link_libraries(batched_dispatch_queue_test ocudulog ocudu_support GTest::
 add_test(batched_dispatch_queue_test batched_dispatch_queue_test)
 
 add_executable(byte_buffer_recycler_test byte_buffer_recycler_test.cpp)
+target_include_directories(byte_buffer_recycler_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/test_doubles/utils)
 target_link_libraries(byte_buffer_recycler_test ocudulog ocudu_support GTest::gtest ocudu_gtest_main)
 gtest_discover_tests(byte_buffer_recycler_test PROPERTIES LABELS "tsan")
 

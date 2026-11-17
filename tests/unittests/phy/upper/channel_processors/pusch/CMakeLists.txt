@@ -19,6 +19,6 @@ target_link_libraries(pusch_processor_validator_test
 add_test(pusch_processor_validator_test pusch_processor_validator_test)
 
 add_executable(pusch_processor_unittest pusch_processor_unittest.cpp)
-target_include_directories(pusch_processor_unittest PRIVATE ${CMAKE_SOURCE_DIR}/tests/unittests)
+target_include_directories(pusch_processor_unittest PRIVATE ${CMAKE_SOURCE_DIR}/tests/test_doubles/utils)
 target_link_libraries(pusch_processor_unittest ocudu_channel_processors ocudulog GTest::gtest GTest::gtest_main)
 add_test(pusch_processor_unittest pusch_processor_unittest)

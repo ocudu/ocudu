@@ -2,8 +2,8 @@
 // SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
+#include "compare_sequences.h"
 #include "sidekiq_helper_functions.h"
-#include "support/compare_sequences.h"
 #include "ocudu/adt/format.h"
 #include <gtest/gtest.h>
 #include <random>

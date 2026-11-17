@@ -7,7 +7,7 @@
 /// \brief Unit test for the log-likelihood ratio type.
 ///
 /// Tests all the operators and functions defined for the type.
-#include "support/compare_sequences.h"
+#include "compare_sequences.h"
 #include "ocudu/phy/upper/log_likelihood_ratio.h"
 #include <gtest/gtest.h>
 #include <random>

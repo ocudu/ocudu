@@ -5,7 +5,7 @@
 
 #include "../../generic_functions/dft_processor_test_doubles.h"
 #include "../../support/resource_grid_test_doubles.h"
-#include "support/compare_sequences.h"
+#include "compare_sequences.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/adt/to_array.h"
 #include "ocudu/ocuduvec/conversion.h"

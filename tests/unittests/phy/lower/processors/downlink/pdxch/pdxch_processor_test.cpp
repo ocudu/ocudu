@@ -5,9 +5,9 @@
 
 #include "../../../../support/resource_grid_test_doubles.h"
 #include "../../../modulation/ofdm_modulator_test_doubles.h"
+#include "compare_sequences.h"
 #include "pdxch_processor_notifier_test_doubles.h"
-#include "support/compare_sequences.h"
-#include "support/task_executor_test_doubles.h"
+#include "task_executor_test_doubles.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "ocudu/ocudulog/ocudulog.h"

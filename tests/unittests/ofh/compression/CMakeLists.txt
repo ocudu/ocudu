@@ -24,5 +24,5 @@ gtest_discover_tests(ofh_iq_compression_fs_offset_test)
 
 add_executable(ofh_iq_compression_test ofh_iq_compression_test.cpp)
 target_link_libraries(ofh_iq_compression_test ocudu_ofh_compression ocudulog GTest::gtest GTest::gtest_main)
-target_include_directories(ofh_iq_compression_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/unittests/support)
+target_include_directories(ofh_iq_compression_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/test_doubles/utils)
 gtest_discover_tests(ofh_iq_compression_test)

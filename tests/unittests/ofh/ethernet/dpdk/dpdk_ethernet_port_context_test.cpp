@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-#include "support/compare_sequences.h"
+#include "compare_sequences.h"
 #include "ocudu/hal/dpdk/dpdk_eal_factory.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ofh/ethernet/dpdk/dpdk_ethernet_port_context.h"

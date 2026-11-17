@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-#include "support/compare_sequences.h"
+#include "compare_sequences.h"
 #include "ocudu/adt/detail/concurrent_queue_params.h"
 #include "ocudu/phy/upper/log_likelihood_ratio.h"
 #include "ocudu/phy/upper/rx_buffer_decoder_callback.h"

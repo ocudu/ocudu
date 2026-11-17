@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "compare_sequences.h"
 #include "pdsch_codeword_interleaver.h"
-#include "support/compare_sequences.h"
 #include <gtest/gtest.h>
 #include <random>
 

@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "compare_sequences.h"
 #include "prach/prach_processor_notifier_test_doubles.h"
 #include "prach/prach_processor_test_doubles.h"
 #include "puxch/puxch_processor_notifier_test_doubles.h"
 #include "puxch/puxch_processor_test_doubles.h"
-#include "support/compare_sequences.h"
 #include "uplink_processor_notifier_test_doubles.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_pool.h"

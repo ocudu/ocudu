@@ -7,7 +7,7 @@
 set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(ofdm_modulator_unittest ofdm_modulator_unittest.cpp)
-target_include_directories(ofdm_modulator_unittest PRIVATE ${CMAKE_SOURCE_DIR}/tests/unittests)
+target_include_directories(ofdm_modulator_unittest PRIVATE ${CMAKE_SOURCE_DIR}/tests/test_doubles/utils)
 target_link_libraries(ofdm_modulator_unittest ocudulog ocudu_lower_phy_modulation GTest::gtest GTest::gtest_main)
 add_test(ofdm_modulator_unittest ofdm_modulator_unittest)
 

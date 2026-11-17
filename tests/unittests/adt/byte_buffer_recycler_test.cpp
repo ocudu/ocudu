@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-#include "../support/task_executor_test_doubles.h"
+#include "task_executor_test_doubles.h"
 #include "ocudu/adt/byte_buffer_recycler.h"
 #include "ocudu/adt/detail/byte_buffer_segment_pool.h"
 #include <gtest/gtest.h>

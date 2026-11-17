@@ -9,7 +9,7 @@ set_directory_properties(PROPERTIES LABELS "phy")
 add_subdirectory(precoding)
 
 add_executable(dft_processor_test dft_processor_test.cpp)
-target_include_directories(dft_processor_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/unittests)
+target_include_directories(dft_processor_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/test_doubles/utils)
 target_link_libraries(dft_processor_test ocudulog ocudu_dft GTest::gtest GTest::gtest_main)
 add_test(dft_processor_test dft_processor_test)
 

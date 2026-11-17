@@ -29,6 +29,7 @@ target_link_libraries(downlink_processor_pool_test ocudu_ran ocudu_upper_phy ocu
 add_test(downlink_processor_pool_test downlink_processor_pool_test)
 
 add_executable(downlink_processor_test downlink_processor_test.cpp)
+target_include_directories(downlink_processor_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/test_doubles/utils)
 target_link_libraries(downlink_processor_test ocudu_downlink_processor ocudulog GTest::gtest GTest::gtest_main)
 gtest_discover_tests(downlink_processor_test)
 
@@ -37,16 +38,17 @@ target_link_libraries(hard_decision_test log_likelihood_ratio ocudulog GTest::gt
 gtest_discover_tests(hard_decision_test)
 
 add_executable(log_likelihood_ratio_test log_likelihood_ratio_test.cpp)
-target_include_directories(log_likelihood_ratio_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/unittests)
+target_include_directories(log_likelihood_ratio_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/test_doubles/utils)
 target_link_libraries(log_likelihood_ratio_test log_likelihood_ratio ocudulog GTest::gtest GTest::gtest_main)
 gtest_discover_tests(log_likelihood_ratio_test)
 
 add_executable(rx_buffer_pool_test rx_buffer_pool_test.cpp)
-target_include_directories(rx_buffer_pool_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/unittests)
+target_include_directories(rx_buffer_pool_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/test_doubles/utils)
 target_link_libraries(rx_buffer_pool_test ocudu_upper_phy_support ocudulog GTest::gtest ocudu_support)
 gtest_discover_tests(rx_buffer_pool_test)
 
 add_executable(uplink_processor_test uplink_processor_test.cpp)
+target_include_directories(uplink_processor_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/test_doubles/utils)
 target_link_libraries(uplink_processor_test ocudu_uplink_processor ocudulog GTest::gtest GTest::gtest_main)
 gtest_discover_tests(uplink_processor_test)
 

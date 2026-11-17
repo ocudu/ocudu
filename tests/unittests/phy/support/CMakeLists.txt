@@ -24,7 +24,7 @@ target_link_libraries(interpolator_test ocudu_phy_support ocudulog GTest::gtest 
 add_test(interpolator_test interpolator_test)
 
 add_executable(resource_grid_mapper_test resource_grid_mapper_test.cpp)
-target_include_directories(resource_grid_mapper_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/unittests)
+target_include_directories(resource_grid_mapper_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/test_doubles/utils)
 target_link_libraries(resource_grid_mapper_test
         ocuduvec
         ocudu_phy_support
