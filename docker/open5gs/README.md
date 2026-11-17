@@ -18,7 +18,7 @@ In [open5gs.env](open5gs.env) the following parameters can be set:
 - MONGODB_IP (default: 127.0.0.1): This is the IP of the mongodb to use. 127.0.0.1 is the mongodb that runs inside this
   container.
 - SUBSCRIBER_DB (default:
-  "001010123456780,00112233445566778899aabbccddeeff,opc,63bfa50ee6523365ff14c1f45f88737d,8000,10.45.1.2"): This adds
+  "001010123456780,00112233445566778899aabbccddeeff,opc,63bfa50ee6523365ff14c1f45f88737d,8000,9,10.45.1.2"): This adds
   subscriber data for a single or multiple users to the Open5GS mongodb. It contains either:
   - Comma separated string with information to define a subscriber
   - `subscriber_db.csv`. This is a csv file that contains entries to add to open5gs mongodb. Each entry will represent a
@@ -71,6 +71,9 @@ time need different `IMSI` and `IP_ALLOC`. The change applies to the next regist
 `SUBSCRIBER_DB` lists are written again at every start of the container, so they go back to the slice of
 `SUBSCRIBER_DB`.
 
+The subscriber is always written with an OPc, never with an OP. A UE that is listed in `SUBSCRIBER_DB` with OP type `op`
+needs its OPc, derived from its OP and key, in `OPC`, or it fails to authenticate after the update.
+
 ## Open5GS Parameters
 
 Open5GS can be setup using [open5gs-5gc.yml](open5gs-5gc.yml).
@@ -118,3 +121,13 @@ for this, as it also removes `gnb-storage`. This resets the local mongodb only, 
 The volume starts empty, so the subscribers that only exist in the database of a container created before it was added
 are not kept the first time the container is recreated. Note their details from the WebUI before recreating it, then add
 them again with the WebUI or in `SUBSCRIBER_DB`.
+
+The image runs MongoDB 7.0, in preparation for MongoDB 8.0, which a future update of the Ubuntu image to a newer release
+requires (Ubuntu 24.04 and later only have MongoDB 8.0). MongoDB only opens the data of the previous major version, so a
+volume has to run MongoDB 7.0 before it can be opened by an image with MongoDB 8.0. For this, at every start the
+entrypoint sets the feature compatibility version of the local database to the one of its mongod, so a volume created by
+an image with MongoDB 6.0 is migrated at its first start. This cannot be undone: an image with MongoDB 6.0 does not open
+the volume afterwards. Start this image at least once on a volume before updating to the one with MongoDB 8.0. A volume
+that holds data of MongoDB 5.0 or older, which this image did not create, first has to be opened with MongoDB 6.0 and
+have its feature compatibility version set to 6.0, as MongoDB 7.0 does not start on it and the entrypoint then waits for
+it.

@@ -319,7 +319,7 @@ The following parameters can be set:
 - MONGODB_IP (default: 127.0.0.1): This is the IP of the mongodb to use. 127.0.0.1 is the mongodb that runs inside this
   container.
 - SUBSCRIBER_DB (default:
-  "001010123456780,00112233445566778899aabbccddeeff,opc,63bfa50ee6523365ff14c1f45f88737d,8000,10.45.1.2"): This adds
+  "001010123456780,00112233445566778899aabbccddeeff,opc,63bfa50ee6523365ff14c1f45f88737d,8000,9,10.45.1.2"): This adds
   subscriber data for a single or multiple users to the Open5GS mongodb. It contains either:
   - Comma separated string with information to define a subscriber
   - `subscriber_db.csv`. This is a csv file that contains entries to add to open5gs mongodb. Each entry will represent a

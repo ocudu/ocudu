@@ -36,6 +36,28 @@ do
     sleep 1
 done
 
+# MongoDB only opens the data of the previous major version, and a newer one only after the feature compatibility
+# version (FCV) is raised. A volume created by an image with an older MongoDB keeps its FCV until it is set to the one
+# of this mongod. It is done for the mongodb of this container only, not for the remote one set with MONGODB_IP.
+if [ "$MONGODB_IP" = "127.0.0.1" ]
+then
+    MONGO_FCV=$(mongod --version | sed -n 's/^db version v\([0-9]*\.[0-9]*\).*/\1/p')
+    # MongoDB 7.0 and later require confirm, and 6.0 rejects it
+    MONGO_FCV_CONFIRM=""
+    [ "${MONGO_FCV%%.*}" -ge 7 ] && MONGO_FCV_CONFIRM=", confirm: true"
+    while ! ( mongosh --quiet --eval 'db.adminCommand({ping: 1})' >/dev/null 2>&1 )
+    do
+        echo waiting for the local mongodb
+        sleep 1
+    done
+    mongosh --quiet --eval "db.adminCommand({setFeatureCompatibilityVersion: '${MONGO_FCV}'${MONGO_FCV_CONFIRM}})"
+    if [ $? -ne 0 ]
+    then
+        echo "Failed to set the mongodb feature compatibility version to ${MONGO_FCV}"
+        exit 1
+    fi
+fi
+
 # setup ogstun and routing
 python3 setup_tun.py --ip_range ${UE_IP_RANGE}
 if [ $? -ne 0 ]
