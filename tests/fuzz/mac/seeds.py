@@ -21,6 +21,10 @@ ATTACHED_UE = 0b0000_0000
 MSG3 = 0b0000_0001
 MSGA = 0b0000_0010
 CREATE_UE_AFTER_MSG3 = 0b0000_0100
+REMOVE_DRB = 0b0000_1000
+APPLY_CONFIG = 0b0001_0000
+REMOVE_UE = 0b0010_0000
+MSGA_UNRESOLVED = 0b0100_0000
 
 
 def seed(control: int, pdu: str) -> bytes:
@@ -68,6 +72,28 @@ MAC_UL_SEEDS = {
 
     # Msg3 with a C-RNTI MAC CE of a UE that does not exist (triggers the discard path).
     "msg3_unknown_crnti_ce": seed(MSG3, "3a46053d59"),
+
+    # Msg3 with the C-RNTI MAC CE of the attached UE and a Long BSR, which completes the random access when positive.
+    "msg3_crnti_ce_and_long_bsr": seed(MSG3, "3a46013e0381d9ab"),
+
+    # Msg3 with the C-RNTI MAC CE of the attached UE and an empty Short BSR, which makes MAC request an UL grant.
+    "msg3_crnti_ce_and_empty_short_bsr": seed(MSG3, "3a46013d00"),
+
+    # Msg3 with the C-RNTI MAC CE of the attached UE, while that UE is being removed.
+    "msg3_crnti_ce_during_ue_removal": seed(MSG3 | REMOVE_UE, "3a46013d59"),
+
+    # MsgA PUSCH whose RA preamble has no TC-RNTI (triggers the discard path).
+    "msga_ccch_unresolved": seed(MSG3 | MSGA | MSGA_UNRESOLVED, "341e4fc004a606"),
+
+    # DRB SDU after the DRB was removed, before and after the UE applied the new configuration.
+    "drb_sdu_after_drb_removal": seed(ATTACHED_UE | REMOVE_DRB, "0403aabbcc"),
+    "drb_sdu_after_drb_removal_applied": seed(ATTACHED_UE | REMOVE_DRB | APPLY_CONFIG, "0403aabbcc"),
+
+    # SDU and Short BSR from the attached UE, while that UE is being removed.
+    "drb_sdu_during_ue_removal": seed(ATTACHED_UE | REMOVE_UE, "0403aabbcc3d59"),
+
+    # Empty PDU from the PHY.
+    "empty_pdu": seed(ATTACHED_UE, ""),
 }
 
 # ---------------------------------------------------------------------------

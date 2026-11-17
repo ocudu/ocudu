@@ -14,8 +14,9 @@
 /// subPDU, and when formatting the PDU for the log. The harness therefore goes through pdu_rx_handler rather than the
 /// decoders alone, so that the decoders run on exactly the paths and inputs that the DU uses.
 ///
-/// The input carries a control byte selecting the RNTI the PDU is received for, and whether the Msg3 path is followed
-/// through to the creation of the UE. See tests/fuzz/README.md for the layout, build instructions and run commands.
+/// The input carries a control byte selecting the RNTI the PDU is received for, whether the Msg3 path is followed
+/// through to the creation of the UE, and the reconfiguration or removal of the attached UE around the reception. See
+/// tests/fuzz/README.md for the layout, build instructions and run commands.
 
 #include "lib/mac/mac_ul/mac_scheduler_ce_info_handler.h"
 #include "lib/mac/mac_ul/mac_ul_processor.h"
@@ -28,6 +29,7 @@
 #include "ocudu/support/async/async_test_utils.h"
 #include "ocudu/support/executors/manual_task_worker.h"
 #include "ocudu/support/timers.h"
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -48,14 +50,29 @@ struct input_header {
   bool is_msg3;
   /// Receive the PDU as a MsgA PUSCH of a 2-step RACH, i.e. with a RA preamble index.
   bool is_msga;
-  /// After a Msg3 carrying a UL-CCCH SDU, create the UE and hand its deferred MAC CEs back to MAC, as the DU does.
+  /// After a Msg3 carrying a UL-CCCH SDU, create the UE and hand its UL-CCCH SDU and deferred MAC CEs back to MAC, as
+  /// the DU does.
   bool create_ue_after_msg3;
+  /// Before the reception, remove the DRB of the attached UE, as a UE reconfiguration does.
+  bool remove_drb;
+  /// Before the reception, notify MAC that the UE applied its new configuration.
+  bool apply_config;
+  /// Remove the attached UE while the PDU is being processed.
+  bool remove_ue;
+  /// The scheduler finds no TC-RNTI for the RA preamble of a MsgA.
+  bool msga_unresolved;
 };
 
 /// Decode the control byte. See tests/fuzz/README.md for the bit layout.
 input_header decode_header(uint8_t byte)
 {
-  return {.is_msg3 = (byte & 0x01U) != 0, .is_msga = (byte & 0x02U) != 0, .create_ue_after_msg3 = (byte & 0x04U) != 0};
+  return {.is_msg3              = (byte & 0x01U) != 0,
+          .is_msga              = (byte & 0x02U) != 0,
+          .create_ue_after_msg3 = (byte & 0x04U) != 0,
+          .remove_drb           = (byte & 0x08U) != 0,
+          .apply_config         = (byte & 0x10U) != 0,
+          .remove_ue            = (byte & 0x20U) != 0,
+          .msga_unresolved      = (byte & 0x40U) != 0};
 }
 
 // ---------------------------------------------------------------------------
@@ -86,10 +103,13 @@ public:
   std::optional<ul_ccch_indication_message> last_ccch_ind;
 };
 
-/// Accepts every MAC CE indication. A MsgA CCCH SDU resolves to the RNTI it was received with.
+/// Accepts every MAC CE indication. A MsgA CCCH SDU resolves to the RNTI it was received with, unless the input says
+/// otherwise.
 class fuzz_sched_ce_handler : public mac_scheduler_ce_info_handler
 {
 public:
+  explicit fuzz_sched_ce_handler(bool msga_resolved_) : msga_resolved(msga_resolved_) {}
+
   void handle_ul_bsr_indication(const mac_bsr_ce_info& /*bsr*/) override {}
   void handle_ul_sched_command(const mac_ul_scheduling_command& /*sched_cmd*/) override {}
   void handle_dl_mac_ce_indication(const mac_ce_scheduling_command& /*mac_ce*/) override {}
@@ -103,8 +123,14 @@ public:
                                              slot_point /*sl_rx*/,
                                              const ue_con_res_id_t& /*con_res_id*/) override
   {
+    if (!msga_resolved) {
+      return std::nullopt;
+    }
     return ra_rnti;
   }
+
+private:
+  bool msga_resolved;
 };
 
 /// Discards the UL SDUs demultiplexed to a bearer.
@@ -112,6 +138,17 @@ class fuzz_sdu_rx_notifier : public mac_sdu_rx_notifier
 {
 public:
   void on_new_sdu(byte_buffer_slice /*sdu*/) override {}
+};
+
+/// Discards the PDUs written to the PCAP, so that the PCAP context of every PDU is still filled.
+class fuzz_mac_pcap : public mac_pcap
+{
+public:
+  void flush() override {}
+  void close() override {}
+  bool is_write_enabled() const override { return true; }
+  void push_pdu(const mac_nr_context_info& /*context*/, const_span<uint8_t> /*pdu*/) override {}
+  void push_pdu(const mac_nr_context_info& /*context*/, byte_buffer /*pdu*/) override {}
 };
 
 // ---------------------------------------------------------------------------
@@ -127,18 +164,37 @@ constexpr du_ue_index_t msg3_ue_index = to_du_ue_index(1);
 constexpr rnti_t        msg3_tc_rnti  = to_rnti(0x4602);
 /// RA preamble index of a MsgA PUSCH reception.
 constexpr uint8_t msga_rapid = 0;
-/// Logical channels of a UE: SRB1, SRB2 and one DRB.
-constexpr std::array<lcid_t, 3> ue_lcids = {LCID_SRB1, LCID_SRB2, LCID_MIN_DRB};
+/// Logical channels of a UE: SRB0, SRB1, SRB2 and one DRB.
+constexpr std::array<lcid_t, 4> ue_lcids = {LCID_SRB0, LCID_SRB1, LCID_SRB2, LCID_MIN_DRB};
 
 /// MAC UL processor and its dependencies, rebuilt for every input so that a crash reproduces from its input file
 /// alone.
 class fuzz_mac_ul
 {
 public:
-  fuzz_mac_ul() { add_ue(attached_ue_index, attached_crnti); }
+  explicit fuzz_mac_ul(bool msga_resolved) : sched(msga_resolved) { add_ue(attached_ue_index, attached_crnti); }
 
-  /// Receive the given MAC PDU as the PHY does, and run every task it triggers.
-  void handle_rx_pdu(rnti_t rnti, std::optional<uint8_t> rapid, span<const uint8_t> pdu_bytes)
+  /// Remove the DRB of the attached UE, as a UE reconfiguration does.
+  void remove_drb()
+  {
+    const std::array<lcid_t, 1> lcids = {LCID_MIN_DRB};
+    async_task<bool>            t     = mac_ul.remove_bearers(attached_ue_index, lcids);
+    lazy_task_launcher<bool>    launcher(t);
+    run_pending_tasks();
+  }
+
+  /// Notify MAC that the attached UE applied its new configuration.
+  void apply_config()
+  {
+    mac_ul.handle_ue_config_applied(attached_ue_index);
+    run_pending_tasks();
+  }
+
+  /// \brief Receive the given MAC PDU as the PHY does, and run every task it triggers.
+  ///
+  /// If \c remove_ue is set, the removal of the attached UE is requested after the reception and before its processing,
+  /// so that the tasks of the PDU run while the UE is being removed.
+  void handle_rx_pdu(rnti_t rnti, std::optional<uint8_t> rapid, span<const uint8_t> pdu_bytes, bool remove_ue)
   {
     mac_rx_data_indication rx_ind{slot_rx, cell_index, {}};
     rx_ind.pdus.push_back(mac_rx_pdu{.rnti = rnti, .harq_id = 0, .pdu = {}, .rapid = rapid});
@@ -146,10 +202,18 @@ public:
       return;
     }
     mac_ul.handle_rx_data_indication(rx_ind);
+    if (!remove_ue) {
+      run_pending_tasks();
+      return;
+    }
+
+    async_task<void>         t = mac_ul.remove_ue(mac_ue_delete_request{cell_index, attached_ue_index, attached_crnti});
+    lazy_task_launcher<void> launcher(t);
     run_pending_tasks();
   }
 
-  /// Create the UE of a Msg3 and hand its deferred MAC CEs back to MAC, as the DU does once the UL-CCCH SDU is handled.
+  /// Create the UE of a Msg3 and hand its UL-CCCH SDU and deferred MAC CEs back to MAC, as the DU does once the
+  /// UL-CCCH SDU is handled.
   void create_ue_after_msg3()
   {
     if (!ccch_notifier.last_ccch_ind.has_value()) {
@@ -159,8 +223,11 @@ public:
     if (rnti_mng.has_rnti(tc_rnti) || !add_ue(msg3_ue_index, tc_rnti)) {
       return;
     }
-    (void)mac_ul.flush_ul_ccch_msg(
-        msg3_ue_index, cell_index, slot_rx, byte_buffer{}, std::move(ccch_notifier.last_ccch_ind->msg3_mac_ces));
+    (void)mac_ul.flush_ul_ccch_msg(msg3_ue_index,
+                                   cell_index,
+                                   slot_rx,
+                                   std::move(ccch_notifier.last_ccch_ind->subpdu),
+                                   std::move(ccch_notifier.last_ccch_ind->msg3_mac_ces));
     run_pending_tasks();
   }
 
@@ -197,7 +264,7 @@ private:
   fuzz_sched_ce_handler   sched;
   fuzz_sdu_rx_notifier    sdu_notifier;
   rnti_manager            rnti_mng;
-  null_mac_pcap           pcap;
+  fuzz_mac_pcap           pcap;
   timer_manager           timers;
   mac_ul_processor mac_ul{mac_ul_config{task_exec, ue_exec_mapper, ccch_notifier, sched, rnti_mng, pcap, timers}};
 };
@@ -241,18 +308,26 @@ extern "C" int LLVMFuzzerInitialize(int* /*argc*/, char*** /*argv*/)
 /// Entry point called by AFL++ / libFuzzer for each mutated input.
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
-  // The first byte selects the RNTI and the Msg3 handling; the rest is the MAC PDU.
-  if (size < 2) {
+  // The first byte selects the RNTI, the Msg3 handling and the UE operations; the rest is the MAC PDU, which can be
+  // empty.
+  if (size < 1) {
     return 0;
   }
   ensure_logging();
 
   const input_header hdr = decode_header(data[0]);
 
-  fuzz_mac_ul mac;
+  fuzz_mac_ul mac(!hdr.msga_unresolved);
+  if (hdr.remove_drb) {
+    mac.remove_drb();
+  }
+  if (hdr.apply_config) {
+    mac.apply_config();
+  }
   mac.handle_rx_pdu(hdr.is_msg3 ? msg3_tc_rnti : attached_crnti,
                     hdr.is_msga ? std::optional<uint8_t>{msga_rapid} : std::nullopt,
-                    span<const uint8_t>(data + 1, size - 1));
+                    span<const uint8_t>(data + 1, size - 1),
+                    hdr.remove_ue);
   if (hdr.is_msg3 && hdr.create_ue_after_msg3) {
     mac.create_ue_after_msg3();
   }

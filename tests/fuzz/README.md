@@ -165,15 +165,25 @@ decoders run on exactly those paths.
 
 The first byte is a control byte; the remaining bytes are the MAC UL-SCH PDU.
 
-| Bit | Meaning                                                                                                  |
-| --- | -------------------------------------------------------------------------------------------------------- |
-| 0   | RNTI: 0 = C-RNTI of the attached UE, 1 = TC-RNTI without a UE context (Msg3)                             |
-| 1   | Receive the PDU as a MsgA PUSCH of a 2-step RACH, with a RA preamble index                               |
-| 2   | After a Msg3 with a UL-CCCH SDU, create the UE and hand its deferred MAC CEs back to MAC, as the DU does |
-| 3-7 | Unused                                                                                                   |
+| Bit | Meaning                                                                                                                  |
+| --- | ------------------------------------------------------------------------------------------------------------------------ |
+| 0   | RNTI: 0 = C-RNTI of the attached UE, 1 = TC-RNTI without a UE context (Msg3)                                             |
+| 1   | Receive the PDU as a MsgA PUSCH of a 2-step RACH, with a RA preamble index                                               |
+| 2   | After a Msg3 with a UL-CCCH SDU, create the UE and hand its UL-CCCH SDU and deferred MAC CEs back to MAC, as the DU does |
+| 3   | Before the reception, remove the DRB of the attached UE, as a UE reconfiguration does                                    |
+| 4   | Before the reception, notify MAC that the attached UE applied its new configuration                                      |
+| 5   | Remove the attached UE while the PDU is being processed                                                                  |
+| 6   | The scheduler finds no TC-RNTI for the RA preamble of a MsgA                                                             |
+| 7   | Unused                                                                                                                   |
 
-The attached UE has C-RNTI `0x4601`, the C-RNTI of the C-RNTI MAC CE seeds, and SRB1, SRB2 and one DRB (LCID 4). The MAC
-UL is rebuilt for every input, so a crash reproduces from its input file alone.
+The attached UE has C-RNTI `0x4601`, the C-RNTI of the C-RNTI MAC CE seeds, and SRB0, SRB1, SRB2 and one DRB (LCID 4).
+The MAC UL is rebuilt for every input, so a crash reproduces from its input file alone. The MAC PDU can be empty, as a
+PDU the PHY failed to fill.
+
+Bits 3 and 4 reach the demultiplexing of SDUs for a removed logical channel, which MAC logs differently while the UE has
+not yet applied its new configuration. Bit 5 runs the processing of the PDU, including the continuation of a C-RNTI MAC
+CE, after the removal of the UE was requested. The harness writes every PDU to a PCAP that discards it, so that the PCAP
+context is filled.
 
 Logs are routed to `/dev/null` at debug level rather than switched off, because the subPDU formatter decodes the MAC CEs
 it prints, which makes it part of the surface under test.
