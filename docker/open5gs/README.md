@@ -1,7 +1,7 @@
 # Open5GS Container
 
 This is a all-in-one Docker container for Open5GS. At build, the container will use the specified version of the open5gs
-repository (default v2.6.6 ). To run the latest tag of the open5gs repository
+repository (default v2.7.6 ). To run the latest tag of the open5gs repository
 ([https://github.com/open5gs/open5gs/tags](https://github.com/open5gs/open5gs/tags)), line 51 and 52 in .Dockerfile
 
 ```Dockerfile
@@ -28,7 +28,7 @@ In [open5gs.env](open5gs.env) the following parameters can be set:
 - DEBUG (default: false): This can be set to true to run Open5GS in debug mode.
 
 ```csv
-# Kept in the following format: "Name,IMSI,Key,OP_Type,OP/OPc,AMF,QCI,IP_alloc"
+# Kept in the following format: "Name,IMSI,Key,OP_Type,OP/OPc,AMF,QCI,IP_alloc[,SST,SD]"
 #
 # Name:     Human readable name to help distinguish UE's. Ignored by the HSS
 # IMSI:     UE's IMSI value
@@ -40,13 +40,36 @@ In [open5gs.env](open5gs.env) the following parameters can be set:
 # IP_alloc: IP allocation stratagy for the SPGW.
 #           With 'dynamic' the SPGW will automatically allocate IPs
 #           With a valid IPv4 (e.g. '10.45.0.2') the UE will have a statically assigned IP.
+# SST:      Optional. Slice/Service Type the UE is subscribed to (0-255, default: 1).
+# SD:       Optional. Slice Differentiator, 6 hexadecimal digits (e.g. '111111'). Without it the subscription has no SD.
+#           The slice must be one of the `s_nssai` of the AMF in open5gs-5gc.yml for the UE to register.
 #
 # Note: Lines starting by '#' are ignored and will be overwritten
 # List of UEs with IMSI, and key increasing by one for each new UE. Useful for testing with AmariUE simulator and ue_count option
 ue01,001010123456789,00112233445566778899aabbccddeeff,opc,63bfa50ee6523365ff14c1f45f88737d,9001,9,10.45.1.2
 ue02,001010123456790,00112233445566778899aabbccddef00,opc,63bfa50ee6523365ff14c1f45f88737d,9001,9,10.45.2.2
 ue03,001010123456791,00112233445566778899aabbccddef01,opc,63bfa50ee6523365ff14c1f45f88737d,9001,9,10.45.3.2
+# ue04 is subscribed to the slice with SST 1 and SD 111111 instead of SST 1 without SD:
+ue04,001010123456792,00112233445566778899aabbccddef02,opc,63bfa50ee6523365ff14c1f45f88737d,9001,9,10.45.4.2,1,111111
 ```
+
+The subscriber string of `SUBSCRIBER_DB` takes the same optional `SST,SD` at the end.
+
+### Changing the slice of a running UE
+
+[set_ue_slice.sh](set_ue_slice.sh) creates or updates a subscriber in the running container, without restarting it:
+
+```bash
+./set_ue_slice.sh 001010123456780 1 111111   # IMSI, SST and optional SD
+```
+
+The key, OPc, AMF, QCI and IP can be changed with the environment variables `KEY`, `OPC`, `AMF`, `QCI` and `IP_ALLOC`,
+and the container with `CONTAINER` (default: `open5gs_5gc`). The whole subscriber is written, not only its slice: what
+is not set goes back to its default, so a UE that has another key, OPc, AMF, QCI or IP needs the same values, and it
+only keeps the sessions that `add_users.py` writes (`internet` and `ims`). Subscribers that are attached at the same
+time need different `IMSI` and `IP_ALLOC`. The change applies to the next registration of the UE. The subscribers that
+`SUBSCRIBER_DB` lists are written again at every start of the container, so they go back to the slice of
+`SUBSCRIBER_DB`.
 
 ## Open5GS Parameters
 

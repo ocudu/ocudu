@@ -1,6 +1,6 @@
 #
 # .csv to store UE's information in HSS
-# Kept in the following format: "Name,IMSI,Key,OP_Type,OP/OPc,AMF,QCI,IP_alloc"
+# Kept in the following format: "Name,IMSI,Key,OP_Type,OP/OPc,AMF,QCI,IP_alloc[,SST,SD]"
 #
 # Name:     Human readable name to help distinguish UE's. Ignored by the HSS
 # IMSI:     UE's IMSI value
@@ -10,9 +10,13 @@
 # AMF:      Authentication management field, stored in hexadecimal
 # QCI:      QoS Class Identifier for the UE's default bearer.
 # IP_alloc: Statically assigned IP for the UE.
+# SST:      Optional. Slice/Service Type the UE is subscribed to (0-255, default: 1).
+# SD:       Optional. Slice Differentiator, 6 hexadecimal digits (e.g. '111111'). Without it the subscription has no SD.
 #
 # Note: Lines starting by '#' are ignored and will be overwritten
 # List of UEs with IMSI, and key increasing by one for each new UE. Useful for testing with AmariUE simulator and ue_count option
 ue01,001010123456789,00112233445566778899aabbccddeeff,opc,63bfa50ee6523365ff14c1f45f88737d,9001,9,10.45.1.2
 ue02,001010123456790,00112233445566778899aabbccddef00,opc,63bfa50ee6523365ff14c1f45f88737d,9001,9,10.45.2.2
 ue03,001010123456791,00112233445566778899aabbccddef01,opc,63bfa50ee6523365ff14c1f45f88737d,9001,9,10.45.3.2
+# ue04 is subscribed to the slice with SST 1 and SD 111111 instead of SST 1 without SD:
+ue04,001010123456792,00112233445566778899aabbccddef02,opc,63bfa50ee6523365ff14c1f45f88737d,9001,9,10.45.4.2,1,111111

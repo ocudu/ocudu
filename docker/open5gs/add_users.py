@@ -8,6 +8,7 @@ import bson
 import click
 import pymongo
 import random
+import re
 import sys
 
 from misc.db.python.Open5GS import Open5GS
@@ -22,6 +23,8 @@ def add_user(
     apn="internet",
     qci="9",
     ip_alloc="",
+    sst="1",
+    sd="",
 ):
     """Add UE data to Open5GS mongodb"""
 
@@ -30,7 +33,9 @@ def add_user(
 
     slice_data = [
         {
-            "sst": 1,
+            "sst": int(sst),
+            # Open5GS tells a slice with no SD from one with an empty SD, so the key is only written when set.
+            **({"sd": sd} if sd else {}),
             "default_indicator": True,
             "session": [
                 {
@@ -74,6 +79,23 @@ def add_user(
     return sub_data
 
 
+def split_slice(fields, fixed_count, what):
+    """
+    Split the optional trailing SST[,SD] off the `fixed_count` leading fields of a subscriber.
+    Without them the subscriber is on SST 1 with no SD. Returns (fixed fields, sst, sd), or None if invalid.
+    """
+    extra = fields[fixed_count:]
+    if len(fields) < fixed_count or len(extra) > 2:
+        print(f"Error reading {what}: expected {fixed_count} fields plus an optional SST[,SD], got {len(fields)}")
+        return None
+    sst = extra[0] if extra else "1"
+    sd = extra[1] if len(extra) > 1 else ""
+    if not re.fullmatch("[0-9]{1,3}", sst) or int(sst) > 255 or (sd and not re.fullmatch("[0-9a-fA-F]{6}", sd)):
+        print(f"Error reading {what}: SST must be 0-255 and SD 6 hexadecimal digits, got SST='{sst}' SD='{sd}'")
+        return None
+    return fields[:fixed_count], sst, sd
+
+
 def read_from_db(db_file):
     """Read UE data from a subscriber db csv-file."""
     subscriber_db = []
@@ -87,11 +109,10 @@ def read_from_db(db_file):
         if line.startswith("#"):
             pass
         else:
-            try:
-                name, imsi, key, op_type, op_c, amf, qci, ip_alloc = line.split(",")
-            except ValueError as e:
-                print(f"Error reading subscriber_db.csv: {e}")
+            parsed = split_slice(line.rstrip().split(","), 8, "subscriber_db.csv")
+            if parsed is None:
                 return None
+            (name, imsi, key, op_type, op_c, amf, qci, ip_alloc), sst, sd = parsed
 
             opc = op_c
             op = None
@@ -100,7 +121,17 @@ def read_from_db(db_file):
                 opc = None
 
             subscriber_db.append(
-                {"imsi": imsi, "key": key, "op": op, "opc": opc, "amf": amf, "qci": qci, "ip_alloc": ip_alloc.rstrip()}
+                {
+                    "imsi": imsi,
+                    "key": key,
+                    "op": op,
+                    "opc": opc,
+                    "amf": amf,
+                    "qci": qci,
+                    "ip_alloc": ip_alloc,
+                    "sst": sst,
+                    "sd": sd,
+                }
             )
 
     return subscriber_db
@@ -110,15 +141,15 @@ def read_from_string(sub_data):
     """
     Read UE data from subscriber data string.
     Example string: "001010123456780,00112233445566778899aabbccddeeff,opc,63bfa50ee6523365ff14c1f45f88737d,8000,9,10.45.1.2"
+    The subscriber can be put on a slice with a trailing SST[,SD], e.g. ",1,111111" for SST 1 and SD 111111.
     """
 
     subscriber_db = []
 
-    try:
-        imsi, key, op_type, op_c, amf, qci, ip_alloc = sub_data.split(",")
-    except ValueError as e:
-        print(f"Error reading subscriber string: {e}")
+    parsed = split_slice(sub_data.rstrip().split(","), 7, "subscriber string")
+    if parsed is None:
         return None
+    (imsi, key, op_type, op_c, amf, qci, ip_alloc), sst, sd = parsed
 
     opc = op_c
     op = None
@@ -127,7 +158,17 @@ def read_from_string(sub_data):
         opc = None
 
     subscriber_db.append(
-        {"imsi": imsi, "key": key, "op": op, "opc": opc, "amf": amf, "qci": qci, "ip_alloc": ip_alloc.rstrip()}
+        {
+            "imsi": imsi,
+            "key": key,
+            "op": op,
+            "opc": opc,
+            "amf": amf,
+            "qci": qci,
+            "ip_alloc": ip_alloc,
+            "sst": sst,
+            "sd": sd,
+        }
     )
 
     return subscriber_db

@@ -185,8 +185,30 @@ amf:
     - plmn_id:
         mcc: ${MCC}
         mnc: ${MNC}
+      # The AMF rejects a registration whose slice is not listed here. Open5GS older than v2.7.0 accepts at most 8
+      # entries.
       s_nssai:
         - sst: 1
+        - sst: 1
+          sd: 111111
+        - sst: 1
+          sd: 222222
+        - sst: 1
+          sd: 333333
+        - sst: 2
+        - sst: 2
+          sd: 111111
+        - sst: 2
+          sd: 222222
+        - sst: 2
+          sd: 333333
+        - sst: 4
+        - sst: 4
+          sd: 111111
+        - sst: 4
+          sd: 222222
+        - sst: 4
+          sd: 333333
   security:
     integrity_order: [NIA2, NIA1, NIA0]
     ciphering_order: [NEA0, NEA1, NEA2]
