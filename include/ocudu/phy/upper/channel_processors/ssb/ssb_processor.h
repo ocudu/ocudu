@@ -77,9 +77,9 @@ public:
 
   /// \brief Validates SSB processor configuration parameters.
   /// \param[in] pdu SS/PBCH Block PDU to be validated.
-  /// \param[in] cell_bandwith_prbs Carrier bandwidth in PRBs based on common subcarrier spacing.
+  /// \param[in] cell_bandwidth_prbs Carrier bandwidth in PRBs based on common subcarrier spacing.
   /// \return A success if the parameters contained in \c pdu are supported, an error message otherwise.
-  virtual error_type<std::string> is_valid(const ssb_processor::pdu_t& pdu, unsigned cell_bandwith_prbs) const = 0;
+  virtual error_type<std::string> is_valid(const ssb_processor::pdu_t& pdu, unsigned cell_bandwidth_prbs) const = 0;
 };
 
 } // namespace ocudu

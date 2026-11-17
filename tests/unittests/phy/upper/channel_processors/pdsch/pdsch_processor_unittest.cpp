@@ -202,7 +202,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
   }
 
   // Use resource grid dummy, the PDSCH processor must not call any method.
-  resource_grid_dummy rg_dummy;
+  resource_grid_dummy rg_dummy(0, 0, pdu.bwp_start_rb + pdu.bwp_size_rb);
 
   // Reset spies.
   encoder_spy->reset();

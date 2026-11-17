@@ -11,12 +11,15 @@
 
 namespace ocudu {
 
-template <typename PucchProcessorParam, unsigned MaxNofSymbols = MAX_NSYMB_PER_SLOT, unsigned MaxNofRxPorts = 8>
+template <typename PucchProcessorParam,
+          unsigned MaxNofSymbols = MAX_NSYMB_PER_SLOT,
+          unsigned MaxNofRxPorts = 8,
+          unsigned MaxNofPrb     = MAX_NOF_PRBS>
 class PucchProcessorTestFixture : public ::testing::TestWithParam<PucchProcessorParam>
 {
 public:
   static constexpr channel_estimate::channel_estimate_dimensions channel_estimate_dimensions = {
-      .nof_prb       = MAX_NOF_PRBS,
+      .nof_prb       = MaxNofPrb,
       .nof_symbols   = MaxNofSymbols,
       .nof_rx_ports  = MaxNofRxPorts,
       .nof_tx_layers = pucch_constants::NOF_LAYERS,

@@ -18,6 +18,9 @@ using namespace ocudu;
 
 namespace {
 
+// Resource grid size in PRB, smaller than MAX_NOF_PRBS.
+constexpr unsigned grid_nof_prb = 106;
+
 // Valid PDSCH configuration used as a base for the test cases.
 const pdsch_processor::pdu_t base_pdu = {.context          = std::nullopt,
                                          .slot             = {0, 19},
@@ -65,6 +68,13 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
      },
      fmt::format(R"(Invalid BWP configuration, i\.e\., \[0, {}\) for the given RB allocation, i\.e\., \[0, 52\)\.)",
                  MAX_NOF_PRBS + 1)},
+    {[] {
+       pdsch_processor::pdu_t pdu = base_pdu;
+       pdu.bwp_size_rb            = grid_nof_prb + 1;
+       return pdu;
+     },
+     fmt::format(R"(Invalid BWP configuration, i\.e\., \[0, {}\) for the given RB allocation, i\.e\., \[0, 52\)\.)",
+                 grid_nof_prb + 1)},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
        pdu.dmrs_symbol_mask       = {true};
@@ -297,7 +307,7 @@ TEST_P(pdschProcessorFixture, pdschProcessorValidatorDeathTest)
   const test_case_t& param = GetParam();
 
   // Make sure the configuration is invalid.
-  error_type<std::string> validator_out = pdu_validator->is_valid(param.get_pdu());
+  error_type<std::string> validator_out = pdu_validator->is_valid(param.get_pdu(), grid_nof_prb);
   ASSERT_FALSE(validator_out.has_value()) << "Validation should fail.";
   ASSERT_TRUE(std::regex_match(validator_out.error(), std::regex(param.expr))) << fmt::format(
       R"(The assertion message "{}" doesn't match the expected pattern "{}".)", validator_out.error(), param.expr);

@@ -14,7 +14,7 @@ class pdsch_processor_validator_impl : public pdsch_pdu_validator
 {
 public:
   // See interface for documentation.
-  error_type<std::string> is_valid(const pdsch_processor::pdu_t& pdu) const override;
+  error_type<std::string> is_valid(const pdsch_processor::pdu_t& pdu, unsigned cell_bandwidth_prbs) const override;
 };
 
 } // namespace ocudu

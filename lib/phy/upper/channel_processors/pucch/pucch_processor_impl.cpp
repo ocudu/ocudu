@@ -486,12 +486,12 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
 
 error_type<std::string> pucch_pdu_validator_impl::is_valid(const pucch_processor::format0_configuration& config) const
 {
-  // BWP PRB shall not exceed the maximum.
-  if (config.bwp_start_rb + config.bwp_size_rb > MAX_NOF_PRBS) {
+  // The BWP size exceeds the grid dimensions.
+  if ((config.bwp_start_rb + config.bwp_size_rb) > ce_dims.nof_prb) {
     return make_unexpected(
         fmt::format("BWP allocation goes up to PRB {}, exceeding the configured maximum grid RB size, i.e., {}.",
                     config.bwp_start_rb + config.bwp_size_rb,
-                    MAX_NOF_PRBS));
+                    ce_dims.nof_prb));
   }
 
   // PRB allocation goes beyond the BWP. Recall that PUCCH Format 0 occupies a single PRB.

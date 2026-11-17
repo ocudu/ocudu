@@ -537,6 +537,10 @@ private:
 
 public:
   resource_grid_dummy() : reader(0, 0, 0), writer(0, 0, 0) {}
+  resource_grid_dummy(unsigned nof_ports, unsigned nof_symb, unsigned nof_prb) :
+    reader(nof_ports, nof_symb, nof_prb), writer(nof_ports, nof_symb, nof_prb)
+  {
+  }
 
   unsigned set_all_zero_count = 0;
 

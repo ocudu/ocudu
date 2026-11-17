@@ -189,7 +189,7 @@ public:
 
   /// \brief Validates PDSCH processor configuration parameters.
   /// \return A success if the parameters contained in \c pdu are supported, an error message otherwise.
-  virtual error_type<std::string> is_valid(const pdsch_processor::pdu_t& pdu) const = 0;
+  virtual error_type<std::string> is_valid(const pdsch_processor::pdu_t& pdu, unsigned cell_bandwidth_prbs) const = 0;
 };
 
 } // namespace ocudu

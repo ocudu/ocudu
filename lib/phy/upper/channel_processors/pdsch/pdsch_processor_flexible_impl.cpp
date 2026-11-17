@@ -35,7 +35,11 @@ void pdsch_processor_flexible_impl::process(resource_grid_writer&               
 {
   // Makes sure the PDU is valid.
   [[maybe_unused]] std::string msg;
-  ocudu_assert(handle_validation(msg, pdsch_processor_validator_impl().is_valid(pdu_)), "{}", msg);
+  ocudu_assert(handle_validation(msg,
+                                 pdsch_processor_validator_impl().is_valid(
+                                     pdu_, divide_ceil(grid_.get_nof_subc(), NOF_SUBCARRIERS_PER_RB))),
+               "{}",
+               msg);
 
   // Initialize transmission and save inputs.
   initialize_new_transmission(grid_, notifier_, std::move(data_), pdu_);

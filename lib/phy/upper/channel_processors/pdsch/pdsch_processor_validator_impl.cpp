@@ -24,7 +24,8 @@ static bool check_dmrs_and_reserved_collision(const pdsch_processor::pdu_t& conf
   return reserved_symbol_mask.any();
 }
 
-error_type<std::string> pdsch_processor_validator_impl::is_valid(const pdsch_processor::pdu_t& pdu) const
+error_type<std::string> pdsch_processor_validator_impl::is_valid(const pdsch_processor::pdu_t& pdu,
+                                                                 unsigned cell_bandwidth_prbs) const
 {
   using namespace units::literals;
 
@@ -32,7 +33,7 @@ error_type<std::string> pdsch_processor_validator_impl::is_valid(const pdsch_pro
   dmrs_config_type dmrs_config      = pdu.dmrs;
 
   // The frequency allocation is not compatible with the BWP parameters.
-  if (!pdu.freq_alloc.is_bwp_valid(pdu.bwp_start_rb, pdu.bwp_size_rb)) {
+  if (!pdu.freq_alloc.is_bwp_valid(pdu.bwp_start_rb, pdu.bwp_size_rb, cell_bandwidth_prbs)) {
     return make_unexpected(
         fmt::format("Invalid BWP configuration, i.e., [{}, {}) for the given RB allocation, i.e., {}.",
                     pdu.bwp_start_rb,

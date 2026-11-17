@@ -108,7 +108,7 @@ public:
   /// \brief Determines whether the resource block allocation is valid for a given bandwidth part.
   ///
   /// The resource block allocation combined with the BWP parameters are valid if:
-  /// - the sum of the BWP start and size does not exceed \ref MAX_NOF_PRBS; and
+  /// - the sum of the BWP start and size does not exceed \c max_nof_prb; and
   /// - the size of the virtual resource block allocation does not exceed the size of the available physical resources.
   ///
   /// For PDSCH transmissions scheduled by DCI in a common SS, the PRBs used for VRB to PRB mapping start from the
@@ -117,10 +117,12 @@ public:
   ///
   /// \param[in] bwp_start_rb   Lowest CRB index of the BWP relative to CRB0 (PointA) as \f$N_{BWP,i}^{start}\f$.
   /// \param[in] bwp_size_rb    BWP size in PRB as \f$N_{BWP,i}^{size}\f$.
+  /// \param[in] max_nof_prb    Resource grid size in PRB. It matches the cell bandwidth, which can be smaller than \ref
+  ///                           MAX_NOF_PRBS.
   /// \return True if the combination of BWP and resource block is valid, false otherwise.
-  bool is_bwp_valid(unsigned bwp_start_rb, unsigned bwp_size_rb) const
+  bool is_bwp_valid(unsigned bwp_start_rb, unsigned bwp_size_rb, unsigned max_nof_prb = MAX_NOF_PRBS) const
   {
-    return ((bwp_start_rb + bwp_size_rb <= MAX_NOF_PRBS) &&
+    return ((bwp_start_rb + bwp_size_rb <= max_nof_prb) &&
             (vrb_mask.size() + vrb_to_prb_config.coreset_start <= bwp_size_rb));
   }
 

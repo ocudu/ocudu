@@ -92,12 +92,15 @@ public:
   }
 
   // See interface for documentation.
-  error_type<std::string> is_valid(const ssb_processor::pdu_t& pdu, unsigned cell_bandwith_prbs) const override
+  error_type<std::string> is_valid(const ssb_processor::pdu_t& pdu, unsigned cell_bandwidth_prbs) const override
   {
-    return ssb->is_valid(pdu, cell_bandwith_prbs);
+    return ssb->is_valid(pdu, cell_bandwidth_prbs);
   }
   error_type<std::string> is_valid(const pdcch_processor::pdu_t& pdu) const override { return pdcch->is_valid(pdu); }
-  error_type<std::string> is_valid(const pdsch_processor::pdu_t& pdu) const override { return pdsch->is_valid(pdu); }
+  error_type<std::string> is_valid(const pdsch_processor::pdu_t& pdu, unsigned cell_bandwidth_prbs) const override
+  {
+    return pdsch->is_valid(pdu, cell_bandwidth_prbs);
+  }
   error_type<std::string> is_valid(const nzp_csi_rs_generator::config_t& config) const override
   {
     return csi->is_valid(config);

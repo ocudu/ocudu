@@ -31,7 +31,11 @@ void pdsch_processor_impl::process(resource_grid_writer&                        
 {
   // Assert PDU.
   [[maybe_unused]] std::string msg;
-  ocudu_assert(handle_validation(msg, pdsch_processor_validator_impl().is_valid(pdu)), "{}", msg);
+  ocudu_assert(handle_validation(msg,
+                                 pdsch_processor_validator_impl().is_valid(
+                                     pdu, divide_ceil(grid.get_nof_subc(), NOF_SUBCARRIERS_PER_RB))),
+               "{}",
+               msg);
 
   // Number of layers from the precoding and beamforming configuration.
   unsigned nof_layers = pdu.precoding_and_beamforming.get_nof_layers();

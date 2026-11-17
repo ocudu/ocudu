@@ -17,6 +17,9 @@ using namespace ocudu;
 
 namespace {
 
+// Resource grid size in PRB, smaller than MAX_NOF_PRBS.
+constexpr unsigned grid_nof_prb = 106;
+
 // Test case parameters structure.
 struct test_params {
   pucch_processor::format0_configuration config;
@@ -75,11 +78,11 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
           test_params entry         = {};
           entry.config              = base_format_0_config;
           entry.config.bwp_start_rb = 10;
-          entry.config.bwp_size_rb  = MAX_NOF_PRBS - entry.config.bwp_start_rb + 1;
+          entry.config.bwp_size_rb  = grid_nof_prb - entry.config.bwp_start_rb + 1;
           entry.assert_message      = fmt::format(
               R"(BWP allocation goes up to PRB {}\, exceeding the configured maximum grid RB size\, i\.e\.\, {}\.)",
               entry.config.bwp_start_rb + entry.config.bwp_size_rb,
-              MAX_NOF_PRBS);
+              grid_nof_prb);
           return entry;
         },
     },
@@ -183,8 +186,9 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
 
 } // namespace
 
-using PucchProcessorFormat0Param   = test_case_t;
-using PucchProcessorFormat0Fixture = PucchProcessorTestFixture<PucchProcessorFormat0Param>;
+using PucchProcessorFormat0Param = test_case_t;
+using PucchProcessorFormat0Fixture =
+    PucchProcessorTestFixture<PucchProcessorFormat0Param, MAX_NSYMB_PER_SLOT, 8, grid_nof_prb>;
 template <>
 std::unique_ptr<pucch_processor> PucchProcessorFormat0Fixture::processor = nullptr;
 template <>

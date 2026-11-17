@@ -229,7 +229,7 @@ static expected<downlink_pdus> translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_
     if (const auto* pdsch_pdu = std::get_if<fapi::dl_pdsch_pdu>(&pdu.pdu)) {
       pdsch_processor::pdu_t& pdsch = pdus.pdsch.emplace_back();
       convert_pdsch_fapi_to_phy(pdsch, *pdsch_pdu, msg.slot, csi_re_patterns, pm_repo);
-      if (error_type<std::string> phy_pdsch_validator = dl_pdu_validator.is_valid(pdsch);
+      if (error_type<std::string> phy_pdsch_validator = dl_pdu_validator.is_valid(pdsch, cell_bandwidth_prb);
           !phy_pdsch_validator.has_value()) {
         logger.warning("Sector#{}: Skipping DL_TTI.request: PDSCH PDU flagged as invalid by the Upper PHY with the "
                        "following error\n    {}",

@@ -1036,7 +1036,7 @@ int main(int argc, char** argv)
     std::unique_ptr<pdsch_pdu_validator> validator = create_validator();
 
     // Make sure the configuration is valid.
-    error_type<std::string> validator_result = validator->is_valid(config);
+    error_type<std::string> validator_result = validator->is_valid(config, MAX_NOF_PRBS);
     report_fatal_error_if_not(validator_result.has_value(), "{}", validator_result.error());
 
     // Calculate the peak throughput, considering that the number of bits is for a slot.
