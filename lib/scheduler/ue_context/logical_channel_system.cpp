@@ -433,15 +433,23 @@ void logical_channel_system::refresh_fallback_pending_data(soa::row_id ue_rid)
     auto it = ue_ch.channels.find(lcid);
     return it != ue_ch.channels.end() and lc_mapper.dl_buf_st(it->second).value() > 0;
   };
-  fallback_pending_dl_ues.set(
-      ue_idx, u.at<ue_context>().pending_con_res_id or has_srb_dl_data(LCID_SRB0) or has_srb_dl_data(LCID_SRB1));
+  auto&      ue_ctx     = u.at<ue_context>();
+  const bool dl_pending = ue_ctx.pending_con_res_id or has_srb_dl_data(LCID_SRB0) or has_srb_dl_data(LCID_SRB1);
+  // The arrival order is kept until all the pending data is served.
+  if (dl_pending and not fallback_pending_dl_ues.test(ue_idx)) {
+    ue_ctx.fallback_dl_arrival_seq = fallback_arrival_seq++;
+  }
+  fallback_pending_dl_ues.set(ue_idx, dl_pending);
 
   // Note: SRBs are assumed to use the LCG-ID 0.
-  const auto& ue_ul_ch = u.at<ue_ul_channel_context>();
-  auto        lcg_it   = ue_ul_ch.lcgs.find(uint_to_lcg_id(0));
-  fallback_pending_ul_ues.set(ue_idx,
-                              ues_with_pending_sr.test(ue_idx) or
-                                  (lcg_it != ue_ul_ch.lcgs.end() and lc_mapper.ul_buf_st(lcg_it->second).value() > 0));
+  const auto& ue_ul_ch   = u.at<ue_ul_channel_context>();
+  auto        lcg_it     = ue_ul_ch.lcgs.find(uint_to_lcg_id(0));
+  const bool  ul_pending = ues_with_pending_sr.test(ue_idx) or
+                          (lcg_it != ue_ul_ch.lcgs.end() and lc_mapper.ul_buf_st(lcg_it->second).value() > 0);
+  if (ul_pending and not fallback_pending_ul_ues.test(ue_idx)) {
+    ue_ctx.fallback_ul_arrival_seq = fallback_arrival_seq++;
+  }
+  fallback_pending_ul_ues.set(ue_idx, ul_pending);
 }
 
 void logical_channel_system::refresh_restricted_slices(soa::row_id ue_rid)
@@ -763,7 +771,7 @@ void logical_channel_system::handle_mac_ce_indication(soa::row_id ue_row_id, con
   unsigned new_ce_bytes = ue_ctx.pending_ce_bytes +
                           (ce.ce_lcid.is_var_len_ce() ? get_mac_sdu_required_bytes(ce.ce_lcid.sizeof_ce())
                                                       : get_mac_ce_subheader_size(ce.ce_lcid) + ce.ce_lcid.sizeof_ce());
-  static constexpr unsigned MAX_PENDING_CE_BYTES = 1U << 14U;
+  static constexpr unsigned MAX_PENDING_CE_BYTES = (1U << 15U) - 1U;
   ocudu_assert(new_ce_bytes <= MAX_PENDING_CE_BYTES, "Exceeded maximum pending CE bytes per UE");
   ue_ctx.pending_ce_bytes = new_ce_bytes;
   ues_with_pending_ces.set(u.at<ue_config_context>().ue_index, true);
@@ -1234,6 +1242,16 @@ void ue_logical_channel_repository::handle_dl_buffer_status_indication(lcid_t   
 slot_point ue_logical_channel_repository_view::pending_sr_slot_rx() const
 {
   return parent->pending_sr_slot_rx(ue_row_id);
+}
+
+uint16_t ue_logical_channel_repository_view::fallback_dl_arrival_seq() const
+{
+  return get_ue_row().at<logical_channel_system::ue_context>().fallback_dl_arrival_seq;
+}
+
+uint16_t ue_logical_channel_repository_view::fallback_ul_arrival_seq() const
+{
+  return get_ue_row().at<logical_channel_system::ue_context>().fallback_ul_arrival_seq;
 }
 
 void ue_logical_channel_repository_view::handle_mac_ce_indication(const mac_ce_info& ce)

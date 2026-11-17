@@ -71,11 +71,13 @@ private:
     uint8_t event_rank;
     /// Slot of the pending event. Invalid if unknown.
     slot_point event_slot;
+    /// Arrival order of the pending data.
+    uint16_t arrival_seq;
   };
 
-  /// \brief Sorts candidates by event rank, then by age of the event, with unknown ages last, then by UE index
-  /// starting from \c rr_offset.
-  void sort_candidates(std::vector<ue_candidate>& candidates) const;
+  /// \brief Sorts candidates by event rank, then by slot of the event, with unknown slots last, then by arrival
+  /// order.
+  static void sort_candidates(std::vector<ue_candidate>& candidates);
 
   /// Fills the DL new tx candidates, sorted by ConRes CE, SRB0 and SRB1 events and by age of the event.
   void fill_dl_new_tx_candidates();
@@ -243,9 +245,6 @@ private:
 
   /// UL candidates of the current slot, in order of priority.
   std::vector<ue_candidate> ul_candidates;
-
-  /// UE index from which the candidates of equal priority are served in the current slot.
-  unsigned rr_offset = 0;
 };
 
 } // namespace ocudu

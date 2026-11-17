@@ -1999,3 +1999,31 @@ TEST_F(fallback_sched_conres_priority_test, when_conres_ce_retx_and_new_conres_c
   ASSERT_TRUE(ue_is_allocated_pdcch(get_ue(new_tx_ue_index))) << "The new ConRes CE must take the only DCI";
   ASSERT_FALSE(ue_is_allocated_pdcch(retx_ue));
 }
+
+TEST_F(fallback_sched_conres_priority_test, srb1_newtxs_are_scheduled_in_order_of_arrival)
+{
+  const std::vector<du_ue_index_t> ue_indexes = {
+      to_du_ue_index(0), to_du_ue_index(1), to_du_ue_index(2), to_du_ue_index(3)};
+  for (du_ue_index_t ue_idx : ue_indexes) {
+    add_conres_ue(ue_idx);
+    bench->handle_conres_completed(ue_idx);
+  }
+
+  // The SRB1 data arrives in decreasing order of UE index.
+  const std::vector<du_ue_index_t> arrival_order(ue_indexes.rbegin(), ue_indexes.rend());
+  for (du_ue_index_t ue_idx : arrival_order) {
+    push_buffer_state_to_dl_ue(ue_idx, current_slot, MAC_SRB_SDU_SIZE, false, false);
+  }
+
+  // Order in which the UEs got their first PDSCH.
+  std::vector<du_ue_index_t> pdsch_order;
+  for (unsigned i = 0; i != MAX_TEST_RUN_SLOTS and pdsch_order.size() < ue_indexes.size(); ++i) {
+    run_slot();
+    for (const dl_msg_alloc& grant : bench->res_grid[0].result_reader().dl().ue_grants()) {
+      if (std::find(pdsch_order.begin(), pdsch_order.end(), grant.context.ue_index) == pdsch_order.end()) {
+        pdsch_order.push_back(grant.context.ue_index);
+      }
+    }
+  }
+  ASSERT_EQ(pdsch_order, arrival_order);
+}

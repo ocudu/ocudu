@@ -86,9 +86,6 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
 
   slot_indication(sched_ref_slot);
 
-  // Rotate the UE index from which candidates of equal priority are served.
-  ++rr_offset;
-
   // Reset the scheduling counters; this takes into account retxs and new txs.
   sched_attempts_cnt = 0;
 
@@ -182,12 +179,11 @@ void ue_fallback_scheduler::schedule_ul_new_tx_and_retx(cell_resource_allocator&
   }
   ues_with_ul_harqs.for_each(0, ues_with_ul_harqs.size(), [&ul_ues](size_t ue_idx) { ul_ues.set(ue_idx); });
 
-  // Serve the oldest SRs first.
+  // Serve the UEs in order of arrival of their pending data.
   ul_candidates.clear();
   ul_ues.for_each(0, ul_ues.size(), [this](size_t ue_idx) {
     const auto& lchs = ues[to_du_ue_index(ue_idx)].logical_channels();
-    ul_candidates.push_back(
-        ue_candidate{to_du_ue_index(ue_idx), 0, lchs.has_pending_sr() ? lchs.pending_sr_slot_rx() : slot_point{}});
+    ul_candidates.push_back(ue_candidate{to_du_ue_index(ue_idx), 0, slot_point{}, lchs.fallback_ul_arrival_seq()});
   });
   sort_candidates(ul_candidates);
 
@@ -228,13 +224,9 @@ ue_fallback_scheduler::dl_new_tx_alloc_type ue_fallback_scheduler::get_dl_new_tx
   return u.logical_channels().is_con_res_id_pending() ? dl_new_tx_alloc_type::conres_only : dl_new_tx_alloc_type::error;
 }
 
-void ue_fallback_scheduler::sort_candidates(std::vector<ue_candidate>& candidates) const
+void ue_fallback_scheduler::sort_candidates(std::vector<ue_candidate>& candidates)
 {
-  // Distance of the UE index from the rotating offset, so that no UE of equal priority is always served last.
-  auto rr_rank = [this](du_ue_index_t ue_idx) {
-    return (static_cast<unsigned>(ue_idx) + MAX_NOF_DU_UES - rr_offset % MAX_NOF_DU_UES) % MAX_NOF_DU_UES;
-  };
-  std::sort(candidates.begin(), candidates.end(), [&rr_rank](const ue_candidate& lhs, const ue_candidate& rhs) {
+  std::sort(candidates.begin(), candidates.end(), [](const ue_candidate& lhs, const ue_candidate& rhs) {
     if (lhs.event_rank != rhs.event_rank) {
       return lhs.event_rank < rhs.event_rank;
     }
@@ -244,7 +236,9 @@ void ue_fallback_scheduler::sort_candidates(std::vector<ue_candidate>& candidate
     if (lhs.event_slot.valid() and lhs.event_slot != rhs.event_slot) {
       return lhs.event_slot < rhs.event_slot;
     }
-    return rr_rank(lhs.ue_index) < rr_rank(rhs.ue_index);
+    // The difference handles the wrap-around of the arrival order, as far fewer than 2^15 arrivals take place while a
+    // UE has pending data.
+    return static_cast<int16_t>(lhs.arrival_seq - rhs.arrival_seq) < 0;
   });
 }
 
@@ -257,12 +251,15 @@ void ue_fallback_scheduler::fill_dl_new_tx_candidates()
     const auto& lchs = u.logical_channels();
     if (lchs.is_con_res_id_pending()) {
       // The oldest ConRes CEs are the closest to the expiry of the ra-ContentionResolutionTimer.
-      dl_candidates.push_back(ue_candidate{
-          u.ue_index, 0, u.get_pcell().get_pcell_state().conres_win_start(cell_cfg.ntn_ul_alloc_delay_slots())});
+      dl_candidates.push_back(
+          ue_candidate{u.ue_index,
+                       0,
+                       u.get_pcell().get_pcell_state().conres_win_start(cell_cfg.ntn_ul_alloc_delay_slots()),
+                       lchs.fallback_dl_arrival_seq()});
     } else if (lchs.has_pending_bytes(LCID_SRB0)) {
-      dl_candidates.push_back(ue_candidate{u.ue_index, 1, lchs.hol_toa(LCID_SRB0)});
+      dl_candidates.push_back(ue_candidate{u.ue_index, 1, slot_point{}, lchs.fallback_dl_arrival_seq()});
     } else if (lchs.has_pending_bytes(LCID_SRB1)) {
-      dl_candidates.push_back(ue_candidate{u.ue_index, 2, lchs.hol_toa(LCID_SRB1)});
+      dl_candidates.push_back(ue_candidate{u.ue_index, 2, slot_point{}, lchs.fallback_dl_arrival_seq()});
     }
   });
   sort_candidates(dl_candidates);
