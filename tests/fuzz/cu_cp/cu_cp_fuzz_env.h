@@ -645,7 +645,10 @@ public:
 
   ~fuzz_ue()
   {
-    release(du_ue_id, cu_ue_id);
+    if (not du_release_requested) {
+      request_release(du_ue_id, cu_ue_id);
+    }
+    finish_release(du_ue_id, cu_ue_id);
     drain_dl_pdus();
     // A release the CU-CP completes after its UE stopped waiting for it leaves its ID behind.
     state.released_du_ue_ids.clear();
@@ -694,7 +697,9 @@ public:
     drain_dl_pdus();
   }
 
-  void inject_dcch(srb_id_t srb_id, byte_buffer pdu)
+  /// Inject a UL-DCCH message. An \c unprotected message carries a zero MAC-I, as the SecurityModeFailure a UE sends
+  /// without integrity protection (TS 38.331 section 5.3.4.3).
+  void inject_dcch(srb_id_t srb_id, byte_buffer pdu, bool unprotected = false)
   {
     if (!cu_ue_id.has_value()) {
       return;
@@ -710,6 +715,15 @@ public:
     byte_buffer pdcp_pdu = pdcp->pack(std::move(pdu));
     if (pdcp_pdu.empty()) {
       return;
+    }
+    // The MAC-I is the last field of an SRB PDCP PDU. The entity still packs the PDU, so that the sequence number
+    // advances as for any other message.
+    if (unprotected and pdcp_pdu.length() >= security::sec_mac_len) {
+      static constexpr security::sec_mac zero_mac = {};
+      pdcp_pdu.trim_tail(security::sec_mac_len);
+      if (not pdcp_pdu.append(span<const uint8_t>(zero_mac))) {
+        return;
+      }
     }
     state.du->push_ul_pdu(
         test_helpers::generate_ul_rrc_message_transfer(du_ue_id, cu_ue_id.value(), srb_id, std::move(pdcp_pdu)));
@@ -843,11 +857,16 @@ public:
     }
   }
 
-  /// Release the UE from the DU, as on a radio link failure.
+  /// Request the release of the UE from the DU, as on a radio link failure.
+  ///
+  /// The release is only awaited when the input ends, so that the steps after this one run while the CU-CP releases
+  /// the UE, and can answer a procedure that holds the release back.
   void release_from_du()
   {
-    release(du_ue_id, cu_ue_id);
-    cu_ue_id.reset();
+    if (not du_release_requested) {
+      request_release(du_ue_id, cu_ue_id);
+      du_release_requested = true;
+    }
   }
 
 private:
@@ -943,11 +962,25 @@ private:
   /// across inputs.
   void release(gnb_du_ue_f1ap_id_t released_du_ue_id, std::optional<gnb_cu_ue_f1ap_id_t> released_cu_ue_id)
   {
+    request_release(released_du_ue_id, released_cu_ue_id);
+    finish_release(released_du_ue_id, released_cu_ue_id);
+  }
+
+  /// Send the UE Context Release Request of the DU for a UE that is not released yet.
+  void request_release(gnb_du_ue_f1ap_id_t released_du_ue_id, std::optional<gnb_cu_ue_f1ap_id_t> released_cu_ue_id)
+  {
     if (released_cu_ue_id.has_value() and state.released_du_ue_ids.count(to_underlying(released_du_ue_id)) == 0) {
       state.du->push_ul_pdu(
           test_helpers::generate_ue_context_release_request(released_cu_ue_id.value(), released_du_ue_id));
       state.drain();
       drain_ngap_pdus();
+    }
+  }
+
+  /// Wait until the CU-CP has released a UE whose release was requested.
+  void finish_release(gnb_du_ue_f1ap_id_t released_du_ue_id, std::optional<gnb_cu_ue_f1ap_id_t> released_cu_ue_id)
+  {
+    if (released_cu_ue_id.has_value()) {
       await_release(released_du_ue_id);
     }
     state.released_du_ue_ids.erase(to_underlying(released_du_ue_id));
@@ -1037,6 +1070,8 @@ private:
   std::optional<uint8_t> reconfig_transaction_id;
   /// Whether the canned SecurityModeComplete and UE capabilities of the bring-up were accepted.
   bool security_activated = false;
+  /// Whether the DU requested the release of the UE, which the end of the input then waits for.
+  bool du_release_requested = false;
   /// Any AMF UE ID works: the stub AMF holds no state of its own.
   static constexpr amf_ue_id_t amf_ue_id = uint_to_amf_ue_id(0x1234);
 };

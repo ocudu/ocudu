@@ -70,6 +70,7 @@ enum class step_type : uint8_t {
   ue_context_modification,
   amf_ue_context_release,
   du_ue_context_release,
+  ul_dcch_srb1_unprotected,
   nof_steps
 };
 
@@ -153,6 +154,11 @@ void run_step(fuzz_ue& ue, const step& s)
       break;
     case step_type::du_ue_context_release:
       ue.release_from_du();
+      break;
+    case step_type::ul_dcch_srb1_unprotected:
+      if (!s.payload.empty()) {
+        ue.inject_dcch(srb_id_t::srb1, fuzz_ue::make_buffer(s.payload), /*unprotected=*/true);
+      }
       break;
     case step_type::nof_steps:
       break;

@@ -120,6 +120,7 @@ DL_NAS_TRANSPORT = 8
 UE_CONTEXT_MODIFICATION = 9
 AMF_UE_CONTEXT_RELEASE = 10
 DU_UE_CONTEXT_RELEASE = 11
+UL_DCCH_SRB1_UNPROTECTED = 12
 
 
 def steps(state: int, *items: tuple) -> bytes:
@@ -164,14 +165,11 @@ RRC_CU_CP_SEEDS = {
     # RRCSetupComplete on SRB1 against a UE awaiting it.
     "dcch_setup_complete": steps(CU_CP_AWAITING_SETUP_COMPLETE, (UL_DCCH_SRB1, RRC_SETUP_COMPLETE)),
 
-    # UL-DCCH against a connected UE, before security activation.
-    "dcch_ul_info_transfer": steps(CU_CP_CONNECTED, (UL_DCCH_SRB1, "0000")),
+    # Truncated MeasurementReport against a connected UE, before security activation.
+    "dcch_before_security": steps(CU_CP_CONNECTED, (UL_DCCH_SRB1, "0000")),
 
     # RRCReconfigurationComplete on SRB1 after security activation, with no reconfiguration open.
     "dcch_reconfig_complete": steps(CU_CP_SECURED, (UL_DCCH_SRB1, "0a00")),
-
-    # MeasurementReport on SRB1 after security activation.
-    "dcch_meas_report": steps(CU_CP_SECURED, (UL_DCCH_SRB1, "0800")),
 
     # UL-DCCH on SRB2, which only exists after security activation.
     "dcch_srb2": steps(CU_CP_SECURED, (UL_DCCH_SRB2, "0000")),
@@ -204,11 +202,10 @@ RRC_CU_CP_SEEDS = {
         (UL_DCCH_SRB1, UE_CAPABILITY_INFORMATION),
     ),
 
-    # SecurityModeFailure answering the SecurityModeCommand. The harness keys SRB1 as the
-    # SecurityModeCommand goes out, so this arrives integrity protected, which the CU-CP rejects: a UE
-    # sends it unprotected (TS 38.331 section 5.3.4.3).
+    # SecurityModeFailure answering the SecurityModeCommand, sent unprotected as a UE sends it
+    # (TS 38.331 section 5.3.4.3).
     "initial_context_setup_security_mode_failure": steps(
-        CU_CP_CONNECTED, (INITIAL_CONTEXT_SETUP, ""), (UL_DCCH_SRB1, SECURITY_MODE_FAILURE)
+        CU_CP_CONNECTED, (INITIAL_CONTEXT_SETUP, ""), (UL_DCCH_SRB1_UNPROTECTED, SECURITY_MODE_FAILURE)
     ),
 
     # A PDU session set up, modified and released, each RRCReconfiguration answered in turn.
@@ -233,7 +230,8 @@ RRC_CU_CP_SEEDS = {
         (AMF_UE_CONTEXT_RELEASE, ""),
     ),
 
-    # A radio link failure reported by the DU while a PDU session setup waits for the UE.
+    # A radio link failure reported by the DU while a PDU session setup waits for the UE. The CU-CP
+    # cancels the setup at once, so the late RRCReconfigurationComplete finds no UE context left.
     "du_release_during_pdu_session_setup": steps(
         CU_CP_AWAITING_RECONFIGURATION_COMPLETE, (DU_UE_CONTEXT_RELEASE, ""), (UL_DCCH_SRB1, RRC_RECONFIGURATION_COMPLETE_3)
     ),

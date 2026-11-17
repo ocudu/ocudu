@@ -411,7 +411,7 @@ unlike `rrc_ue_fuzzer`: here PDCP derives that from the MAC-I the harness comput
 | 2     | AS security activated on SRB1, UE capabilities transferred, SRB2 created      |
 | 3     | As 2, plus a PDU session setup that awaits the `RRCReconfigurationComplete`   |
 
-Each step is a type byte, a length byte and that many bytes of payload. The type is taken modulo 12, so that every byte
+Each step is a type byte, a length byte and that many bytes of payload. The type is taken modulo 13, so that every byte
 value names a step. A truncated final step ends the sequence, so that a mutation that shortens the input drops one step
 and does not make the remainder invalid. The harness takes at most 16 steps from one input.
 
@@ -428,9 +428,10 @@ and does not make the remainder invalid. The harness takes at most 16 steps from
 | 8    | Downlink NAS Transport from the AMF, which the CU-CP forwards in a `DLInformationTransfer`                 |
 | 9    | UE Context Modification from the AMF                                                                       |
 | 10   | UE Context Release from the AMF                                                                            |
-| 11   | UE Context Release Request from the DU, as on a radio link failure                                         |
+| 11   | UE Context Release Request from the DU, as on a radio link failure, completed when the input ends          |
+| 12   | UL-DCCH message on SRB1, the payload, without integrity protection, as a `SecurityModeFailure` is sent     |
 
-Only the RRC messages of steps 0 to 2 are mutated; the other steps are messages the harness builds, which start a
+Only the RRC messages of steps 0 to 2 and 12 are mutated; the other steps are messages the harness builds, which start a
 procedure that the messages after them then answer. Most UL-DCCH messages are only handled while a procedure waits for
 them: a `UECapabilityInformation`, for example, only reaches the capability decoding after the `UECapabilityEnquiry` of
 step 4, and a `RRCReconfigurationComplete` only completes something after step 5, 6 or 7. A single message per input
@@ -447,7 +448,8 @@ would be dropped on integrity failure and the UE released, so the fuzzer would n
 The DU side therefore runs its own PDCP TX entities, keyed with the AS keys the CU-CP derives for the UE: the harness
 rebuilds the security context from the K_gNB that the injected Initial Context Setup Request carries, using the same
 algorithm preferences as the CU-CP configuration. Mutated payloads are then packed the way the UE packs them, MAC-I
-included, and the CU-CP accepts them.
+included, and the CU-CP accepts them. Step 12 sends a message with a zero MAC-I instead, as a UE sends its
+`SecurityModeFailure`: the CU-CP accepts it unprotected only while the `SecurityModeCommand` is pending.
 
 A wrong key, direction or algorithm would fail silently: every input dropped, the harness still reporting healthy
 throughput while covering nothing past RRC Setup. To make that impossible to miss, the harness brings one UE all the way
