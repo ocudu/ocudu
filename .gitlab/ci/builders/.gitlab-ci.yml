@@ -781,9 +781,7 @@ image-build-publish [fedora, 44, amd64]:
 
 check fedora rohc:
   stage: verify
-  image:
-    name: ${CI_REGISTRY_IMAGE}/builder-fedora-44:${DOCKER_BUILDER_VERSION}
-    pull_policy: always
+  image: ${CI_REGISTRY_IMAGE}/builder-fedora-44:${DOCKER_BUILDER_VERSION}
   tags:
     - ${OCUDU_RUNNER_TAG}-amd64
   rules:
