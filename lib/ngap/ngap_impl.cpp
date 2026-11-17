@@ -247,6 +247,14 @@ void ngap_impl::start_request_pdu_session_timer(ngap_ue_context& ue_ctxt)
                            ue_ctxt.request_pdu_session_timer.duration().count());
 }
 
+void ngap_impl::start_release_request_timer(ngap_ue_context& ue_ctxt)
+{
+  const cu_cp_ue_index_t ue_index = ue_ctxt.ue_ids.ue_index;
+  ue_ctxt.release_request_timer.set(context.procedure_timeout,
+                                    [this, ue_index]() { on_release_request_timer_expired(ue_index); });
+  ue_ctxt.release_request_timer.run();
+}
+
 bool ngap_impl::send_initial_ue_message(cu_cp_ue_index_t ue_index, ngap_message& ngap_msg)
 {
   // Create NGAP UE.
@@ -1358,6 +1366,7 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   }
 
   ue_ctxt.release_scheduled = true;
+  ue_ctxt.release_request_timer.stop();
 
   if (ran_ue_id == ran_ue_id_t::invalid) {
     ran_ue_id = ue_ctxt.ue_ids.ran_ue_id;
@@ -1874,6 +1883,7 @@ async_task<bool> ngap_impl::handle_ue_context_release_request(const cu_cp_ue_con
                      ngap_msg.pdu.init_msg().value.ue_context_release_request()->amf_ue_ngap_id);
         CORO_EARLY_RETURN(false);
       }
+      start_release_request_timer(ue_ctxt_list[msg.ue_index]);
     }
     CORO_RETURN(true);
   });
@@ -2208,6 +2218,38 @@ void ngap_impl::on_request_pdu_session_timer_expired(cu_cp_ue_index_t ue_index)
     logger.debug("ue={}: Ignoring expired PDU session setup timer. UE context not found", ue_index);
     return;
   }
+}
+
+void ngap_impl::on_release_request_timer_expired(cu_cp_ue_index_t ue_index)
+{
+  if (!ue_ctxt_list.contains(ue_index)) {
+    logger.debug("ue={}: Ignoring expired release request timer. UE context not found", ue_index);
+    return;
+  }
+  ngap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
+  if (not ue_ctxt.release_requested or ue_ctxt.release_scheduled) {
+    // The AMF answered, or the UE is released for another reason.
+    return;
+  }
+
+  auto* ue = ue_ctxt.get_cu_cp_ue();
+  ocudu_assert(ue != nullptr,
+               "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
+               ue_ctxt.ue_ids.ue_index,
+               fmt::underlying(ue_ctxt.ue_ids.ran_ue_id),
+               ue_ctxt.ue_ids.amf_ue_id);
+
+  // Without a release, the UE would hold its resources until the AMF connection is lost.
+  ue_ctxt.logger.log_warning("No UEContextReleaseCommand received after {}ms. Releasing UE locally",
+                             ue_ctxt.release_request_timer.duration().count());
+  ue_ctxt.release_requested = false;
+  ue_ctxt.release_scheduled = true;
+  ue->schedule_async_task(launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT(cu_cp_notifier.on_new_ue_context_release_command(
+        {ue_index, ngap_cause_radio_network_t::release_due_to_ngran_generated_reason, true}));
+    CORO_RETURN();
+  }));
 }
 
 bool ngap_impl::validate_consistent_ue_id_pair(ran_ue_id_t ran_ue_ngap_id, amf_ue_id_t amf_ue_ngap_id)

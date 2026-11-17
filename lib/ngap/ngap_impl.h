@@ -186,6 +186,9 @@ private:
   /// \brief Starts the timer that releases the UE if the UE requests no PDU session.
   void start_request_pdu_session_timer(ngap_ue_context& ue_ctxt);
 
+  /// \brief Starts the timer that releases the UE locally if the AMF doesn't answer its UE Context Release Request.
+  void start_release_request_timer(ngap_ue_context& ue_ctxt);
+
   /// \brief Notify about the reception of an Initial Context Setup Request.
   /// \param[in] msg The received Initial Context Setup Request.
   void handle_initial_context_setup_request(const asn1::ngap::init_context_setup_request_s& request);
@@ -270,6 +273,9 @@ private:
 
   /// \brief Callback for the PDU Session Request Timer expiration. Triggers the release of the UE.
   void on_request_pdu_session_timer_expired(cu_cp_ue_index_t ue_index);
+
+  /// \brief Callback for the Release Request Timer expiration. Releases the UE without the AMF.
+  void on_release_request_timer_expired(cu_cp_ue_index_t ue_index);
 
   /// \brief Validates consistent UE id pair. It checks if an existing context already exists
   /// for the received AMF-UE-NGAP-ID and checks if it matches the received RAN-UE-NGAP-ID.

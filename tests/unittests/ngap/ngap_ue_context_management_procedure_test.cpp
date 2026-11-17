@@ -8,6 +8,7 @@
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/ngap/ngap_pdu_contents.h"
+#include "ocudu/ngap/ngap_configuration.h"
 #include "ocudu/ran/rnti.h"
 #include "ocudu/support/async/async_test_utils.h"
 #include <gtest/gtest.h>
@@ -630,6 +631,45 @@ TEST_F(ngap_ue_context_management_procedure_test,
   // Procedure should have succeeded.
   ASSERT_TRUE(t2.get());
   ASSERT_FALSE(was_ue_context_release_request_sent());
+}
+
+/// Test that the UE is released locally when the AMF doesn't answer the UE Context Release Request.
+TEST_F(ngap_ue_context_management_procedure_test,
+       when_amf_does_not_answer_ue_context_release_request_then_ue_is_released_after_procedure_timeout)
+{
+  // Test preamble.
+  cu_cp_ue_index_t ue_index = this->start_procedure();
+
+  auto& ue = test_ues.at(ue_index);
+
+  // Inject Initial Context Setup Request.
+  ngap_message init_context_setup_request =
+      generate_valid_initial_context_setup_request_message(ue.amf_ue_id.value(), ue.ran_ue_id.value());
+  ngap->handle_message(init_context_setup_request);
+
+  ASSERT_TRUE(was_ue_added());
+
+  // Trigger UE context release request.
+  cu_cp_ue_context_release_request release_request;
+  release_request.ue_index = ue_index;
+
+  async_task<bool>         t = ngap->handle_ue_context_release_request(release_request);
+  lazy_task_launcher<bool> t_launcher(t);
+  ASSERT_TRUE(t.ready());
+  ASSERT_TRUE(t.get());
+  ASSERT_TRUE(was_ue_context_release_request_sent());
+
+  // The AMF doesn't answer. The UE is kept until the procedure timeout expires.
+  const auto timeout = ngap_configuration{}.procedure_timeout;
+  for (unsigned msec_elapsed = 1; msec_elapsed < timeout.count(); ++msec_elapsed) {
+    this->tick();
+  }
+  ASSERT_FALSE(was_ue_release_requested(ue));
+  ASSERT_FALSE(was_ue_removed());
+
+  this->tick();
+  ASSERT_TRUE(was_ue_release_requested(ue));
+  ASSERT_TRUE(was_ue_removed());
 }
 
 /// Test when UE Context Release Command with inconsistent NGAP ID pair is received,

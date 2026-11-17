@@ -37,7 +37,10 @@ struct ngap_ue_context {
   /// UL NAS messages that the UE sent before the AMF sent the AMF UE NGAP ID (TS 38.413 sections 8.6.2.2 and 8.6.3.1).
   std::vector<cu_cp_ul_nas_transport> pending_ul_nas_msgs;
 
-  unique_timer                                               request_pdu_session_timer;
+  unique_timer request_pdu_session_timer;
+  /// Releases the UE locally if the AMF doesn't answer the UE CONTEXT RELEASE REQUEST (implementation-defined).
+  unique_timer release_request_timer;
+
   bool                                                       release_requested                     = false;
   bool                                                       release_scheduled                     = false;
   std::optional<cu_cp_core_network_assist_info_for_inactive> core_network_assist_info_for_inactive = std::nullopt;
@@ -56,6 +59,7 @@ struct ngap_ue_context {
     ue_ids({ue_index_, ran_ue_id_}), ue(&ue_notifier_), logger("NGAP", {ue_index_, ran_ue_id_}), ev_mng(timers_)
   {
     request_pdu_session_timer = timers_.create_timer();
+    release_request_timer     = timers_.create_timer();
   }
 
   [[nodiscard]] ngap_cu_cp_ue_notifier* get_cu_cp_ue() const { return ue; }
