@@ -235,8 +235,13 @@ class mac_sdu_rx_test_notifier : public mac_sdu_rx_notifier
 {
 public:
   byte_buffer_slice last_sdu;
+  unsigned          nof_sdus = 0;
 
-  void on_new_sdu(byte_buffer_slice sdu) override { last_sdu = std::move(sdu); }
+  void on_new_sdu(byte_buffer_slice sdu) override
+  {
+    last_sdu = std::move(sdu);
+    ++nof_sdus;
+  }
 };
 
 class mac_sdu_tx_builder_test_notifier : public mac_sdu_tx_builder

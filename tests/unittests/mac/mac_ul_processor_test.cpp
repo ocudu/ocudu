@@ -347,16 +347,17 @@ TEST(mac_ul_processor, when_sdu_is_empty_then_it_is_discarded_and_the_rest_of_th
   du_cell_index_t cell_idx = to_du_cell_index(1U);
   test_bench      t_bench(ue1_rnti, ue1_idx, cell_idx);
 
-  // Create PDU content.
-  // R/LCID MAC subheader | MAC CE Short BSR | R/F/LCID/L MAC subheader of an empty SRB1 SDU
-  // { 0x3d | 0x59 | 0x01, 0x00 }
-  byte_buffer pdu = byte_buffer::create({0x3d, 0x59, 0x01, 0x00}).value();
+  // Create PDU content. An empty SDU precedes the Short BSR, so that the BSR shows the rest of the PDU is processed,
+  // and another one ends the PDU, where its payload would start past the end of the PDU. R/F/LCID/L MAC subheader of an
+  // empty SRB1 SDU | R/LCID MAC subheader | MAC CE Short BSR | R/F/LCID/L MAC subheader of an empty SRB1 SDU { 0x01,
+  // 0x00 | 0x3d | 0x59 | 0x01, 0x00 }
+  byte_buffer pdu = byte_buffer::create({0x01, 0x00, 0x3d, 0x59, 0x01, 0x00}).value();
 
   // Send RX data indication to MAC UL
   t_bench.send_rx_indication_msg(ue1_rnti, pdu);
 
-  // The empty SDU is not forwarded to RLC.
-  ASSERT_TRUE(t_bench.get_test_ues()[ue1_idx].bearers[LCID_SRB1].ul_notifier.last_sdu.empty());
+  // The empty SDUs are not forwarded to RLC.
+  ASSERT_EQ(t_bench.get_test_ues()[ue1_idx].bearers[LCID_SRB1].ul_notifier.nof_sdus, 0U);
 
   // The Short BSR is still processed.
   mac_bsr_ce_info bsr;
