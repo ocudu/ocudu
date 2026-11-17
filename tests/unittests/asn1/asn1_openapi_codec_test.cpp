@@ -130,6 +130,15 @@ TEST(asn1_openapi_codec_test, absent_optional_fields_are_left_absent)
   ASSERT_FALSE(decoded.slice_id_present);
 }
 
+TEST(asn1_openapi_codec_test, an_absent_mandatory_field_fails_to_read)
+{
+  // sST is mandatory in S-NSSAI and sD optional.
+  s_nssai_s decoded;
+  ASSERT_TRUE(openapi::from_json(nlohmann::ordered_json::parse(R"({"sST": "01"})"), &decoded, s_nssai_table));
+  ASSERT_FALSE(openapi::from_json(nlohmann::ordered_json::parse(R"({"sD": "000017"})"), &decoded, s_nssai_table));
+  ASSERT_FALSE(openapi::from_json(nlohmann::ordered_json::object(), &decoded, s_nssai_table));
+}
+
 TEST(asn1_openapi_codec_test, a_value_outside_the_bounds_of_its_field_fails_to_read)
 {
   // aRPmax is an INTEGER (1..15), so 16 falls outside it.
