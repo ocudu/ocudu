@@ -790,8 +790,8 @@ TEST_F(e2sm_ccc_ric_control_procedure_test, sound_request_is_applied_and_acknowl
   ASSERT_EQ(du_configurator.applied.size(), 1);
 }
 
-// A header or a message that does not decode, including a list below its SIZE, leaves the request without a value
-// of E2SM-CCC.
+// A header or a message that does not decode, including one missing a mandatory field or holding a list below its
+// SIZE, leaves the request without a value of E2SM-CCC.
 TEST_F(e2sm_ccc_ric_control_procedure_test, request_whose_header_or_message_does_not_decode_fails)
 {
   const std::string hdr = make_ctrl_hdr_json();
@@ -800,9 +800,11 @@ TEST_F(e2sm_ccc_ric_control_procedure_test, request_whose_header_or_message_does
   const std::vector<std::pair<std::string, std::string>> requests = {
       {"not json", msg},
       {"[]", msg},
+      {"{}", msg},
       {R"({"controlHeaderFormat":{"ricStyleType":"2"}})", msg},
       {hdr, "not json"},
       {hdr, "[]"},
+      {hdr, "{}"},
       {hdr, R"({"controlMessageFormat":{"listOfCellsControlled":"cell"}})"},
       {hdr, R"({"controlMessageFormat":{"listOfCellsControlled":[]}})"},
       {hdr, make_ctrl_msg_json_without_structures()}};
