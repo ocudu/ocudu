@@ -273,6 +273,10 @@ bool e2sm_ccc_control_o_rrm_policy_ratio_executor::ric_control_action_supported(
   // first, and a request is acted on whole or not at all.
   bool names_this_executor = false;
   for (const auto& cell_ctrl : cell_ctrl_list) {
+    // The conversion reads the cell as an NR CGI.
+    if (cell_ctrl.cell_global_id.type() != cell_global_id_c::types::nr_cgi) {
+      return false;
+    }
     if (cell_ctrl.list_of_cfg_structures.size() == 0) {
       return false;
     }
@@ -302,6 +306,11 @@ bool e2sm_ccc_control_o_rrm_policy_ratio_executor::ric_control_action_supported(
 async_task<e2sm_ric_control_response>
 e2sm_ccc_control_o_rrm_policy_ratio_executor::execute_ric_control_action(const e2sm_ric_control_request& req)
 {
+  // The conversion below reads the message without checks, so a request that bypassed the service is checked here.
+  if (not ric_control_action_supported(req)) {
+    return return_ctrl_failure(req);
+  }
+
   odu::du_param_config_request du_ctrl_config_req = convert_to_du_config_request(req);
 
   for (const auto& cell_cfg : du_ctrl_config_req.cells) {

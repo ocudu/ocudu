@@ -216,6 +216,53 @@ TEST_F(e2sm_ccc_control_executor_test, a_first_structure_whose_values_hold_anoth
   ASSERT_FALSE(executor.ric_control_action_supported(req));
 }
 
+// A request that the packer failed to decode holds the header and message of another service model.
+TEST_F(e2sm_ccc_control_executor_test, a_request_of_another_service_model_is_not_applied)
+{
+  auto                                          task = executor.execute_ric_control_action(e2sm_ric_control_request{});
+  lazy_task_launcher<e2sm_ric_control_response> launcher(task);
+  ASSERT_TRUE(task.ready());
+  ASSERT_FALSE(task.get().success);
+  ASSERT_TRUE(du_configurator.applied.empty());
+}
+
+TEST_F(e2sm_ccc_control_executor_test, a_request_without_cells_is_not_applied)
+{
+  e2sm_ric_control_request req = make_request(1);
+  cells_of(req).resize(0);
+
+  auto                                          task = executor.execute_ric_control_action(req);
+  lazy_task_launcher<e2sm_ric_control_response> launcher(task);
+  ASSERT_TRUE(task.ready());
+  ASSERT_FALSE(task.get().success);
+  ASSERT_TRUE(du_configurator.applied.empty());
+}
+
+TEST_F(e2sm_ccc_control_executor_test, a_cell_of_eutra_cgi_is_rejected)
+{
+  e2sm_ric_control_request req = make_request(1);
+  cells_of(req)[0].cell_global_id.set_eutra_cgi();
+
+  ASSERT_FALSE(executor.ric_control_action_supported(req));
+}
+
+TEST_F(e2sm_ccc_control_executor_test, a_cell_of_eutra_cgi_is_not_applied)
+{
+  e2sm_ric_control_request req = make_request(1);
+  cells_of(req)[0].cell_global_id.set_eutra_cgi();
+
+  auto                                          task = executor.execute_ric_control_action(req);
+  lazy_task_launcher<e2sm_ric_control_response> launcher(task);
+  ASSERT_TRUE(task.ready());
+  ASSERT_FALSE(task.get().success);
+  ASSERT_TRUE(du_configurator.applied.empty());
+}
+
+TEST_F(e2sm_ccc_control_service_style_2_test, a_request_of_another_service_model_fails)
+{
+  assert_request_fails_without_configuring_the_du(e2sm_ric_control_request{});
+}
+
 TEST_F(e2sm_ccc_control_service_style_2_test, a_request_of_one_sound_structure_is_supported)
 {
   ASSERT_TRUE(service.control_request_supported(make_request(1)));

@@ -96,8 +96,6 @@ bool e2sm_ccc_control_service_style_2::control_request_supported(const e2sm_ric_
 async_task<e2sm_ric_control_response>
 e2sm_ccc_control_service_style_2::execute_control_request(const e2sm_ric_control_request& req)
 {
-  const auto& ctrl_msg = std::get<ric_ctrl_msg_s>(req.request_ctrl_msg);
-
   if (not control_request_supported(req)) {
     return launch_async([](coro_context<async_task<e2sm_ric_control_response>>& ctx) {
       CORO_BEGIN(ctx);
@@ -111,6 +109,7 @@ e2sm_ccc_control_service_style_2::execute_control_request(const e2sm_ric_control
   }
 
   // Currently, only O-RRMPolicyRatio is accepted, so all fields are the same here.
+  const auto& ctrl_msg = std::get<ric_ctrl_msg_s>(req.request_ctrl_msg);
   const auto& ran_cfg_struct =
       ctrl_msg.ctrl_msg_format.ctrl_msg_format2().list_of_cells_ctrl[0].list_of_cfg_structures[0];
   std::string ran_cfg_struct_name = ran_cfg_struct.ran_cfg_structure_name.to_string();

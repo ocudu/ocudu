@@ -6,9 +6,14 @@
 #include "common/e2ap_asn1_packer.h"
 #include "lib/e2/common/e2ap_asn1_utils.h"
 #include "lib/e2/e2sm/e2sm_ccc/e2sm_ccc_asn1_packer.h"
+#include "lib/e2/e2sm/e2sm_ccc/e2sm_ccc_control_action_du_executor.h"
+#include "lib/e2/e2sm/e2sm_ccc/e2sm_ccc_control_service_impl.h"
+#include "lib/e2/e2sm/e2sm_ccc/e2sm_ccc_impl.h"
 #include "lib/e2/procedures/e2ap_ric_control_procedure.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
+#include "ocudu/asn1/asn1_openapi_codec.h"
 #include "ocudu/support/async/async_test_utils.h"
+#include "ocudu/support/executors/manual_task_worker.h"
 #include "ocudu/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -615,4 +620,163 @@ TEST(e2sm_ccc_ric_control_response_test, failure_outcome_is_packed_in_the_failur
   ASSERT_GT(e2_response.failure->ric_ctrl_outcome.size(), 0);
   ASSERT_FALSE(e2_response.ack->ric_ctrl_outcome_present);
   ASSERT_EQ(e2_response.ack->ric_ctrl_outcome.size(), 0);
+}
+
+namespace {
+
+/// Records the operator configurations that reach the DU, and applies each of them.
+class recording_du_configurator : public dummy_du_configurator
+{
+public:
+  async_task<odu::du_param_config_response> handle_operator_config(const odu::du_param_config_request& req,
+                                                                   task_executor&                      exec) override
+  {
+    applied.push_back(req);
+    return launch_async([](coro_context<async_task<odu::du_param_config_response>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(odu::du_param_config_response{true});
+    });
+  }
+
+  std::vector<odu::du_param_config_request> applied;
+};
+
+/// Runs the RIC Control procedure against an E2 agent that serves E2SM-CCC alone, as the DU builds it.
+class e2sm_ccc_ric_control_procedure_test : public ::testing::Test
+{
+protected:
+  e2sm_ccc_ric_control_procedure_test()
+  {
+    auto service = std::make_unique<e2sm_ccc_control_service_style_2>();
+    service->add_e2sm_rc_control_action_executor(
+        std::make_unique<e2sm_ccc_control_o_rrm_policy_ratio_executor>(du_configurator, worker));
+    packer.add_e2sm_control_service(service.get());
+    auto iface = std::make_unique<e2sm_ccc_impl>(logger, packer);
+    iface->add_e2sm_control_service(std::move(service));
+    e2sm_mngr.add_e2sm_service(e2sm_ccc_asn1_packer::oid, std::move(iface));
+    e2sm_mngr.add_supported_ran_function(e2sm_ccc_asn1_packer::ran_func_id, e2sm_ccc_asn1_packer::oid);
+  }
+
+  /// Sends a RIC Control Request whose header and message are the given JSON documents.
+  void run_control_request(const std::string& hdr_json, const std::string& msg_json)
+  {
+    e2_ric_control_request request;
+    request.request->ran_function_id = e2sm_ccc_asn1_packer::ran_func_id;
+    ASSERT_TRUE(request.request->ric_ctrl_hdr.resize(hdr_json.size()));
+    std::copy(hdr_json.begin(), hdr_json.end(), request.request->ric_ctrl_hdr.begin());
+    ASSERT_TRUE(request.request->ric_ctrl_msg.resize(msg_json.size()));
+    std::copy(msg_json.begin(), msg_json.end(), request.request->ric_ctrl_msg.begin());
+
+    async_task<void>         task = launch_async<e2ap_ric_control_procedure>(request, notifier, e2sm_mngr, logger);
+    lazy_task_launcher<void> launcher(task);
+    ASSERT_TRUE(task.ready());
+  }
+
+  ocudulog::basic_logger&   logger = ocudulog::fetch_basic_logger("TEST");
+  recording_du_configurator du_configurator;
+  manual_task_worker        worker{16};
+  e2sm_ccc_asn1_packer      packer;
+  e2sm_manager              e2sm_mngr{logger};
+  e2_message                sent_msg;
+  dummy_e2_tx_pdu_notifier  notifier{sent_msg, []() {}};
+};
+
+/// Header of a control request of style 2, as JSON.
+std::string make_ctrl_hdr_json()
+{
+  asn1::e2sm_ccc::ric_ctrl_hdr_s hdr;
+  hdr.ctrl_hdr_format.ctrl_hdr_format1().ric_style_type = 2;
+  nlohmann::ordered_json j;
+  if (not asn1::openapi::to_json(j, hdr)) {
+    ADD_FAILURE() << "Failed to write the control header";
+  }
+  return j.dump();
+}
+
+/// Message of a control request that sets one O-RRMPolicyRatio of one cell, as JSON.
+std::string make_ctrl_msg_json()
+{
+  using namespace asn1::e2sm_ccc;
+
+  ric_ctrl_msg_s msg;
+  auto&          cells = msg.ctrl_msg_format.set_ctrl_msg_format2().list_of_cells_ctrl;
+  cells.resize(1);
+  auto& cell = cells.back();
+  auto& cgi  = cell.cell_global_id.set_nr_cgi();
+  cgi.nr_cell_id.from_number(1);
+  cgi.plmn_id.mcc_present = true;
+  cgi.plmn_id.mcc.from_string("001");
+  cgi.plmn_id.mnc_present = true;
+  cgi.plmn_id.mnc.from_string("01");
+
+  cell.list_of_cfg_structures.resize(1);
+  auto& structure = cell.list_of_cfg_structures.back();
+  structure.ran_cfg_structure_name.from_string("O-RRMPolicyRatio");
+  auto& policy                        = structure.new_values_of_attributes.ran_cfg_structure.set_o_rrm_policy_ratio();
+  policy.res_type_present             = true;
+  policy.res_type                     = res_type_opts::prb_dl;
+  policy.rrm_policy_min_ratio_present = true;
+  policy.rrm_policy_min_ratio         = 10;
+  policy.rrm_policy_max_ratio_present = true;
+  policy.rrm_policy_max_ratio         = 75;
+  policy.rrm_policy_ded_ratio_present = true;
+  policy.rrm_policy_ded_ratio         = 52;
+  policy.rrm_policy_member_list.resize(1);
+  auto& member               = policy.rrm_policy_member_list.back();
+  member.plmn_id_present     = true;
+  member.plmn_id.mcc_present = true;
+  member.plmn_id.mcc.from_string("001");
+  member.plmn_id.mnc_present = true;
+  member.plmn_id.mnc.from_string("01");
+  structure.old_values_of_attributes.ran_cfg_structure = structure.new_values_of_attributes.ran_cfg_structure;
+
+  nlohmann::ordered_json j;
+  if (not asn1::openapi::to_json(j, msg)) {
+    ADD_FAILURE() << "Failed to write the control message";
+  }
+  return j.dump();
+}
+
+/// Message of a control request whose one cell holds no configuration structure, as JSON.
+std::string make_ctrl_msg_json_without_structures()
+{
+  nlohmann::ordered_json j = nlohmann::ordered_json::parse(make_ctrl_msg_json());
+  j["controlMessageFormat"]["listOfCellsControlled"][0]["listOfConfigurationStructures"] =
+      nlohmann::ordered_json::array();
+  return j.dump();
+}
+
+} // namespace
+
+TEST_F(e2sm_ccc_ric_control_procedure_test, sound_request_is_applied_and_acknowledged)
+{
+  run_control_request(make_ctrl_hdr_json(), make_ctrl_msg_json());
+
+  ASSERT_EQ(sent_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(du_configurator.applied.size(), 1);
+}
+
+// A header or a message that does not decode, including a list below its SIZE, leaves the request without a value
+// of E2SM-CCC.
+TEST_F(e2sm_ccc_ric_control_procedure_test, request_whose_header_or_message_does_not_decode_fails)
+{
+  const std::string hdr = make_ctrl_hdr_json();
+  const std::string msg = make_ctrl_msg_json();
+
+  const std::vector<std::pair<std::string, std::string>> requests = {
+      {"not json", msg},
+      {"[]", msg},
+      {R"({"controlHeaderFormat":{"ricStyleType":"2"}})", msg},
+      {hdr, "not json"},
+      {hdr, "[]"},
+      {hdr, R"({"controlMessageFormat":{"listOfCellsControlled":"cell"}})"},
+      {hdr, R"({"controlMessageFormat":{"listOfCellsControlled":[]}})"},
+      {hdr, make_ctrl_msg_json_without_structures()}};
+  for (const auto& [request_hdr, request_msg] : requests) {
+    sent_msg = {};
+    run_control_request(request_hdr, request_msg);
+
+    ASSERT_TRUE(is_ric_control_failure(sent_msg)) << request_hdr << " / " << request_msg;
+    ASSERT_TRUE(du_configurator.applied.empty()) << request_hdr << " / " << request_msg;
+  }
 }
