@@ -268,16 +268,6 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf, std::optional<uint32_t> forward
     return;
   }
 
-  // Update the PDCP state to the first forwarded SDU.
-  if (not fwd_state_updated and forward_sn.has_value()) {
-    st.tx_next_ack     = *forward_sn;
-    st.tx_trans        = *forward_sn;
-    st.tx_trans_crypto = *forward_sn;
-    st.tx_reord_crypto = *forward_sn;
-    fwd_state_updated  = true;
-    logger.log_debug("Updated PDCP from forwarded SDU. st=[{}]", st);
-  }
-
   trace_point                           tx_tp           = up_tracer.now();
   std::chrono::steady_clock::time_point time_of_arrival = std::chrono::steady_clock::now();
 
@@ -304,6 +294,31 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf, std::optional<uint32_t> forward
       }
       warn_on_drop_count = 0;
     }
+  }
+
+  /// If this is a forwarded SDU, we need to estimate the COUNT
+  uint32_t pdu_count;
+  if (forward_sn.has_value()) {
+    expected<uint32_t> fwd_count = estimate_forwareded_sdu_count(*forward_sn);
+    if (!fwd_count.has_value()) {
+      logger.log_warning(
+          "Dropping forwarded SDU. Cause COUNT larger then TX_NEXT. sn={} tx_next={}", *forward_sn, st.tx_next);
+      return;
+    }
+    pdu_count = fwd_count.value();
+    logger.log_debug("Forwarding SDU with estimated count={}", pdu_count);
+
+    // Update the PDCP state to the first forwarded SDU.
+    if (not fwd_state_updated) {
+      st.tx_next_ack     = pdu_count;
+      st.tx_trans        = pdu_count;
+      st.tx_trans_crypto = pdu_count;
+      st.tx_reord_crypto = pdu_count;
+      fwd_state_updated  = true;
+      logger.log_debug("Updated PDCP from forwarded SDU. st=[{}]", st);
+    }
+  } else {
+    pdu_count = st.tx_next;
   }
 
   // The PDCP is not allowed to use the same COUNT value more than once for a given security key,
@@ -333,21 +348,6 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf, std::optional<uint32_t> forward
     logger.log_info("Forward SDU. count={}", st.tx_next);
     st.tx_next++;
     return;
-  }
-
-  /// If this is a forwarded SDU, we need to estimate the COUNT
-  uint32_t pdu_count;
-  if (forward_sn.has_value()) {
-    expected<uint32_t> fwd_count = estimate_forwareded_sdu_count(*forward_sn);
-    if (!fwd_count.has_value()) {
-      logger.log_warning(
-          "Dropping forwarded SDU. Cause COUNT larger then TX_NEXT. count={} tx_next={}", pdu_count, st.tx_next);
-      return;
-    }
-    pdu_count = fwd_count.value();
-    logger.log_debug("Forwarding SDU with estimated count={}", pdu_count);
-  } else {
-    pdu_count = st.tx_next;
   }
 
   // Wrap SDU with meta information.
