@@ -18,7 +18,7 @@ const std::string e2sm_rc_asn1_packer::func_description = "RAN Control";
 const uint32_t    e2sm_rc_asn1_packer::ran_func_id      = 3;
 const uint32_t    e2sm_rc_asn1_packer::revision         = 0;
 
-e2sm_rc_asn1_packer::e2sm_rc_asn1_packer() {}
+e2sm_rc_asn1_packer::e2sm_rc_asn1_packer() : logger(ocudulog::fetch_basic_logger("E2SM-RC")) {}
 
 bool e2sm_rc_asn1_packer::add_e2sm_control_service(e2sm_control_service* control_service)
 {
@@ -51,16 +51,20 @@ e2sm_rc_asn1_packer::handle_packed_ric_control_request(const asn1::e2ap::ric_ctr
     ric_control_request.ric_call_process_id = req->ric_call_process_id.to_number();
   }
 
+  // A partly decoded header or message must not reach the control services, so return an empty request, which the
+  // procedure rejects.
   asn1::cbit_ref bref_hdr(req->ric_ctrl_hdr);
   asn1::cbit_ref bref_msg(req->ric_ctrl_msg);
   if (asn1::unpack(std::get<asn1::e2sm::e2sm_rc_ctrl_hdr_s>(ric_control_request.request_ctrl_hdr), bref_hdr) !=
       asn1::OCUDUASN_SUCCESS) {
-    fmt::println("Failed to unpack E2SM RC Control Request Header");
+    logger.error("Failed to unpack E2SM-RC Control Request Header");
+    return {};
   }
 
   if (asn1::unpack(std::get<asn1::e2sm::e2sm_rc_ctrl_msg_s>(ric_control_request.request_ctrl_msg), bref_msg) !=
       asn1::OCUDUASN_SUCCESS) {
-    fmt::println("Failed to unpack E2SM RC Control Request Message");
+    logger.error("Failed to unpack E2SM-RC Control Request Message");
+    return {};
   }
 
   if (ric_control_request.ric_ctrl_ack_request_present) {

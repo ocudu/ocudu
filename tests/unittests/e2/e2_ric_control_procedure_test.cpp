@@ -289,6 +289,40 @@ TEST_F(e2_test_setup, ric_control_procedure_rejects_plmn_without_policy_member)
   e2->handle_e2_disconnection_request();
 }
 
+TEST_F(e2_test_setup, ric_control_procedure_rejects_truncated_header)
+{
+  e2->handle_e2_tnl_connection_request();
+
+  e2_message request_msg = generate_ric_control_request_style2_action6(test_logger, make_single_member_policy_list());
+  auto&      hdr         = request_msg.pdu.init_msg().value.ric_ctrl_request()->ric_ctrl_hdr;
+  ASSERT_TRUE(hdr.resize(hdr.size() - 1));
+  e2->handle_message(request_msg);
+
+  e2_message& msg = e2_client->last_tx_e2_pdu;
+  ASSERT_EQ(msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::unsuccessful_outcome);
+  ASSERT_EQ(msg.pdu.unsuccessful_outcome().value.type(),
+            asn1::e2ap::e2ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ric_ctrl_fail);
+  ASSERT_TRUE(du_rc_param_configurator->config.rrm_policy_ratio_list.empty());
+  e2->handle_e2_disconnection_request();
+}
+
+TEST_F(e2_test_setup, ric_control_procedure_rejects_truncated_message)
+{
+  e2->handle_e2_tnl_connection_request();
+
+  e2_message request_msg = generate_ric_control_request_style2_action6(test_logger, make_single_member_policy_list());
+  auto&      ctrl_msg    = request_msg.pdu.init_msg().value.ric_ctrl_request()->ric_ctrl_msg;
+  ASSERT_TRUE(ctrl_msg.resize(ctrl_msg.size() - 1));
+  e2->handle_message(request_msg);
+
+  e2_message& msg = e2_client->last_tx_e2_pdu;
+  ASSERT_EQ(msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::unsuccessful_outcome);
+  ASSERT_EQ(msg.pdu.unsuccessful_outcome().value.type(),
+            asn1::e2ap::e2ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ric_ctrl_fail);
+  ASSERT_TRUE(du_rc_param_configurator->config.rrm_policy_ratio_list.empty());
+  e2->handle_e2_disconnection_request();
+}
+
 TEST_F(e2_test_setup, ric_control_procedure_fail)
 {
   e2->handle_e2_tnl_connection_request();
