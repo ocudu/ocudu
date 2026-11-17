@@ -75,6 +75,12 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
      R"(The number of transmit layers \(i\.e\., 3\) is out of the range \[1\.\.2\]\.)"},
     {[] {
        pusch_processor::pdu_t pdu = base_pdu;
+       pdu.nof_tx_layers          = 0;
+       return pdu;
+     },
+     R"(The number of transmit layers \(i\.e\., 0\) is out of the range \[1\.\.2\]\.)"},
+    {[] {
+       pusch_processor::pdu_t pdu = base_pdu;
        // Configure one more receive port than the maximum supported to trigger the validation failure.
        pdu.rx_ports.resize(pusch_constants::MAX_NOF_RX_PORTS + 1);
        std::iota(pdu.rx_ports.begin(), pdu.rx_ports.end(), 0);

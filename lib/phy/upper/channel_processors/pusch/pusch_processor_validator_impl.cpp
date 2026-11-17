@@ -43,10 +43,10 @@ error_type<std::string> pusch_processor_validator_impl::is_valid(const pusch_pro
   }
 
   // The number of transmit layers must be within the channel estimate limits.
-  if (pdu.nof_tx_layers > ce_dims.nof_tx_layers) {
-    return make_unexpected(fmt::format("The number of transmit layers (i.e., {}) is out of the range {}.",
-                                       pdu.nof_tx_layers,
-                                       interval<unsigned, true>(1, ce_dims.nof_tx_layers)));
+  const interval<unsigned, true> nof_tx_layers_range(1, ce_dims.nof_tx_layers);
+  if (!nof_tx_layers_range.contains(pdu.nof_tx_layers)) {
+    return make_unexpected(fmt::format(
+        "The number of transmit layers (i.e., {}) is out of the range {}.", pdu.nof_tx_layers, nof_tx_layers_range));
   }
 
   // The number of receive ports cannot exceed the maximum dimensions.
