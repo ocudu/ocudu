@@ -5,458 +5,49 @@
 
 #include "ldpc_encoder_neon.h"
 #include "neon_support.h"
-#include "ocudu/ocuduvec/binary.h"
-#include "ocudu/ocuduvec/bit.h"
-#include "ocudu/ocuduvec/circ_shift.h"
-#include "ocudu/ocuduvec/copy.h"
-#include "ocudu/ocuduvec/zero.h"
+#include <algorithm>
 
 using namespace ocudu;
-using namespace ocudu::ldpc;
 
-/// Maximum number of NEON vectors needed to represent a BG node.
-static constexpr unsigned MAX_NODE_SIZE_NEON = divide_ceil(ldpc::MAX_LIFTING_SIZE, NEON_SIZE_BYTE);
-
-// Recursively selects the proper strategy for the high-rate region by successively decreasing the value of the template
-// parameter.
-template <unsigned NODE_SIZE_NEON_PH>
-ldpc_encoder_neon::strategy_method ldpc_encoder_neon::select_hr_strategy(ldpc_base_graph_type current_bg,
-                                                                         uint8_t              current_ls_index,
-                                                                         unsigned             node_size_neon)
+template <unsigned NOF_REGISTERS>
+void ldpc_encoder_neon::compute_check_node_neon(span<uint8_t> out, unsigned i_check, unsigned nof_var_nodes) const
 {
-  if (node_size_neon != NODE_SIZE_NEON_PH) {
-    return select_hr_strategy<NODE_SIZE_NEON_PH - 1>(current_bg, current_ls_index, node_size_neon);
-  }
+  static_assert((NOF_REGISTERS >= 1) && (NOF_REGISTERS <= 3), "Only one to three registers are supported.");
 
-  if (current_bg == ldpc_base_graph_type::BG1) {
-    if (current_ls_index == 6) {
-      return &ldpc_encoder_neon::high_rate_bg1_i6_inner<NODE_SIZE_NEON_PH>;
+  uint8x16_t sum[NOF_REGISTERS];
+  std::fill_n(sum, NOF_REGISTERS, vdupq_n_u8(0));
+
+  for_each_connected_node(i_check, nof_var_nodes, [&sum](const uint8_t* doubled_node, unsigned shift) {
+    const uint8_t* data      = doubled_node + shift / 8;
+    int8_t         bit_shift = static_cast<int8_t>(shift % 8);
+
+    // Each output byte combines the trailing bits of an input byte with the leading bits of the next one. A negative
+    // shift amount shifts to the right.
+    int8x16_t head_shift = vdupq_n_s8(bit_shift);
+    int8x16_t tail_shift = vdupq_n_s8(static_cast<int8_t>(bit_shift - 8));
+    for (unsigned i_reg = 0; i_reg != NOF_REGISTERS; ++i_reg) {
+      uint8x16_t head = vshlq_u8(vld1q_u8(data + i_reg * NEON_SIZE_BYTE), head_shift);
+      uint8x16_t tail = vshlq_u8(vld1q_u8(data + i_reg * NEON_SIZE_BYTE + 1), tail_shift);
+      sum[i_reg]      = veorq_u8(sum[i_reg], vorrq_u8(head, tail));
     }
-    // If current_lifting_index is not 6...
-    return &ldpc_encoder_neon::high_rate_bg1_other_inner<NODE_SIZE_NEON_PH>;
-  }
-  // Else, if current_bg == BG2...
-  if ((current_ls_index == 3) || (current_ls_index == 7)) {
-    return &ldpc_encoder_neon::high_rate_bg2_i3_7_inner<NODE_SIZE_NEON_PH>;
-  }
-  // If current_lifting_index is neither 3 nor 7...
-  return &ldpc_encoder_neon::high_rate_bg2_other_inner<NODE_SIZE_NEON_PH>;
-}
+  });
 
-// Ensures that the recursion stops when NODE_SIZE_NEON_PH == 1.
-template <>
-ldpc_encoder_neon::strategy_method ldpc_encoder_neon::select_hr_strategy<1>(ldpc_base_graph_type current_bg,
-                                                                            uint8_t              current_ls_index,
-                                                                            unsigned /*node_size_neon*/)
-{
-  if (current_bg == ldpc_base_graph_type::BG1) {
-    if (current_ls_index == 6) {
-      return &ldpc_encoder_neon::high_rate_bg1_i6_inner<1>;
-    }
-    // If current_lifting_index is not 6...
-    return &ldpc_encoder_neon::high_rate_bg1_other_inner<1>;
-  }
-  // Else, if current_bg == BG2...
-  if ((current_ls_index == 3) || (current_ls_index == 7)) {
-    return &ldpc_encoder_neon::high_rate_bg2_i3_7_inner<1>;
-  }
-  // If current_lifting_index is neither 3 nor 7...
-  return &ldpc_encoder_neon::high_rate_bg2_other_inner<1>;
-}
-
-static constexpr unsigned BG1_K = BG1_N_FULL - BG1_M;
-static constexpr unsigned BG2_K = BG2_N_FULL - BG2_M;
-
-// Recursively selects the proper strategy for the systematic bits by successively decreasing the value of the template
-// parameter.
-template <unsigned NODE_SIZE_NEON_PH>
-ldpc_encoder_neon::strategy_method ldpc_encoder_neon::select_sys_bits_strategy(ldpc_base_graph_type current_bg,
-                                                                               unsigned             node_size_neon)
-{
-  if (node_size_neon != NODE_SIZE_NEON_PH) {
-    return select_sys_bits_strategy<NODE_SIZE_NEON_PH - 1>(current_bg, node_size_neon);
-  }
-  if (current_bg == ldpc_base_graph_type::BG1) {
-    return &ldpc_encoder_neon::systematic_bits_inner<BG1_K, BG1_M, NODE_SIZE_NEON_PH>;
-  }
-  return &ldpc_encoder_neon::systematic_bits_inner<BG2_K, BG2_M, NODE_SIZE_NEON_PH>;
-}
-
-// Ensures that the recursion stops when NODE_SIZE_NEON_PH == 1.
-template <>
-ldpc_encoder_neon::strategy_method ldpc_encoder_neon::select_sys_bits_strategy<1>(ldpc_base_graph_type current_bg,
-                                                                                  unsigned /*node_size_neon*/)
-{
-  if (current_bg == ldpc_base_graph_type::BG1) {
-    return &ldpc_encoder_neon::systematic_bits_inner<BG1_K, BG1_M, 1>;
-  }
-  return &ldpc_encoder_neon::systematic_bits_inner<BG2_K, BG2_M, 1>;
-}
-
-void ldpc_encoder_neon::select_strategy()
-{
-  ldpc_base_graph_type current_bg       = current_graph->get_base_graph();
-  uint8_t              current_ls_index = current_graph->get_lifting_index();
-
-  // Each BG node contains LS bits, which are stored in node_size_neon NEON vectors.
-  node_size_neon = divide_ceil(lifting_size, NEON_SIZE_BYTE);
-
-  systematic_bits = select_sys_bits_strategy<MAX_NODE_SIZE_NEON>(current_bg, node_size_neon);
-  high_rate       = select_hr_strategy<MAX_NODE_SIZE_NEON>(current_bg, current_ls_index, node_size_neon);
-}
-
-void ldpc_encoder_neon::load_input(const bit_buffer& in)
-{
-  unsigned node_size_byte = node_size_neon * NEON_SIZE_BYTE;
-  unsigned tail_bytes     = node_size_byte - lifting_size;
-
-  // Set state variables depending on the codeblock length.
-  codeblock_used_size = codeblock_length / lifting_size * node_size_neon;
-  length_extended     = (codeblock_length / lifting_size - bg_K) * node_size_neon;
-
-  span<uint8_t> codeblock = span<uint8_t>(codeblock_buffer).first((bg_K + bg_hr_parity_nodes) * node_size_byte);
-  for (unsigned i_node = 0; i_node != bg_K; ++i_node) {
-    ocuduvec::bit_unpack(codeblock.first(lifting_size), in, i_node * lifting_size);
-    codeblock = codeblock.last(codeblock.size() - lifting_size);
-
-    ocuduvec::zero(codeblock.first(tail_bytes));
-    codeblock = codeblock.last(codeblock.size() - tail_bytes);
-  }
-  ocuduvec::zero(codeblock);
-}
-
-// Computes the XOR logical operation (modulo-2 sum) between the contents of "in0" and "in1". The result is stored in
-// "out". The representation is unpacked (1 byte represents 1 bit).
-template <typename Type>
-static void fast_xor(span<Type> out, span<const Type> in0, span<const Type> in1)
-{
-  static_assert(sizeof(Type) == 1, "Type size must be one byte.");
-  unsigned              nof_vectors = in0.size() / NEON_SIZE_BYTE;
-  neon::neon_const_span in0_local(in0, nof_vectors);
-  neon::neon_const_span in1_local(in1, nof_vectors);
-  neon::neon_span       out_local(out, nof_vectors);
-
-  unsigned i = 0;
-  for (unsigned i_vector = 0; i_vector != nof_vectors; ++i_vector, i += NEON_SIZE_BYTE) {
-    vst1q_s8(out_local.data_at(i_vector, 0), veorq_s8(in0_local.get_at(i_vector), in1_local.get_at(i_vector)));
-  }
-
-  for (unsigned i_end = out.size(); i != i_end; ++i) {
-    out[i] = in0[i] ^ in1[i];
+  for (unsigned i_reg = 0; i_reg != NOF_REGISTERS; ++i_reg) {
+    vst1q_u8(out.data() + i_reg * NEON_SIZE_BYTE, sum[i_reg]);
   }
 }
 
-template <unsigned BG_K_PH, unsigned BG_M_PH, unsigned NODE_SIZE_NEON_PH>
-void ldpc_encoder_neon::systematic_bits_inner()
+void ldpc_encoder_neon::compute_check_node(span<uint8_t> out, unsigned i_check, unsigned nof_var_nodes) const
 {
-  static constexpr unsigned node_size_byte = NODE_SIZE_NEON_PH * NEON_SIZE_BYTE;
-  neon::neon_const_span     codeblock(codeblock_buffer, codeblock_used_size);
-  neon::neon_span           auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
-
-  std::array<int8_t, node_size_byte> tmp_blk = {};
-  span<int8_t>                       blk     = span<int8_t>(tmp_blk);
-
-  for (unsigned m = 0; m != bg_hr_parity_nodes; ++m) {
-    const ldpc::BG_adjacency_row_t& row = current_graph->get_adjacency_row(m);
-
-    for (uint16_t k : row) {
-      if ((k >= bg_K) || (k == NO_EDGE)) {
-        break;
-      }
-
-      unsigned node_shift = current_graph->get_lifted_node(m, k);
-      if (node_shift == NO_EDGE) {
-        break;
-      }
-
-      unsigned i_aux = m * NODE_SIZE_NEON_PH;
-      unsigned i_blk = k * NODE_SIZE_NEON_PH;
-
-      span<int8_t> plain_auxiliary = auxiliary.plain_span(i_aux, node_size_byte);
-
-      if (k == row[0]) {
-        ocuduvec::circ_shift_backward(
-            plain_auxiliary.first(lifting_size), codeblock.plain_span(i_blk, lifting_size), node_shift);
-      } else {
-        ocuduvec::circ_shift_backward(blk.first(lifting_size), codeblock.plain_span(i_blk, lifting_size), node_shift);
-        fast_xor<int8_t>(plain_auxiliary, blk, plain_auxiliary);
-      }
-    }
+  static_assert(max_node_nof_bytes <= 3 * NEON_SIZE_BYTE, "The lifted node does not fit in the stored registers.");
+  ocudu_assert(out.size() >= max_node_nof_bytes, "The output size (i.e., {}) is too small.", out.size());
+  if (lifting_size <= 64) {
+    ldpc_encoder_generic::compute_check_node(out, i_check, nof_var_nodes);
+  } else if (get_node_nof_bytes() <= NEON_SIZE_BYTE) {
+    compute_check_node_neon<1>(out, i_check, nof_var_nodes);
+  } else if (get_node_nof_bytes() <= 2 * NEON_SIZE_BYTE) {
+    compute_check_node_neon<2>(out, i_check, nof_var_nodes);
+  } else {
+    compute_check_node_neon<3>(out, i_check, nof_var_nodes);
   }
-}
-
-template <unsigned NODE_SIZE_NEON_PH>
-void ldpc_encoder_neon::high_rate_bg1_i6_inner()
-{
-  unsigned skip0         = bg_K * NODE_SIZE_NEON_PH;
-  unsigned skip1         = (bg_K + 1) * NODE_SIZE_NEON_PH;
-  unsigned skip2         = (bg_K + 2) * NODE_SIZE_NEON_PH;
-  unsigned skip3         = (bg_K + 3) * NODE_SIZE_NEON_PH;
-  unsigned node_size_x_2 = 2 * NODE_SIZE_NEON_PH;
-  unsigned node_size_x_3 = 3 * NODE_SIZE_NEON_PH;
-
-  neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
-
-  neon::neon_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
-
-  neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
-
-  // First chunk of parity bits.
-  for (unsigned j = 0; j != NODE_SIZE_NEON_PH; ++j) {
-    int8x16_t tmp = veorq_s8(auxiliary.get_at(j), auxiliary.get_at(NODE_SIZE_NEON_PH + j));
-    tmp           = veorq_s8(tmp, auxiliary.get_at(node_size_x_2 + j));
-    tmp           = veorq_s8(tmp, auxiliary.get_at(node_size_x_3 + j));
-    rotated_node.set_at(j, tmp);
-  }
-
-  ocuduvec::circ_shift_forward(
-      codeblock.plain_span(skip0, lifting_size), rotated_node.plain_span(0, lifting_size), 105 % lifting_size);
-
-  for (unsigned j = 0; j != NODE_SIZE_NEON_PH; ++j) {
-    int8x16_t block0 = codeblock.get_at(skip0 + j);
-    // Second chunk of parity bits.
-    codeblock.set_at(skip1 + j, veorq_s8(auxiliary.get_at(j), block0));
-    // Fourth chunk of parity bits.
-    int8x16_t block3 = veorq_s8(auxiliary.get_at(node_size_x_3 + j), block0);
-    codeblock.set_at(skip3 + j, block3);
-    // Third chunk of parity bits.
-    codeblock.set_at(skip2 + j, veorq_s8(auxiliary.get_at(node_size_x_2 + j), block3));
-  }
-}
-
-template <unsigned NODE_SIZE_NEON_PH>
-void ldpc_encoder_neon::high_rate_bg1_other_inner()
-{
-  unsigned skip0         = bg_K * NODE_SIZE_NEON_PH;
-  unsigned skip1         = (bg_K + 1) * NODE_SIZE_NEON_PH;
-  unsigned skip2         = (bg_K + 2) * NODE_SIZE_NEON_PH;
-  unsigned skip3         = (bg_K + 3) * NODE_SIZE_NEON_PH;
-  unsigned node_size_x_2 = 2 * NODE_SIZE_NEON_PH;
-  unsigned node_size_x_3 = 3 * NODE_SIZE_NEON_PH;
-
-  neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
-
-  neon::neon_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
-
-  neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
-
-  // First chunk of parity bits.
-  for (unsigned j = 0; j != NODE_SIZE_NEON_PH; ++j) {
-    int8x16_t block0 = veorq_s8(auxiliary.get_at(j), auxiliary.get_at(NODE_SIZE_NEON_PH + j));
-    block0           = veorq_s8(block0, auxiliary.get_at(node_size_x_2 + j));
-    block0           = veorq_s8(block0, auxiliary.get_at(node_size_x_3 + j));
-    codeblock.set_at(skip0 + j, block0);
-  }
-
-  ocuduvec::circ_shift_backward(rotated_node.plain_span(0, lifting_size), codeblock.plain_span(skip0, lifting_size), 1);
-
-  for (unsigned j = 0; j != NODE_SIZE_NEON_PH; ++j) {
-    int8x16_t rotated_j = rotated_node.get_at(j);
-    // Second chunk of parity bits.
-    codeblock.set_at(skip1 + j, veorq_s8(auxiliary.get_at(j), rotated_j));
-    // Fourth chunk of parity bits.
-    int8x16_t block3 = veorq_s8(auxiliary.get_at(node_size_x_3 + j), rotated_j);
-    codeblock.set_at(skip3 + j, block3);
-    // Third chunk of parity bits.
-    codeblock.set_at(skip2 + j, veorq_s8(auxiliary.get_at(node_size_x_2 + j), block3));
-  }
-}
-
-template <unsigned NODE_SIZE_NEON_PH>
-void ldpc_encoder_neon::high_rate_bg2_i3_7_inner()
-{
-  unsigned skip0         = bg_K * NODE_SIZE_NEON_PH;
-  unsigned skip1         = (bg_K + 1) * NODE_SIZE_NEON_PH;
-  unsigned skip2         = (bg_K + 2) * NODE_SIZE_NEON_PH;
-  unsigned skip3         = (bg_K + 3) * NODE_SIZE_NEON_PH;
-  unsigned node_size_x_2 = 2 * NODE_SIZE_NEON_PH;
-  unsigned node_size_x_3 = 3 * NODE_SIZE_NEON_PH;
-
-  neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
-
-  neon::neon_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
-
-  neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
-
-  // First chunk of parity bits.
-  for (unsigned j = 0; j != NODE_SIZE_NEON_PH; ++j) {
-    int8x16_t block0 = veorq_s8(auxiliary.get_at(j), auxiliary.get_at(NODE_SIZE_NEON_PH + j));
-    block0           = veorq_s8(block0, auxiliary.get_at(node_size_x_2 + j));
-    block0           = veorq_s8(block0, auxiliary.get_at(node_size_x_3 + j));
-    codeblock.set_at(skip0 + j, block0);
-  }
-
-  ocuduvec::circ_shift_backward(rotated_node.plain_span(0, lifting_size), codeblock.plain_span(skip0, lifting_size), 1);
-
-  for (unsigned j = 0; j != NODE_SIZE_NEON_PH; ++j) {
-    int8x16_t rotated_j = rotated_node.get_at(j);
-    // Second chunk of parity bits.
-    int8x16_t block_1 = veorq_s8(auxiliary.get_at(j), rotated_j);
-    codeblock.set_at(skip1 + j, block_1);
-    // Third chunk of parity bits.
-    codeblock.set_at(skip2 + j, veorq_s8(auxiliary.get_at(NODE_SIZE_NEON_PH + j), block_1));
-    // Fourth chunk of parity bits.
-    codeblock.set_at(skip3 + j, veorq_s8(auxiliary.get_at(node_size_x_3 + j), rotated_j));
-  }
-}
-
-template <unsigned NODE_SIZE_NEON_PH>
-void ldpc_encoder_neon::high_rate_bg2_other_inner()
-{
-  unsigned skip0         = bg_K * NODE_SIZE_NEON_PH;
-  unsigned skip1         = (bg_K + 1) * NODE_SIZE_NEON_PH;
-  unsigned skip2         = (bg_K + 2) * NODE_SIZE_NEON_PH;
-  unsigned skip3         = (bg_K + 3) * NODE_SIZE_NEON_PH;
-  unsigned node_size_x_2 = 2 * NODE_SIZE_NEON_PH;
-  unsigned node_size_x_3 = 3 * NODE_SIZE_NEON_PH;
-
-  neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
-
-  neon::neon_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
-
-  neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
-
-  // First chunk of parity bits.
-  for (unsigned j = 0; j != NODE_SIZE_NEON_PH; ++j) {
-    int8x16_t rotated_j = veorq_s8(auxiliary.get_at(j), auxiliary.get_at(NODE_SIZE_NEON_PH + j));
-    rotated_j           = veorq_s8(rotated_j, auxiliary.get_at(node_size_x_2 + j));
-    rotated_j           = veorq_s8(rotated_j, auxiliary.get_at(node_size_x_3 + j));
-    rotated_node.set_at(j, rotated_j);
-  }
-
-  ocuduvec::circ_shift_forward(codeblock.plain_span(skip0, lifting_size), rotated_node.plain_span(0, lifting_size), 1);
-
-  for (unsigned j = 0; j != NODE_SIZE_NEON_PH; ++j) {
-    int8x16_t block_0 = codeblock.get_at(skip0 + j);
-    // Second chunk of parity bits.
-    int8x16_t block_1 = veorq_s8(auxiliary.get_at(j), block_0);
-    codeblock.set_at(skip1 + j, block_1);
-    // Third chunk of parity bits.
-    codeblock.set_at(skip2 + j, veorq_s8(auxiliary.get_at(NODE_SIZE_NEON_PH + j), block_1));
-    // Fourth chunk of parity bits.
-    codeblock.set_at(skip3 + j, veorq_s8(auxiliary.get_at(node_size_x_3 + j), block_0));
-  }
-}
-
-void ldpc_encoder_neon::ext_region_inner(span<uint8_t> out_node, unsigned m) const
-{
-  unsigned            node_size_byte = node_size_neon * NEON_SIZE_BYTE;
-  span<const uint8_t> codeblock(codeblock_buffer);
-
-  // Get the adjacency row for the node m.
-  const ldpc::BG_adjacency_row_t& row = current_graph->get_adjacency_row(m);
-
-  // Zero node.
-  ocuduvec::zero(out_node);
-
-  // Process each of the nodes.
-  for (uint16_t k : row) {
-    // Check if the node is in codeblock range.
-    if ((k >= bg_K) || (k == NO_EDGE)) {
-      break;
-    }
-
-    // Obtain the node cyclic shift.
-    unsigned node_shift = current_graph->get_lifted_node(m, k);
-    if (node_shift == NO_EDGE) {
-      break;
-    }
-
-    // Get the view of the codeblock node.
-    span<const uint8_t> codeblock_node = codeblock.subspan(k * node_size_byte, lifting_size);
-
-    // The first time, the node is copied; afterwards combined.
-    if (k == row[0]) {
-      ocuduvec::circ_shift_backward(out_node, codeblock_node, node_shift);
-    } else {
-      fast_xor<uint8_t>(out_node.first(lifting_size - node_shift),
-                        out_node.first(lifting_size - node_shift),
-                        codeblock_node.last(lifting_size - node_shift));
-      fast_xor<uint8_t>(out_node.last(node_shift), out_node.last(node_shift), codeblock_node.first(node_shift));
-    }
-  }
-
-  for (unsigned k = 0; k != bg_hr_parity_nodes; ++k) {
-    unsigned node_shift = current_graph->get_lifted_node(m, bg_K + k);
-
-    if (node_shift == NO_EDGE) {
-      continue;
-    }
-
-    // At this point, the codeblock nodes in the extended region already contain the contribution from the systematic
-    // bits (they were computed in systematic_bits_inner). All is left to do is to sum the contribution due to the
-    // high-rate region (also stored in codeblock), with the proper circular shifts.
-    span<const uint8_t> in_node = codeblock.subspan((bg_K + k) * node_size_byte, lifting_size);
-    fast_xor<uint8_t>(out_node.first(lifting_size - node_shift),
-                      out_node.first(lifting_size - node_shift),
-                      in_node.last(lifting_size - node_shift));
-    fast_xor<uint8_t>(out_node.last(node_shift), out_node.last(node_shift), in_node.first(node_shift));
-  }
-}
-
-void ldpc_encoder_neon::write_codeblock(span<uint8_t> out, unsigned offset) const
-{
-  ocudu_assert(out.size() + offset <= bg_N_short * lifting_size,
-               "The output size (i.e., {}) plus the offset (i.e., {}) exceeds the codeblock length (i.e., {}).",
-               out.size(),
-               offset,
-               bg_N_short * lifting_size);
-
-  // Calculate the node size in bytes, considering SIMD alignment.
-  unsigned            node_size_byte = node_size_neon * NEON_SIZE_BYTE;
-  span<const uint8_t> codeblock(codeblock_buffer);
-
-  // Select the initial node. The first two blocks are shortened and the last node is not considered, since it can be
-  // incomplete.
-  unsigned i_node_begin = 2 + offset / lifting_size;
-
-  // Advance the codeblock to the initial node.
-  codeblock = codeblock.last(codeblock.size() - i_node_begin * node_size_byte);
-
-  // Calculate the offset within the first node.
-  offset = offset % lifting_size;
-
-  // End node - counts an extra node if the offset of the first node is not zero.
-  unsigned i_node_end = i_node_begin + divide_ceil(out.size() + offset, lifting_size);
-
-  for (unsigned i_node = i_node_begin; i_node != i_node_end; ++i_node) {
-    // Determine the number of bits to read from this node.
-    unsigned count = std::min(lifting_size - offset, static_cast<unsigned>(out.size()));
-
-    // Check if it is operating in the extended region.
-    if (i_node < bg_hr_parity_nodes + bg_K) {
-      ocuduvec::copy(out.first(count), codeblock.subspan(offset, count));
-    } else {
-      // Detect if the extended region can be done directly on the output.
-      bool inplace = ((offset == 0) && (count == lifting_size));
-
-      // Create temporary data.
-      static_vector<uint8_t, MAX_LIFTING_SIZE> temp(lifting_size);
-      span<uint8_t>                            node_view = temp;
-
-      // Use direct output for the extended node.
-      if (inplace) {
-        node_view = out.first(lifting_size);
-      }
-
-      // Process extended region for the given node.
-      ext_region_inner(node_view, i_node - bg_K);
-
-      // Copy data if temporal buffer was used.
-      if (!inplace) {
-        ocuduvec::copy(out.first(count), node_view.subspan(offset, count));
-      }
-    }
-
-    // Advance codeblock.
-    codeblock = codeblock.last(codeblock.size() - node_size_byte);
-
-    // Advance output.
-    out = out.last(out.size() - count);
-
-    // The offset is no longer required after the first node.
-    offset = 0;
-  }
-
-  ocudu_assert(out.empty(), "Not all the output was writen.");
 }
