@@ -672,6 +672,46 @@ TEST_F(ngap_ue_context_management_procedure_test,
   ASSERT_TRUE(was_ue_removed());
 }
 
+/// Test that the UE is released locally when its NGAP UE context moves to a new UE index while the AMF doesn't answer
+/// the UE Context Release Request, as on a reestablishment.
+TEST_F(ngap_ue_context_management_procedure_test,
+       when_ue_context_moves_to_new_ue_index_during_release_request_then_new_ue_is_released_after_procedure_timeout)
+{
+  // Test preamble.
+  cu_cp_ue_index_t ue_index = this->start_procedure();
+
+  auto& ue = test_ues.at(ue_index);
+
+  // Inject Initial Context Setup Request.
+  ngap_message init_context_setup_request =
+      generate_valid_initial_context_setup_request_message(ue.amf_ue_id.value(), ue.ran_ue_id.value());
+  ngap->handle_message(init_context_setup_request);
+
+  // Trigger UE context release request.
+  cu_cp_ue_context_release_request release_request;
+  release_request.ue_index = ue_index;
+
+  async_task<bool>         t = ngap->handle_ue_context_release_request(release_request);
+  lazy_task_launcher<bool> t_launcher(t);
+  ASSERT_TRUE(t.ready());
+  ASSERT_TRUE(t.get());
+  ASSERT_TRUE(was_ue_context_release_request_sent());
+
+  // Transfer the NGAP UE context to a new UE.
+  cu_cp_ue_index_t target_ue_index = create_ue_without_init_ue_message(rnti_t::MAX_CRNTI);
+  ASSERT_NE(target_ue_index, cu_cp_ue_index_t::invalid);
+  ASSERT_TRUE(
+      ngap->update_ue_index(target_ue_index, ue_index, ue_mng.find_ue(target_ue_index)->get_ngap_cu_cp_ue_notifier()));
+
+  // The AMF doesn't answer. The new UE is released when the procedure timeout expires.
+  const auto timeout = ngap_configuration{}.procedure_timeout;
+  for (unsigned msec_elapsed = 0; msec_elapsed < timeout.count(); ++msec_elapsed) {
+    this->tick();
+  }
+  ASSERT_TRUE(was_ue_release_requested(test_ues.at(target_ue_index)));
+  ASSERT_TRUE(was_ue_removed());
+}
+
 /// Test when UE Context Release Command with inconsistent NGAP ID pair is received,
 /// an error indication is sent.
 TEST_F(ngap_ue_context_management_procedure_test,

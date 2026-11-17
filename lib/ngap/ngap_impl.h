@@ -275,7 +275,7 @@ private:
   void on_request_pdu_session_timer_expired(cu_cp_ue_index_t ue_index);
 
   /// \brief Callback for the Release Request Timer expiration. Releases the UE without the AMF.
-  void on_release_request_timer_expired(cu_cp_ue_index_t ue_index);
+  void on_release_request_timer_expired(ran_ue_id_t ran_ue_id);
 
   /// \brief Validates consistent UE id pair. It checks if an existing context already exists
   /// for the received AMF-UE-NGAP-ID and checks if it matches the received RAN-UE-NGAP-ID.

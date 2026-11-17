@@ -249,9 +249,10 @@ void ngap_impl::start_request_pdu_session_timer(ngap_ue_context& ue_ctxt)
 
 void ngap_impl::start_release_request_timer(ngap_ue_context& ue_ctxt)
 {
-  const cu_cp_ue_index_t ue_index = ue_ctxt.ue_ids.ue_index;
+  // A reestablishment can move the UE context to a new UE index while the timer runs, but not to a new RAN UE ID.
+  const ran_ue_id_t ran_ue_id = ue_ctxt.ue_ids.ran_ue_id;
   ue_ctxt.release_request_timer.set(context.procedure_timeout,
-                                    [this, ue_index]() { on_release_request_timer_expired(ue_index); });
+                                    [this, ran_ue_id]() { on_release_request_timer_expired(ran_ue_id); });
   ue_ctxt.release_request_timer.run();
 }
 
@@ -2220,13 +2221,13 @@ void ngap_impl::on_request_pdu_session_timer_expired(cu_cp_ue_index_t ue_index)
   }
 }
 
-void ngap_impl::on_release_request_timer_expired(cu_cp_ue_index_t ue_index)
+void ngap_impl::on_release_request_timer_expired(ran_ue_id_t ran_ue_id)
 {
-  if (!ue_ctxt_list.contains(ue_index)) {
-    logger.debug("ue={}: Ignoring expired release request timer. UE context not found", ue_index);
+  if (!ue_ctxt_list.contains(ran_ue_id)) {
+    logger.debug("ran_ue={}: Ignoring expired release request timer. UE context not found", fmt::underlying(ran_ue_id));
     return;
   }
-  ngap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
+  ngap_ue_context& ue_ctxt = ue_ctxt_list[ran_ue_id];
   if (not ue_ctxt.release_requested or ue_ctxt.release_scheduled) {
     // The AMF answered, or the UE is released for another reason.
     return;
@@ -2244,12 +2245,20 @@ void ngap_impl::on_release_request_timer_expired(cu_cp_ue_index_t ue_index)
                              ue_ctxt.release_request_timer.duration().count());
   ue_ctxt.release_requested = false;
   ue_ctxt.release_scheduled = true;
-  ue->schedule_async_task(launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
-    CORO_BEGIN(ctx);
-    CORO_AWAIT(cu_cp_notifier.on_new_ue_context_release_command(
-        {ue_index, ngap_cause_radio_network_t::release_due_to_ngran_generated_reason, true}));
-    CORO_RETURN();
-  }));
+  if (not ue->schedule_async_task(
+          launch_async([this, ue_index = ue_ctxt.ue_ids.ue_index](coro_context<async_task<void>>& ctx) {
+            CORO_BEGIN(ctx);
+            CORO_AWAIT(cu_cp_notifier.on_new_ue_context_release_command(
+                {ue_index, ngap_cause_radio_network_t::release_due_to_ngran_generated_reason, true}));
+            CORO_RETURN();
+          }))) {
+    // Keep waiting for the AMF, and retry the local release when the timer expires again.
+    ue_ctxt.logger.log_warning("Cannot schedule the local release. Retrying in {}ms",
+                               ue_ctxt.release_request_timer.duration().count());
+    ue_ctxt.release_requested = true;
+    ue_ctxt.release_scheduled = false;
+    ue_ctxt.release_request_timer.run();
+  }
 }
 
 bool ngap_impl::validate_consistent_ue_id_pair(ran_ue_id_t ran_ue_ngap_id, amf_ue_id_t amf_ue_ngap_id)
