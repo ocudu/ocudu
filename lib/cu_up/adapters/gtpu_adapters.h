@@ -82,7 +82,13 @@ public:
       logger.debug("Dropped DL forwarded GTP-U SDU. PDCP DRB not connected.");
       return;
     }
+#if 0
+    // TODO: until buffering of new incoming SDUs is done correctly, we should
+    // withhold passing the forwarded PDUs to the PDCP. This is to avoid re-ordering of SDUs without SN
+    // forwarded and non-forwarded.
+    // When the end-marker handling is correctly implemented, we can start forwarding PDUs.
     pdcp_handler->handle_sdu(std::move(tpdu), pdcp_pdu_number);
+#endif
   }
 
 private:
