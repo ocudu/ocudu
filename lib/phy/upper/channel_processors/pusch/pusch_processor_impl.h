@@ -103,11 +103,10 @@ public:
   pusch_processor_impl(configuration& config);
 
   // See interface for documentation.
-  void process(span<uint8_t>                    data,
-               unique_rx_buffer                 rm_buffer,
-               pusch_processor_result_notifier& notifier,
+  void process(pusch_processor_result_notifier& notifier,
                const resource_grid_reader&      grid,
-               const pdu_t&                     pdu) override;
+               const common_parameters&         common,
+               span<ue_specific_parameters>     ues) override;
 
 private:
   /// \brief Notifier for the PUSCH channel estimator.
@@ -128,7 +127,8 @@ private:
     /// \param[in,out] dependencies Pointer to the dependencies object assigned to the PUSCH processor.
     /// \param[in]     notifier_    Result notification interface.
     /// \param[in]     grid_        Source resource grid.
-    /// \param[in]     pdu_         Necessary parameters to process the PUSCH transmission.
+    /// \param[in]     pdu_         Parameters common to all the UEs that share the transmission.
+    /// \param[in]     ue_          Grant of the UE.
     /// \param[in]     dmrs_type_   DM-RS type used by the PUSCH transmission.
     /// \param[in]     cdm_         Number of CDM groups without data in the PUSCH transmission.
     /// \return A reference to the configured notifier.
@@ -137,7 +137,8 @@ private:
                                              concurrent_dependencies_pool_type::ptr dependencies_,
                                              pusch_processor_result_notifier&       notifier_,
                                              const resource_grid_reader&            grid_,
-                                             const pdu_t&                           pdu_,
+                                             const common_parameters&               pdu_,
+                                             const ue_grant&                        ue_,
                                              dmrs_config_type                       dmrs_type_,
                                              unsigned                               cdm_)
     {
@@ -148,6 +149,7 @@ private:
       [[maybe_unused]] auto        prev_dependencies = std::exchange(dependencies, std::move(dependencies_));
       [[maybe_unused]] const auto* prev_grid         = std::exchange(grid, &grid_);
       [[maybe_unused]] const auto* prev_pdu          = std::exchange(pdu, &pdu_);
+      [[maybe_unused]] const auto* prev_ue           = std::exchange(ue, &ue_);
       used_dmrs_type                                 = dmrs_type_;
       nof_cdm_groups_without_data                    = cdm_;
 
@@ -158,6 +160,7 @@ private:
       ocudu_assert(prev_dependencies == nullptr, "Detected dependencies overwrite.");
       ocudu_assert(prev_grid == nullptr, "Detected grid overwrite.");
       ocudu_assert(prev_pdu == nullptr, "Detected PDU overwrite.");
+      ocudu_assert(prev_ue == nullptr, "Detected UE grant overwrite.");
 
       // Return its own reference to the estimator callback interface.
       return *this;
@@ -170,13 +173,15 @@ private:
       // Move current transmission parameters to the stack.
       pusch_processor_result_notifier* current_notifier = std::exchange(notifier, nullptr);
       const resource_grid_reader*      current_grid     = std::exchange(grid, nullptr);
-      const pdu_t*                     current_pdu      = std::exchange(pdu, nullptr);
+      const common_parameters*         current_pdu      = std::exchange(pdu, nullptr);
+      const ue_grant*                  current_ue       = std::exchange(ue, nullptr);
       span<uint8_t>                    current_data     = std::exchange(data, {});
 
       // Verify the parameters are valid before continuing with the processing.
       ocudu_assert(current_notifier != nullptr, "Invalid notifier.");
       ocudu_assert(current_grid != nullptr, "Invalid grid.");
       ocudu_assert(current_pdu != nullptr, "Invalid PDU.");
+      ocudu_assert(current_ue != nullptr, "Invalid UE grant.");
       ocudu_assert((current_data.data() != nullptr) && (!current_data.empty()), "Invalid data.");
 
       // Keep processing the PUSCH reception. The notifier can be configured for a different reception before returning.
@@ -187,6 +192,7 @@ private:
                                       est_results,
                                       *current_grid,
                                       *current_pdu,
+                                      *current_ue,
                                       used_dmrs_type,
                                       nof_cdm_groups_without_data);
     }
@@ -203,8 +209,10 @@ private:
     pusch_processor_result_notifier* notifier = nullptr;
     /// Pointer to the reader of the resource grid containing the PUSCH transmission.
     const resource_grid_reader* grid = nullptr;
-    /// Pointer to the PDU describing the processed PUSCH transmission.
-    const pdu_t* pdu = nullptr;
+    /// Pointer to the parameters common to all the UEs of the processed PUSCH transmission.
+    const common_parameters* pdu = nullptr;
+    /// Pointer to the grant of the UE.
+    const ue_grant* ue = nullptr;
     /// DM-RS type.
     dmrs_config_type used_dmrs_type = dmrs_config_type::type1;
     /// Number of CDM groups without data.
@@ -238,7 +246,8 @@ private:
   /// \param[in]     notifier                     Result notification interface.
   /// \param[in]     est_results                  Results of the DM-RS channel estimator.
   /// \param[in]     grid                         Source resource grid.
-  /// \param[in]     pdu                          Necessary parameters to process the PUSCH transmission.
+  /// \param[in]     pdu                          Parameters common to all the UEs that share the transmission.
+  /// \param[in]     ue                           Grant of the UE.
   /// \param[in]     dmrs_type                    DM-RS type used by the PUSCH transmission.
   /// \param[in]     nof_cdm_groups_without_data  Number of CDM groups without data in the PUSCH transmission.
   void process_data(span<uint8_t>                          data,
@@ -247,7 +256,8 @@ private:
                     pusch_processor_result_notifier&       notifier,
                     const dmrs_pusch_estimator_results&    est_results,
                     const resource_grid_reader&            grid,
-                    const pdu_t&                           pdu,
+                    const common_parameters&               pdu,
+                    const ue_grant&                        ue,
                     dmrs_config_type                       dmrs_type,
                     unsigned                               nof_cdm_groups_without_data);
 };

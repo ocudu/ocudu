@@ -94,7 +94,11 @@ public:
   {
     return default_success_t();
   }
-  error_type<std::string> is_valid(const pusch_processor::pdu_t& pdu) const override { return default_success_t(); }
+  error_type<std::string> is_valid(const pusch_processor::common_parameters&           common,
+                                   span<const pusch_processor::ue_specific_parameters> ues) const override
+  {
+    return default_success_t();
+  }
   error_type<std::string> is_valid(const srs_estimator_configuration& config) const override
   {
     return default_success_t();
@@ -520,8 +524,8 @@ TEST_F(fapi_to_phy_translator_fixture, ntn_k_mac_pusch_pdu_carries_the_uplink_sl
 
   const auto& stored = pdus[0];
 
-  ASSERT_EQ(stored.pdu.slot, dl_slot) << "pdu.slot must carry the slot the gNB receives in";
-  ASSERT_EQ(stored.pdu.slot_offset, k_mac) << "pdu.slot_offset must carry k_mac for DMRS PN init";
+  ASSERT_EQ(stored.common.slot, dl_slot) << "pdu.slot must carry the slot the gNB receives in";
+  ASSERT_EQ(stored.common.slot_offset, k_mac) << "pdu.slot_offset must carry k_mac for DMRS PN init";
 
   ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
 }
@@ -563,10 +567,38 @@ TEST_F(fapi_to_phy_translator_fixture, terrestrial_pusch_pdu_slot_offset_is_zero
 
   const auto& stored = pdus[0];
 
-  ASSERT_EQ(stored.pdu.slot, msg_slot) << "pdu.slot must equal the message slot";
-  ASSERT_EQ(stored.pdu.slot_offset, 0U) << "pdu.slot_offset must be zero for terrestrial";
+  ASSERT_EQ(stored.common.slot, msg_slot) << "pdu.slot must equal the message slot";
+  ASSERT_EQ(stored.common.slot_offset, 0U) << "pdu.slot_offset must be zero for terrestrial";
 
   ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
+}
+
+/// Verify that a PUSCH PDU whose number of layers does not match the number of DM-RS ports is rejected.
+TEST_F(fapi_to_phy_translator_fixture, pusch_pdu_with_nof_layers_not_matching_dmrs_ports_is_rejected)
+{
+  translator.handle_new_slot(slot);
+
+  fapi::ul_tti_request msg;
+  msg.slot = slot;
+  {
+    auto& entry      = msg.pdus.emplace_back();
+    auto& pusch      = entry.pdu.emplace<fapi::ul_pusch_pdu>();
+    pusch            = unittest::build_valid_ul_pusch_pdu();
+    pusch.num_layers = 2;
+    pusch.dmrs_ports = fapi::dmrs_ports_mask(fapi::dmrs_ports_mask::max_size());
+    pusch.dmrs_ports.set(0);
+  }
+  translator.send_ul_tti_request(msg);
+
+  // The PDU must not reach the PHY.
+  ASSERT_TRUE(pdu_repo.get_pusch_pdus().empty());
+
+  // The UL_TTI.request must be reported as invalid.
+  ASSERT_TRUE(error_notifier_spy.has_on_error_indication_been_called());
+  const fapi::error_indication& error_msg = error_notifier_spy.get_message();
+  ASSERT_EQ(error_msg.message_id, fapi::message_type_id::ul_tti_request);
+  ASSERT_EQ(error_msg.error_code, fapi::error_code_id::msg_slot_err);
+  ASSERT_EQ(error_msg.slot, slot);
 }
 
 // ---- NTN k_mac PUCCH slot tests -------------------------------------------------------

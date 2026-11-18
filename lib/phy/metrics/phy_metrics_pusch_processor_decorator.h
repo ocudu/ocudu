@@ -26,22 +26,22 @@ public:
   }
 
   // See pusch_processor interface for documentation.
-  void process(span<uint8_t>                    data_,
-               unique_rx_buffer                 rm_buffer,
-               pusch_processor_result_notifier& proc_notifier,
+  void process(pusch_processor_result_notifier& proc_notifier,
                const resource_grid_reader&      grid,
-               const pdu_t&                     pdu_) override
+               const common_parameters&         common,
+               span<ue_specific_parameters>     ues) override
   {
     // Save reference to the notifier for this transmission. It must be nullptr to ensure that the processor was
     // released from previous processing.
     [[maybe_unused]] pusch_processor_result_notifier* prev_proc_notifier = std::exchange(notifier, &proc_notifier);
     ocudu_assert(prev_proc_notifier == nullptr, "The PUSCH processor is in use.");
 
-    // Save processing inputs.
-    data = data_;
-    pdu  = pdu_;
+    // Only one UE is currently supported.
+    ocudu_assert(ues.size() == 1, "Multiple UEs per PUSCH transmission are not currently supported.");
+    slot = common.slot;
+    tbs  = units::bytes(ues.front().data.size());
 
-    // Setup times.
+    // Save processing inputs.
     time_start                 = std::chrono::steady_clock::now();
     elapsed_data_and_return_ns = 0;
     elapsed_uci_ns.store(0, std::memory_order_relaxed);
@@ -51,7 +51,7 @@ public:
     {
       // Use scoped resource usage class to measure CPU usage of this block.
       resource_usage_utils::scoped_resource_usage rusage_tracker(measurements);
-      processor->process(data, std::move(rm_buffer), *this, grid, pdu);
+      processor->process(*this, grid, common, ues);
     }
     cpu_time_usage_ns.store(measurements.duration.count(), std::memory_order_relaxed);
     elapsed_data_and_return_ns |=
@@ -119,8 +119,8 @@ private:
     float evm     = sch_result.csi.get_total_evm().value_or(invalid_sinr_and_evm);
     bool  crc_ok  = sch_result.data.tb_crc_ok;
 
-    metric_notifier.on_new_metric({.slot              = pdu.slot,
-                                   .tbs               = units::bytes(data.size()),
+    metric_notifier.on_new_metric({.slot              = slot,
+                                   .tbs               = tbs,
                                    .crc_ok            = crc_ok,
                                    .elapsed_return    = std::chrono::nanoseconds(elapsed_return_ns),
                                    .elapsed_data      = std::chrono::nanoseconds(elapsed_data_ns),
@@ -141,8 +141,8 @@ private:
   std::atomic<uint64_t>                 cpu_time_usage_ns          = {};
   pusch_processor_result_notifier*      notifier                   = nullptr;
   std::unique_ptr<pusch_processor>      processor;
-  span<uint8_t>                         data;
-  pdu_t                                 pdu;
+  slot_point                            slot;
+  units::bytes                          tbs;
   pusch_processor_metric_notifier&      metric_notifier;
   pusch_processor_result_data           sch_result;
 

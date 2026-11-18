@@ -7,7 +7,6 @@
 #include "pusch_decoder_buffer_dummy.h"
 #include "pusch_processor_notifier_adaptor.h"
 #include "pusch_processor_validator_impl.h"
-#include "ocudu/adt/format.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "ocudu/phy/upper/channel_processors/pusch/formatters.h"
@@ -30,6 +29,14 @@ using namespace ocudu;
     msg = err.error();
   }
   return is_success;
+}
+
+/// Validates the PUSCH transmission parameters. Only used when asserts are active.
+[[maybe_unused]] static error_type<std::string> validate(const pusch_processor::channel_size&                ce_dims,
+                                                         const pusch_processor::common_parameters&           common,
+                                                         span<const pusch_processor::ue_specific_parameters> ues)
+{
+  return pusch_processor_validator_impl(ce_dims).is_valid(common, ues);
 }
 
 namespace {
@@ -114,11 +121,10 @@ pusch_processor_impl::pusch_processor_impl(configuration& config) :
   ocudu_assert(dec_nof_iterations != 0, "The decoder number of iterations must be non-zero.");
 }
 
-void pusch_processor_impl::process(span<uint8_t>                    data,
-                                   unique_rx_buffer                 rm_buffer,
-                                   pusch_processor_result_notifier& notifier,
+void pusch_processor_impl::process(pusch_processor_result_notifier& notifier,
                                    const resource_grid_reader&      grid,
-                                   const pusch_processor::pdu_t&    pdu)
+                                   const common_parameters&         pdu,
+                                   span<ue_specific_parameters>     ues)
 {
   // Get dependencies.
   concurrent_dependencies_pool_type::ptr dependencies = dependencies_pool->get();
@@ -126,17 +132,25 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   if (!dependencies) {
     logger.error("Failed to retrieve PUSCH processor dependencies.");
 
-    // Notify
-    if (pdu.uci.nof_harq_ack != 0) {
-      notifier.on_uci({.harq_ack  = {.payload = uci_payload_type(pdu.uci.nof_harq_ack), .status = uci_status::invalid},
-                       .csi_part1 = {},
-                       .csi_part2 = {},
-                       .csi       = {}});
-    }
+    for (ue_specific_parameters& ue_params : ues) {
+      const ue_grant& ue = ue_params.grant;
 
-    // Notify the completion of the data processing as the CRC check is KO.
-    if (pdu.codeword.has_value()) {
-      notifier.on_sch({});
+      // Unlock RM buffer.
+      ue_params.rm_buffer.unlock();
+
+      // Notify UCI.
+      if (ue.uci.nof_harq_ack != 0) {
+        notifier.on_uci({.context   = ue.context,
+                         .harq_ack  = {.payload = uci_payload_type(ue.uci.nof_harq_ack), .status = uci_status::invalid},
+                         .csi_part1 = {},
+                         .csi_part2 = {},
+                         .csi       = {}});
+      }
+
+      // Notify the completion of the data processing as the CRC check is KO.
+      if (ue.codeword.has_value()) {
+        notifier.on_sch({.context = ue.context, .data = {}, .csi = {}});
+      }
     }
 
     return;
@@ -144,7 +158,11 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
 
   // Assert PDU.
   [[maybe_unused]] std::string msg;
-  ocudu_assert(handle_validation(msg, pusch_processor_validator_impl(ce_dims).is_valid(pdu)), "{}", msg);
+  ocudu_assert(handle_validation(msg, validate(ce_dims, pdu, ues)), "{}", msg);
+
+  // Only one UE is currently supported.
+  ue_specific_parameters& ue_params = ues.front();
+  const ue_grant&         ue        = ue_params.grant;
 
   // Get RB mask relative to Point A. It assumes PUSCH is never interleaved.
   crb_bitmap rb_mask = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
@@ -174,7 +192,10 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
     ch_est_config.sequence_config = dmrs_pusch_estimator::low_papr_sequence_configuration{.n_rs_id = n_rs_id};
   } else {
     ch_est_config.sequence_config = dmrs_pusch_estimator::pseudo_random_sequence_configuration{
-        .type = dmrs_type, .nof_tx_layers = pdu.nof_tx_layers, .scrambling_id = scrambling_id, .n_scid = n_scid};
+        .type          = dmrs_type,
+        .nof_tx_layers = static_cast<unsigned>(ue.dmrs_ports.count()),
+        .scrambling_id = scrambling_id,
+        .n_scid        = n_scid};
   }
   ch_est_config.scaling      = convert_dB_to_amplitude(-get_sch_to_dmrs_ratio_dB(nof_cdm_groups_without_data));
   ch_est_config.c_prefix     = pdu.cp;
@@ -185,9 +206,17 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   ch_est_config.rx_ports.assign(pdu.rx_ports.begin(), pdu.rx_ports.end());
 
   // Configure and get the estimator notifier.
-  dmrs_pusch_estimator&          estimator          = dependencies->get_estimator();
-  dmrs_pusch_estimator_notifier& estimator_notifier = estimator_notifier_configurator.configure(
-      data, std::move(rm_buffer), std::move(dependencies), notifier, grid, pdu, dmrs_type, nof_cdm_groups_without_data);
+  dmrs_pusch_estimator&          estimator = dependencies->get_estimator();
+  dmrs_pusch_estimator_notifier& estimator_notifier =
+      estimator_notifier_configurator.configure(ue_params.data,
+                                                std::move(ue_params.rm_buffer),
+                                                std::move(dependencies),
+                                                notifier,
+                                                grid,
+                                                pdu,
+                                                ue,
+                                                dmrs_type,
+                                                nof_cdm_groups_without_data);
 
   // Run the channel estimator. When done, the notifier will trigger the remaining steps for recovering the PUSCH data.
   estimator.estimate(estimator_notifier, grid, ch_est_config);
@@ -199,7 +228,8 @@ void pusch_processor_impl::process_data(span<uint8_t>                          d
                                         pusch_processor_result_notifier&       notifier,
                                         const dmrs_pusch_estimator_results&    est_results,
                                         const resource_grid_reader&            grid,
-                                        const pdu_t&                           pdu,
+                                        const common_parameters&               pdu,
+                                        const ue_grant&                        ue,
                                         dmrs_config_type                       dmrs_type,
                                         unsigned                               nof_cdm_groups_without_data)
 {
@@ -226,28 +256,28 @@ void pusch_processor_impl::process_data(span<uint8_t>                          d
   // Configure the UL SCH transmission.
   ulsch_configuration ulsch_config;
   ulsch_config.tbs                         = units::bytes(data.size()).to_bits();
-  ulsch_config.mcs_descr                   = pdu.mcs_descr;
-  ulsch_config.nof_harq_ack_bits           = units::bits(pdu.uci.nof_harq_ack);
-  ulsch_config.nof_csi_part1_bits          = units::bits(pdu.uci.nof_csi_part1);
+  ulsch_config.mcs_descr                   = ue.mcs_descr;
+  ulsch_config.nof_harq_ack_bits           = units::bits(ue.uci.nof_harq_ack);
+  ulsch_config.nof_csi_part1_bits          = units::bits(ue.uci.nof_csi_part1);
   ulsch_config.nof_csi_part2_bits          = 0_bits;
-  ulsch_config.alpha_scaling               = pdu.uci.alpha_scaling;
-  ulsch_config.beta_offset_harq_ack        = pdu.uci.beta_offset_harq_ack;
-  ulsch_config.beta_offset_csi_part1       = pdu.uci.beta_offset_csi_part1;
-  ulsch_config.beta_offset_csi_part2       = pdu.uci.beta_offset_csi_part2;
+  ulsch_config.alpha_scaling               = ue.uci.alpha_scaling;
+  ulsch_config.beta_offset_harq_ack        = ue.uci.beta_offset_harq_ack;
+  ulsch_config.beta_offset_csi_part1       = ue.uci.beta_offset_csi_part1;
+  ulsch_config.beta_offset_csi_part2       = ue.uci.beta_offset_csi_part2;
   ulsch_config.nof_rb                      = nof_rb;
   ulsch_config.start_symbol_index          = pdu.start_symbol_index;
   ulsch_config.nof_symbols                 = pdu.nof_symbols;
   ulsch_config.dmrs_type                   = dmrs_type;
   ulsch_config.dmrs_symbol_mask            = pdu.dmrs_symbol_mask;
   ulsch_config.nof_cdm_groups_without_data = nof_cdm_groups_without_data;
-  ulsch_config.nof_layers                  = pdu.nof_tx_layers;
+  ulsch_config.nof_layers                  = ue.dmrs_ports.count();
   ulsch_config.contains_dc                 = overlap_dc;
 
   // Prepare demultiplex configuration.
   ulsch_information                info = get_ulsch_information(ulsch_config);
   ulsch_demultiplex::configuration demux_config;
-  demux_config.modulation                  = pdu.mcs_descr.modulation;
-  demux_config.nof_layers                  = pdu.nof_tx_layers;
+  demux_config.modulation                  = ue.mcs_descr.modulation;
+  demux_config.nof_layers                  = ue.dmrs_ports.count();
   demux_config.nof_prb                     = ulsch_config.nof_rb;
   demux_config.start_symbol_index          = pdu.start_symbol_index;
   demux_config.nof_symbols                 = pdu.nof_symbols;
@@ -260,7 +290,7 @@ void pusch_processor_impl::process_data(span<uint8_t>                          d
   demux_config.nof_csi_part1_bits          = ulsch_config.nof_csi_part1_bits.value();
   demux_config.nof_enc_csi_part1_bits      = info.nof_csi_part1_bits.value();
 
-  bool has_sch_data = pdu.codeword.has_value();
+  bool has_sch_data = ue.codeword.has_value();
 
   // Prepare decoder buffers with dummy instances.
   std::reference_wrapper<pusch_decoder_buffer> decoder_buffer(decoder_buffer_dummy);
@@ -271,32 +301,32 @@ void pusch_processor_impl::process_data(span<uint8_t>                          d
   pusch_processor_csi_part1_feedback_impl csi_part1_feedback(dependencies->get_csi_part2_decoder(),
                                                              *decoder,
                                                              dependencies->get_demultiplex(),
-                                                             pdu.mcs_descr.modulation,
-                                                             pdu.uci.csi_part2_size,
+                                                             ue.mcs_descr.modulation,
+                                                             ue.uci.csi_part2_size,
                                                              ulsch_config);
 
   // Prepare notifiers.
-  notifier_adaptor.new_transmission(notifier, csi_part1_feedback, csi);
+  notifier_adaptor.new_transmission(notifier, csi_part1_feedback, csi, ue.context);
   csi_part1_feedback.connect_notifier(notifier_adaptor);
 
   if (has_sch_data) {
     units::bits tbs            = units::bytes(data.size()).to_bits();
-    unsigned    nof_codeblocks = compute_nof_codeblocks(tbs, pdu.codeword->ldpc_base_graph);
+    unsigned    nof_codeblocks = compute_nof_codeblocks(tbs, ue.codeword->ldpc_base_graph);
     // A zero N_ref leaves the circular buffer unlimited, as required without limited buffer rate matching.
     units::bits Nref =
-        (pdu.tbs_lbrm != units::bytes(0)) ? ldpc::compute_N_ref(pdu.tbs_lbrm, nof_codeblocks) : units::bits(0);
+        (ue.tbs_lbrm != units::bytes(0)) ? ldpc::compute_N_ref(ue.tbs_lbrm, nof_codeblocks) : units::bits(0);
 
     // Prepare decoder configuration.
     pusch_decoder::configuration decoder_config;
-    decoder_config.base_graph          = pdu.codeword->ldpc_base_graph;
-    decoder_config.rv                  = pdu.codeword->rv;
-    decoder_config.mod                 = pdu.mcs_descr.modulation;
+    decoder_config.base_graph          = ue.codeword->ldpc_base_graph;
+    decoder_config.rv                  = ue.codeword->rv;
+    decoder_config.mod                 = ue.mcs_descr.modulation;
     decoder_config.Nref                = Nref.value();
-    decoder_config.nof_layers          = pdu.nof_tx_layers;
+    decoder_config.nof_layers          = ue.dmrs_ports.count();
     decoder_config.nof_ldpc_iterations = dec_nof_iterations;
     decoder_config.use_early_stop      = dec_enable_early_stop;
-    decoder_config.new_data            = pdu.codeword->new_data;
-    decoder_config.last_repetition     = pdu.codeword->last_repetition;
+    decoder_config.new_data            = ue.codeword->new_data;
+    decoder_config.last_repetition     = ue.codeword->last_repetition;
 
     // Setup decoder.
     decoder_buffer =
@@ -304,21 +334,21 @@ void pusch_processor_impl::process_data(span<uint8_t>                          d
 
     // If there is no expected CSI Part 2 payload, the number of UL-SCH LLRs is known without the need to decode the
     // CSI Part 1 payload.
-    if (pdu.uci.csi_part2_size.entries.empty()) {
+    if (ue.uci.csi_part2_size.entries.empty()) {
       decoder->set_nof_softbits(info.nof_ul_sch_bits);
     }
   }
 
   // Prepares HARQ-ACK notifier and buffer.
-  if (pdu.uci.nof_harq_ack != 0) {
+  if (ue.uci.nof_harq_ack != 0) {
     harq_ack_buffer = dependencies->get_harq_ack_decoder().new_transmission(
-        pdu.uci.nof_harq_ack, pdu.mcs_descr.modulation, notifier_adaptor.get_harq_ack_notifier());
+        ue.uci.nof_harq_ack, ue.mcs_descr.modulation, notifier_adaptor.get_harq_ack_notifier());
   }
 
   // Prepares CSI Part 1 notifier and buffer.
-  if (pdu.uci.nof_csi_part1 != 0) {
+  if (ue.uci.nof_csi_part1 != 0) {
     csi_part1_buffer = dependencies->get_csi_part1_decoder().new_transmission(
-        pdu.uci.nof_csi_part1, pdu.mcs_descr.modulation, notifier_adaptor.get_csi_part1_notifier());
+        ue.uci.nof_csi_part1, ue.mcs_descr.modulation, notifier_adaptor.get_csi_part1_notifier());
   }
 
   // Demultiplex SCH data, HARQ-ACK and CSI Part 1.
@@ -329,20 +359,20 @@ void pusch_processor_impl::process_data(span<uint8_t>                          d
   bool enable_transform_precoding = !std::holds_alternative<ocudu::pusch_processor::dmrs_configuration>(pdu.dmrs);
 
   pusch_demodulator::configuration demod_config;
-  demod_config.rnti                        = pdu.rnti;
+  demod_config.rnti                        = ue.context.rnti;
   demod_config.rb_mask                     = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
-  demod_config.modulation                  = pdu.mcs_descr.modulation;
+  demod_config.modulation                  = ue.mcs_descr.modulation;
   demod_config.start_symbol_index          = pdu.start_symbol_index;
   demod_config.nof_symbols                 = pdu.nof_symbols;
   demod_config.dmrs_symb_pos               = pdu.dmrs_symbol_mask;
   demod_config.dmrs_type                   = demux_config.dmrs;
   demod_config.nof_cdm_groups_without_data = ulsch_config.nof_cdm_groups_without_data;
-  demod_config.n_id                        = pdu.n_id;
-  demod_config.nof_tx_layers               = pdu.nof_tx_layers;
+  demod_config.n_id                        = ue.n_id;
+  demod_config.nof_tx_layers               = ue.dmrs_ports.count();
   demod_config.dc_position                 = pdu.dc_position;
   demod_config.enable_transform_precoding  = enable_transform_precoding;
   demod_config.rx_ports                    = pdu.rx_ports;
-  demod_config.n_rapid                     = pdu.n_rapid;
+  demod_config.n_rapid                     = ue.context.n_rapid;
   dependencies->get_demodulator().demodulate(
       demodulator_buffer, notifier_adaptor.get_demodulator_notifier(), grid, est_results, demod_config);
 }

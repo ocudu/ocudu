@@ -10,6 +10,7 @@
 #include "ocudu/phy/upper/channel_processors/pusch/formatters.h"
 #include "ocudu/phy/upper/unique_rx_buffer.h"
 #include "fmt/std.h"
+#include <algorithm>
 #include <atomic>
 
 namespace fmt {
@@ -71,33 +72,55 @@ public:
     ocudu_assert(processor, "Invalid processor.");
   }
 
-  void process(span<uint8_t>                    data_,
-               unique_rx_buffer                 rm_buffer,
-               pusch_processor_result_notifier& notifier_,
+  void process(pusch_processor_result_notifier& notifier_,
                const resource_grid_reader&      grid,
-               const pdu_t&                     pdu_) override
+               const common_parameters&         common_,
+               span<ue_specific_parameters>     ues_) override
   {
     notifier    = &notifier_;
-    data        = data_;
-    pdu         = pdu_;
+    common      = common_;
     time_start  = std::chrono::steady_clock::now();
-    time_uci    = std::chrono::time_point<std::chrono::steady_clock>();
     time_return = 0;
 
-    // Clear processor results.
-    results.sch.reset();
-    results.uci.reset();
+    // Save the UE parameters and clear the processor results.
+    ues.clear();
+    for (const ue_specific_parameters& ue : ues_) {
+      ues.push_back({.grant = ue.grant, .data = ue.data, .results = {}, .time_uci = {}});
+    }
 
-    processor->process(data, std::move(rm_buffer), *this, grid, pdu);
+    processor->process(*this, grid, common_, ues_);
     time_return = std::chrono::steady_clock::now().time_since_epoch().count();
   }
 
 private:
+  /// Collects the parameters and the results of a UE.
+  struct ue_entry {
+    /// UE grant.
+    ue_grant grant;
+    /// Received transport block data.
+    span<uint8_t> data;
+    /// Processor results.
+    fmt::pusch_results_wrapper results;
+    /// Time of the UCI notification.
+    std::chrono::time_point<std::chrono::steady_clock> time_uci;
+  };
+
+  /// Gets the UE entry that matches the given context.
+  ue_entry& get_ue(const ue_context& context)
+  {
+    auto* ue = std::find_if(ues.begin(), ues.end(), [&context](const ue_entry& entry) {
+      return (entry.grant.context.rnti == context.rnti) && (entry.grant.context.harq_id == context.harq_id);
+    });
+    ocudu_assert(ue != ues.end(), "No UE matches rnti={} h_id={}.", context.rnti, context.harq_id);
+    return *ue;
+  }
+
   void on_uci(const pusch_processor_result_control& uci) override
   {
     ocudu_assert(notifier, "Invalid notifier");
-    time_uci    = std::chrono::steady_clock::now();
-    results.uci = uci;
+    ue_entry& ue   = get_ue(uci.context);
+    ue.time_uci    = std::chrono::steady_clock::now();
+    ue.results.uci = uci;
     notifier->on_uci(uci);
   }
 
@@ -106,20 +129,21 @@ private:
     ocudu_assert(notifier, "Invalid notifier");
 
     // Save SCH results.
-    results.sch = sch;
+    ue_entry& ue   = get_ue(sch.context);
+    ue.results.sch = sch;
 
     // Data size in bytes for printing hex dump only if SCH is present and CRC is passed.
     unsigned data_size = 0;
-    if (results.sch.has_value() && results.sch->data.tb_crc_ok) {
-      data_size = data.size();
+    if (ue.results.sch.has_value() && ue.results.sch->data.tb_crc_ok) {
+      data_size = ue.data.size();
     }
 
     std::chrono::time_point<std::chrono::steady_clock> time_end = std::chrono::steady_clock::now();
 
     // Calculate the UCI report latency if available.
     std::chrono::nanoseconds time_uci_ns(0);
-    if (time_uci != std::chrono::time_point<std::chrono::steady_clock>()) {
-      time_uci_ns = time_uci - time_start;
+    if (ue.time_uci != std::chrono::time_point<std::chrono::steady_clock>()) {
+      time_uci_ns = ue.time_uci - time_start;
     }
 
     // Calculate the return latency if available.
@@ -135,51 +159,48 @@ private:
 
     if (logger.debug.enabled()) {
       // Detailed log information, including a list of all PDU fields.
-      logger.debug(pdu.slot.sfn(),
-                   pdu.slot.slot_index(),
-                   data.data(),
+      logger.debug(common.slot.sfn(),
+                   common.slot.slot_index(),
+                   ue.data.data(),
                    data_size,
-                   "PUSCH: {:s} tbs={} {:s} {} uci_{} ret_{}\n  {:n}\n  {:n}",
-                   pdu,
-                   data.size(),
-                   results,
+                   "PUSCH: {:s} {:s} tbs={} {:s} {} uci_{} ret_{}\n  {:n}\n  {:n}\n  {:n}",
+                   ue.grant,
+                   common,
+                   ue.data.size(),
+                   ue.results,
                    time_ns,
                    time_uci_ns,
                    time_return_ns,
-                   pdu,
-                   results);
+                   ue.grant,
+                   common,
+                   ue.results);
     } else {
       // Single line log entry.
-      logger.info(pdu.slot.sfn(),
-                  pdu.slot.slot_index(),
-                  data.data(),
+      logger.info(common.slot.sfn(),
+                  common.slot.slot_index(),
+                  ue.data.data(),
                   data_size,
-                  "PUSCH: {:s} tbs={} {:s} {} uci_{} ret_{}",
-                  pdu,
-                  data.size(),
-                  results,
+                  "PUSCH: {:s} {:s} tbs={} {:s} {} uci_{} ret_{}",
+                  ue.grant,
+                  common,
+                  ue.data.size(),
+                  ue.results,
                   time_ns,
                   time_uci_ns,
                   time_return_ns);
     }
 
-    // Exchanges the notifier before notifying the reception of SCH.
-    pusch_processor_result_notifier* notifier_ = nullptr;
-    std::exchange(notifier_, notifier);
-
     // Notify the SCH reception.
-    notifier_->on_sch(sch);
+    notifier->on_sch(sch);
   }
 
-  ocudulog::basic_logger&                            logger;
-  std::unique_ptr<pusch_processor>                   processor;
-  span<uint8_t>                                      data;
-  pdu_t                                              pdu;
-  pusch_processor_result_notifier*                   notifier;
-  std::chrono::time_point<std::chrono::steady_clock> time_start;
-  std::chrono::time_point<std::chrono::steady_clock> time_uci;
-  std::atomic<uint64_t>                              time_return;
-  fmt::pusch_results_wrapper                         results;
+  ocudulog::basic_logger&                                       logger;
+  std::unique_ptr<pusch_processor>                              processor;
+  common_parameters                                             common;
+  static_vector<ue_entry, pusch_constants::MAX_NOF_MU_MIMO_UES> ues;
+  pusch_processor_result_notifier*                              notifier;
+  std::chrono::time_point<std::chrono::steady_clock>            time_start;
+  std::atomic<uint64_t>                                         time_return;
 
   // Makes sure atomics are lock free.
   static_assert(std::atomic<decltype(time_return)>::is_always_lock_free);

@@ -437,9 +437,22 @@ static expected<uplink_pdus> translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tt
     }
 
     if (const auto* pusch_pdu = std::get_if<fapi::ul_pusch_pdu>(&pdu.pdu)) {
+      // The number of layers must match the number of DM-RS ports, as the PHY derives the layers from the ports.
+      if (pusch_pdu->dmrs_ports.count() != pusch_pdu->num_layers) {
+        logger.warning("Sector#{}: Skipping UL_TTI.request: PUSCH PDU number of layers (i.e., {}) does not match the "
+                       "number of DM-RS ports (i.e., {}).",
+                       sector_id,
+                       pusch_pdu->num_layers,
+                       pusch_pdu->dmrs_ports.count());
+        return make_unexpected(default_error_t{});
+      }
+
       uplink_pdu_slot_repository::pusch_pdu& ul_pdu = pdus.pusch.emplace_back();
       convert_pusch_fapi_to_phy(ul_pdu, *pusch_pdu, msg.slot, carrier_cfg.num_rx_ant, part2_repo, ntn_k_mac_slots);
-      if (error_type<std::string> phy_pusch_validator = ul_pdu_validator.is_valid(ul_pdu.pdu);
+      // Each FAPI PUSCH PDU carries a single UE. The buffers are not needed for the validation.
+      pusch_processor::ue_specific_parameters ue_params = {
+          .grant = ul_pdu.ues.front().grant, .rm_buffer = unique_rx_buffer(), .data = {}};
+      if (error_type<std::string> phy_pusch_validator = ul_pdu_validator.is_valid(ul_pdu.common, {&ue_params, 1});
           !phy_pusch_validator.has_value()) {
         logger.warning("Sector#{}: Skipping UL_TTI.request: PUSCH PDU flagged as invalid by the Upper PHY with the "
                        "following error\n    {}",

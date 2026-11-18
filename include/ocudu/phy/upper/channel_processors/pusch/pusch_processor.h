@@ -10,9 +10,12 @@
 #include "ocudu/phy/antenna_ports.h"
 #include "ocudu/phy/support/mask_types.h"
 #include "ocudu/phy/support/rb_allocation.h"
+#include "ocudu/phy/upper/dmrs_mapping.h"
+#include "ocudu/phy/upper/unique_rx_buffer.h"
 #include "ocudu/ran/cyclic_prefix.h"
 #include "ocudu/ran/dmrs/dmrs.h"
 #include "ocudu/ran/harq_id.h"
+#include "ocudu/ran/pusch/pusch_constants.h"
 #include "ocudu/ran/rnti.h"
 #include "ocudu/ran/sch/ldpc_base_graph.h"
 #include "ocudu/ran/sch/sch_mcs.h"
@@ -24,7 +27,6 @@ namespace ocudu {
 
 class pusch_processor_result_notifier;
 class resource_grid_reader;
-class unique_rx_buffer;
 
 /// \brief Describes the PUSCH processor interface.
 ///
@@ -100,31 +102,34 @@ public:
     unsigned n_rs_id;
   };
 
-  /// \brief Describes the PUSCH processing parameters.
+  /// \brief UE context.
   ///
-  /// For a valid PUSCH transmission the codeword, the UCI information or both must be present.
-  struct pdu_t {
-    /// HARQ identifier.
-    harq_id_t harq_id = INVALID_HARQ_ID;
-    /// Indicates the slot and numerology.
-    slot_point slot;
-    /// \brief Slot delay with which the message is processed.
+  /// Identifies the UE that transmits a grant. The PUSCH processor reports it with each of the UE results.
+  struct ue_context {
+    /// \brief Parameter \f$n_{RNTI}\f$ from TS38.211 Section 6.3.1.1.
     ///
-    /// Determines the number of slot that have passed since the UE transmitted to the gNB received. In other words,
-    /// the UE transmitted in slot \e n while the gNB is receiving in slot <em>n + slot_offset</em>.
-    ///
-    /// The effect of this offset is applied to the sequence generators that depend on the slot.
-    ///
-    /// This parameter is derived from the higher layers K-MAC which is specific for NTN.
-    unsigned slot_offset;
-    /// Provides \f$n_{RNTI}\f$ from TS38.211 Section 6.3.1.1 Scrambling.
+    /// It identifies the UE and initializes the scrambling sequence.
     rnti_t rnti;
-    /// Number of contiguous PRBs allocated to the BWP {1...275}.
-    unsigned bwp_size_rb;
-    /// BWP start RB index from reference CRB {0...274}.
-    unsigned bwp_start_rb;
-    /// Cyclic prefix type.
-    cyclic_prefix cp;
+    /// HARQ process identifier.
+    harq_id_t harq_id = INVALID_HARQ_ID;
+    /// \brief Random Access Preamble Index (RAPID) associated with msgA on PUSCH (Release 16). Possible values
+    /// are {0, ..., 63}.
+    ///
+    /// During 2-step RACH, the PUSCH carrying msgA is alternatively scrambled using an initialization value that
+    /// depends on the sequence index of the detected RACH preamble.
+    ///
+    /// The presence of this parameter indicates the PUSCH is a msgA and the scrambling sequence is initialized as:
+    /// \f$c_{init} = n_{RNTI} \cdot 2^{16} + n_{RAPID} \cdot 2^{10} + n_{ID}\f$
+    /// as specified in TS38.211, Section 6.3.1.1.
+    std::optional<unsigned> n_rapid;
+  };
+
+  /// \brief Describes the grant of a single UE within a PUSCH transmission.
+  ///
+  /// For a valid grant the codeword, the UCI information or both must be present.
+  struct ue_grant {
+    /// UE context.
+    ue_context context;
     /// Modulation and coding scheme.
     sch_mcs_description mcs_descr;
     /// Provides codeword description if present.
@@ -137,8 +142,50 @@ public:
     /// - {0...1023} if the higher-layer parameter dataScramblingIdentityPUSCH if configured,
     /// - \f$N^{cell}_{ID}\f$ otherwise.
     unsigned n_id;
-    /// Number of transmission layers as per TS38.211 Section 6.3.1.3.
-    unsigned nof_tx_layers;
+    /// \brief Transport block size for limited buffer rate match.
+    ///
+    /// Parameter \f$TBS_{LBRM}\f$ from TS38.212 Section 5.4.2.1, for computing the size of the circular buffer.
+    /// \remark Zero if limited buffer rate matching is not applied (\f$I_{LBRM} = 0\f$, as per TS38.212
+    /// Section 6.2.5), in which case the circular buffer has the length of the encoded codeblock.
+    units::bytes tbs_lbrm;
+    /// \brief DM-RS ports used by the UE, as per TS38.212 Tables 7.3.1.1.2-6 to 7.3.1.1.2-23.
+    ///
+    /// The number of transmission layers is equal to the number of selected ports.
+    dmrs_port_mask dmrs_ports;
+  };
+
+  /// \brief Collects the parameters of a single UE and its buffers.
+  struct ue_specific_parameters {
+    /// Dedicated UE parameters.
+    ue_grant grant;
+    /// Receive rate matching buffer.
+    unique_rx_buffer rm_buffer;
+    /// Received transport block data. Its size determines the transport block size.
+    span<uint8_t> data;
+  };
+
+  /// \brief Collects the PUSCH processing parameters common to all the UEs that share the transmission.
+  ///
+  /// The DM-RS sequence and the time-frequency allocation are common to all the UEs. Each UE has its own grant, given
+  /// by \ref ue_specific_parameters.
+  struct common_parameters {
+    /// Indicates the slot and numerology.
+    slot_point slot;
+    /// \brief Slot delay with which the message is processed.
+    ///
+    /// Determines the number of slot that have passed since the UE transmitted to the gNB received. In other words,
+    /// the UE transmitted in slot \e n while the gNB is receiving in slot <em>n + slot_offset</em>.
+    ///
+    /// The effect of this offset is applied to the sequence generators that depend on the slot.
+    ///
+    /// This parameter is derived from the higher layers K-MAC which is specific for NTN.
+    unsigned slot_offset;
+    /// Number of contiguous PRBs allocated to the BWP {1...275}.
+    unsigned bwp_size_rb;
+    /// BWP start RB index from reference CRB {0...274}.
+    unsigned bwp_start_rb;
+    /// Cyclic prefix type.
+    cyclic_prefix cp;
     /// Port indices the PUSCH reception is mapped to.
     static_vector<uint8_t, MAX_PORTS> rx_ports;
     /// Indicates which symbol in the slot transmit DMRS.
@@ -151,27 +198,11 @@ public:
     unsigned start_symbol_index;
     /// Time domain allocation number of symbols (1...14).
     unsigned nof_symbols;
-    /// \brief Transport block size for limited buffer rate match.
-    ///
-    /// Parameter \f$TBS_{LBRM}\f$ from 3GPP TS38.212 Section 5.4.2.1, for computing the size of the circular buffer.
-    /// \remark Zero if limited buffer rate matching is not applied (\f$I_{LBRM} = 0\f$, as per TS38.212
-    /// Section 6.2.5), in which case the circular buffer has the length of the encoded codeblock.
-    units::bytes tbs_lbrm;
     /// \brief Direct current position.
     ///
     /// Sets the direct current position relative to Point A.
     /// \remark An assertion is triggered if the DC position is not within the resource grid.
     std::optional<unsigned> dc_position;
-    /// \brief Random Access Preamble Index (RAPID) associated with msgA on PUSCH (Release 16). Possible values
-    /// are {0, ..., 63}.
-    ///
-    /// During 2-step RACH, the PUSCH carrying msgA is alternatively scrambled using an initialization value that
-    /// depends on the sequence index of the detected RACH preamble.
-    ///
-    /// The presence of this parameter indicates the PUSCH is a msgA and the scrambling sequence is initialized as:
-    /// \f$c_{init} = n_{RNTI} \cdot 2^{16} + n_{RAPID} \cdot 2^{10} + n_{ID}\f$
-    /// as specified in TS 38.211, Section 6.3.1.1.
-    std::optional<unsigned> n_rapid;
   };
 
   /// \brief Channel size as seen by the PUSCH channel estimator.
@@ -184,7 +215,7 @@ public:
     unsigned nof_symbols;
     /// Number of receive ports.
     unsigned nof_rx_ports;
-    /// Number of transmit layers.
+    /// Number of transmit layers, summed over all the UEs.
     unsigned nof_tx_layers;
   };
 
@@ -193,18 +224,17 @@ public:
 
   /// \brief Processes a PUSCH transmission.
   ///
-  /// The size of each transport block is determined by <tt> data[TB index].size() </tt>.
+  /// The processor takes the rate matching buffer of each UE. The size of the transport block of each UE is given by
+  /// the size of its data.
   ///
-  /// \param[out]    data      Received transport block.
-  /// \param[in,out] rm_buffer Rate matcher buffer.
-  /// \param[in]     notifier  Result notification interface.
-  /// \param[in]     grid      Source resource grid.
-  /// \param[in]     pdu       Necessary parameters to process the PUSCH transmission.
-  virtual void process(span<uint8_t>                    data,
-                       unique_rx_buffer                 rm_buffer,
-                       pusch_processor_result_notifier& notifier,
+  /// \param[in]     notifier Result notification interface.
+  /// \param[in]     grid     Source resource grid.
+  /// \param[in]     common   Parameters common to all the UEs that share the transmission.
+  /// \param[in,out] ues      Parameters and buffers of each UE.
+  virtual void process(pusch_processor_result_notifier& notifier,
                        const resource_grid_reader&      grid,
-                       const pdu_t&                     pdu) = 0;
+                       const common_parameters&         common,
+                       span<ue_specific_parameters>     ues) = 0;
 };
 
 /// \brief Describes the PUSCH processor validator interface.
@@ -215,8 +245,11 @@ public:
   virtual ~pusch_pdu_validator() = default;
 
   /// \brief Validates PUSCH processor configuration parameters.
-  /// \return A success if the parameters contained in \c pdu are supported, an error message otherwise.
-  virtual error_type<std::string> is_valid(const pusch_processor::pdu_t& pdu) const = 0;
+  /// \param[in] common Parameters common to all the UEs that share the transmission.
+  /// \param[in] ues    Grants of the UEs that share the transmission.
+  /// \return A success if the parameters are supported, an error message otherwise.
+  virtual error_type<std::string> is_valid(const pusch_processor::common_parameters&           common,
+                                           span<const pusch_processor::ue_specific_parameters> ues) const = 0;
 };
 
 } // namespace ocudu

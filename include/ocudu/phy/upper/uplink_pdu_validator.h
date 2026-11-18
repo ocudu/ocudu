@@ -45,8 +45,11 @@ public:
   virtual error_type<std::string> is_valid(const pucch_processor::format4_configuration& config) const = 0;
 
   /// \brief Validates PUSCH configuration parameters.
-  /// \return A success if the parameters contained in \c config are supported, an error message otherwise.
-  virtual error_type<std::string> is_valid(const pusch_processor::pdu_t& config) const = 0;
+  /// \param[in] common Parameters common to all the UEs that share the transmission.
+  /// \param[in] ues    Grants of the UEs that share the transmission.
+  /// \return A success if the parameters are supported, an error message otherwise.
+  virtual error_type<std::string> is_valid(const pusch_processor::common_parameters&           common,
+                                           span<const pusch_processor::ue_specific_parameters> ues) const = 0;
 
   /// \brief Validates Sounding Reference Signals channel estimator configuration.
   /// \return A success if the parameters contained in \c config are supported, an error message otherwise.

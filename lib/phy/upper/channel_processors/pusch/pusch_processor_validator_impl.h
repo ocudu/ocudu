@@ -23,7 +23,8 @@ public:
   explicit pusch_processor_validator_impl(const pusch_processor::channel_size& ce_dims_);
 
   // See interface for documentation.
-  error_type<std::string> is_valid(const pusch_processor::pdu_t& pdu) const override;
+  error_type<std::string> is_valid(const pusch_processor::common_parameters&           common,
+                                   span<const pusch_processor::ue_specific_parameters> ues) const override;
 
 private:
   pusch_processor::channel_size ce_dims;

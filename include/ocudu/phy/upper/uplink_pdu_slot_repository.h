@@ -21,12 +21,20 @@ namespace ocudu {
 class uplink_pdu_slot_repository
 {
 public:
-  /// PUSCH PDU configuration.
-  struct pusch_pdu {
+  /// PUSCH PDU configuration of a single UE.
+  struct pusch_ue_pdu {
+    /// UE grant.
+    pusch_processor::ue_grant grant;
     /// Transport block size.
     units::bytes tb_size;
-    /// PUSCH processor PDU.
-    pusch_processor::pdu_t pdu;
+  };
+
+  /// PUSCH PDU configuration.
+  struct pusch_pdu {
+    /// Parameters common to all the UEs that share the transmission.
+    pusch_processor::common_parameters common;
+    /// Parameters of each UE that shares the transmission.
+    static_vector<pusch_ue_pdu, pusch_constants::MAX_NOF_MU_MIMO_UES> ues;
   };
 
   /// PUCCH PDU configuration.

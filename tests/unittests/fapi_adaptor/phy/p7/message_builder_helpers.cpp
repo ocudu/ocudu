@@ -587,18 +587,22 @@ ul_pusch_pdu unittest::build_valid_ul_pusch_pdu()
     tp_disabled.num_dmrs_cdm_grps_no_data = generate_num_dmrs_cdm_no_data();
   }
 
+  // One DM-RS port per layer, starting at port 0.
+  unsigned        num_layers = generate_num_layers();
+  dmrs_ports_mask dmrs_ports(dmrs_ports_mask::max_size());
+  dmrs_ports.fill(0, num_layers);
+
   pdu.qam_mod_order    = generate_qam_mod_order(transform_precoding);
   pdu.mcs_index        = generate_mcs_index();
   pdu.mcs_table        = generate_mcs_table();
   pdu.nid_pusch        = generate_nid_pucch_hopping();
-  pdu.num_layers       = generate_num_layers();
+  pdu.num_layers       = num_layers;
   pdu.ul_dmrs_symb_pos = dmrs_symbol_mask(13);
   pdu.ul_dmrs_symb_pos.from_uint64(3);
-  pdu.dmrs_type                = generate_dmrs_type();
-  pdu.pusch_dmrs_scrambling_id = 32421;
-  pdu.nscid                    = generate_bool();
-  pdu.dmrs_ports               = dmrs_ports_mask(11);
-  pdu.dmrs_ports.from_uint64(4);
+  pdu.dmrs_type                  = generate_dmrs_type();
+  pdu.pusch_dmrs_scrambling_id   = 32421;
+  pdu.nscid                      = generate_bool();
+  pdu.dmrs_ports                 = dmrs_ports;
   pdu.resource_allocation_1.vrbs = generate_vrb_interval();
   pdu.tx_direct_current_location = generate_tx_direct_current_location();
   pdu.symbols                    = generate_symbols();

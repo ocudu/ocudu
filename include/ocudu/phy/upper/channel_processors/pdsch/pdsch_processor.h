@@ -142,7 +142,7 @@ public:
     // ...
     /// \brief Transport block size for limited buffer rate match.
     ///
-    /// Parameter \f$TBS_{LBRM}\f$ from 3GPP TS38.212 Section 5.4.2.1, for computing the size of the circular buffer.
+    /// Parameter \f$TBS_{LBRM}\f$ from TS38.212 Section 5.4.2.1, for computing the size of the circular buffer.
     /// \remark Use <tt> tbs_lbrm_default </tt> for maximum length.
     /// \remark Zero is reserved.
     units::bytes tbs_lbrm;

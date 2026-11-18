@@ -13,44 +13,49 @@ namespace ocudu {
 class pusch_processor_spy : public pusch_processor
 {
 public:
-  void process(span<uint8_t>                    data,
-               unique_rx_buffer                 buffer,
-               pusch_processor_result_notifier& notifier,
+  void process(pusch_processor_result_notifier& notifier,
                const resource_grid_reader&      grid,
-               const pdu_t&                     pdu) override
+               const common_parameters&         common,
+               span<ue_specific_parameters>     ues) override
   {
     processed_method_been_called = true;
 
-    // Notify completion of PUSCH UCI.
-    if ((pdu.uci.nof_harq_ack != 0) || (pdu.uci.nof_csi_part1 != 0)) {
-      pusch_processor_result_control uci_result;
+    // Notify the results of each UE.
+    for (const ue_specific_parameters& ue_params : ues) {
+      const ue_grant& ue = ue_params.grant;
 
-      // Report HARQ-ACK if present.
-      if (pdu.uci.nof_harq_ack != 0) {
-        uci_result.harq_ack.payload.resize(pdu.uci.nof_harq_ack);
-        uci_result.harq_ack.status = uci_status::valid;
-      }
+      // Notify completion of PUSCH UCI.
+      if ((ue.uci.nof_harq_ack != 0) || (ue.uci.nof_csi_part1 != 0)) {
+        pusch_processor_result_control uci_result;
+        uci_result.context = ue.context;
 
-      // Report CSI-Part1 if present.
-      if (pdu.uci.nof_csi_part1 != 0) {
-        uci_result.csi_part1.payload.resize(pdu.uci.nof_csi_part1);
-        uci_result.csi_part1.status = uci_status::valid;
-      }
-
-      // CSI Part 2: derive size from the fixed-size entry (if present).
-      if (pdu.uci.csi_part2_size.entries.size() == 1 && pdu.uci.csi_part2_size.entries[0].map.size() == 1) {
-        unsigned part2_bits = pdu.uci.csi_part2_size.entries[0].map[0];
-        if (part2_bits != 0) {
-          uci_result.csi_part2.payload.resize(part2_bits);
-          uci_result.csi_part2.status = uci_status::valid;
+        // Report HARQ-ACK if present.
+        if (ue.uci.nof_harq_ack != 0) {
+          uci_result.harq_ack.payload.resize(ue.uci.nof_harq_ack);
+          uci_result.harq_ack.status = uci_status::valid;
         }
+
+        // Report CSI-Part1 if present.
+        if (ue.uci.nof_csi_part1 != 0) {
+          uci_result.csi_part1.payload.resize(ue.uci.nof_csi_part1);
+          uci_result.csi_part1.status = uci_status::valid;
+        }
+
+        // CSI Part 2: derive size from the fixed-size entry (if present).
+        if (ue.uci.csi_part2_size.entries.size() == 1 && ue.uci.csi_part2_size.entries[0].map.size() == 1) {
+          unsigned part2_bits = ue.uci.csi_part2_size.entries[0].map[0];
+          if (part2_bits != 0) {
+            uci_result.csi_part2.payload.resize(part2_bits);
+            uci_result.csi_part2.status = uci_status::valid;
+          }
+        }
+
+        notifier.on_uci(uci_result);
       }
 
-      notifier.on_uci(uci_result);
+      // Notify completion of PUSCH data.
+      notifier.on_sch({.context = ue.context, .data = {}, .csi = {}});
     }
-
-    // Notify completion of PUSCH data.
-    notifier.on_sch({});
   }
 
   bool has_process_method_been_called() const { return processed_method_been_called; }

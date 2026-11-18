@@ -22,45 +22,75 @@ constexpr unsigned max_supported_nof_layers = 2;
 /// Default DM-RS symbol mask within the slot.
 const symbol_slot_mask dmrs_symbol_mask =
     {false, false, true, false, false, false, false, false, false, false, false, true, false, false};
+/// Creates a DM-RS port mask that selects the first \c nof_ports ports.
+dmrs_port_mask make_dmrs_ports(unsigned nof_ports)
+{
+  dmrs_port_mask ports(DMRS_MAX_NPORTS);
+  ports.fill(0, nof_ports);
+  return ports;
+}
+
+/// Default valid UE grant.
+const pusch_processor::ue_grant base_ue = {
+    .context    = {.rnti = to_rnti(8323), .harq_id = INVALID_HARQ_ID, .n_rapid = std::nullopt},
+    .mcs_descr  = {modulation_scheme::PI_2_BPSK, 0.1},
+    .codeword   = {{0, ldpc_base_graph_type::BG2, true}},
+    .uci        = {0, 1, uci_part2_size_description(1), 1, 20, 6.25, 6.25},
+    .n_id       = 935,
+    .tbs_lbrm   = units::bytes(ldpc::MAX_CODEBLOCK_SIZE / 8),
+    .dmrs_ports = make_dmrs_ports(1)};
+/// Collects the common parameters and the UE grants of a PUSCH transmission.
+struct test_pdu {
+  /// Parameters common to all the UEs.
+  pusch_processor::common_parameters common;
+  /// Grants of the UEs.
+  static_vector<pusch_processor::ue_grant, pusch_constants::MAX_NOF_MU_MIMO_UES> ues;
+};
+
 /// Default valid PUSCH processor configuration.
-const pusch_processor::pdu_t base_pdu = {.harq_id          = INVALID_HARQ_ID,
-                                         .slot             = {0, 9},
-                                         .rnti             = to_rnti(8323),
-                                         .bwp_size_rb      = 25,
-                                         .bwp_start_rb     = 0,
-                                         .cp               = cyclic_prefix::NORMAL,
-                                         .mcs_descr        = {modulation_scheme::PI_2_BPSK, 0.1},
-                                         .codeword         = {{0, ldpc_base_graph_type::BG2, true}},
-                                         .uci              = {0, 1, uci_part2_size_description(1), 1, 20, 6.25, 6.25},
-                                         .n_id             = 935,
-                                         .nof_tx_layers    = 1,
-                                         .rx_ports         = {0, 1, 2, 3},
-                                         .dmrs_symbol_mask = dmrs_symbol_mask,
-                                         .dmrs = pusch_processor::dmrs_configuration{.dmrs = dmrs_config_type::type1,
-                                                                                     .scrambling_id = 0,
-                                                                                     .n_scid        = false,
-                                                                                     .nof_cdm_groups_without_data = 2},
-                                         .freq_alloc         = rb_allocation::make_type1(15, 1),
-                                         .start_symbol_index = 0,
-                                         .nof_symbols        = 14,
-                                         .tbs_lbrm           = units::bytes(ldpc::MAX_CODEBLOCK_SIZE / 8),
-                                         .dc_position        = std::nullopt};
+const test_pdu base_pdu = {.common = {.slot             = {0, 9},
+                                      .slot_offset      = 0,
+                                      .bwp_size_rb      = 25,
+                                      .bwp_start_rb     = 0,
+                                      .cp               = cyclic_prefix::NORMAL,
+                                      .rx_ports         = {0, 1, 2, 3},
+                                      .dmrs_symbol_mask = dmrs_symbol_mask,
+                                      .dmrs       = pusch_processor::dmrs_configuration{.dmrs = dmrs_config_type::type1,
+                                                                                        .scrambling_id               = 0,
+                                                                                        .n_scid                      = false,
+                                                                                        .nof_cdm_groups_without_data = 2},
+                                      .freq_alloc = rb_allocation::make_type1(15, 1),
+                                      .start_symbol_index = 0,
+                                      .nof_symbols        = 14,
+                                      .dc_position        = std::nullopt},
+                           .ues    = {base_ue}};
+
+/// Validates a test PDU, wrapping each UE grant in a UE-specific parameter set without buffers.
+error_type<std::string> validate(const pusch_pdu_validator& validator, const test_pdu& pdu)
+{
+  static_vector<pusch_processor::ue_specific_parameters, pusch_constants::MAX_NOF_MU_MIMO_UES> ues;
+  for (const pusch_processor::ue_grant& grant : pdu.ues) {
+    ues.push_back({.grant = grant, .rm_buffer = unique_rx_buffer(), .data = {}});
+  }
+  return validator.is_valid(pdu.common, ues);
+}
 
 struct test_case_t {
-  std::function<pusch_processor::pdu_t()> get_pdu;
-  std::string                             expr;
+  std::function<test_pdu()> get_pdu;
+  std::string               expr;
 };
 
 std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 {
-  fmt::print(os, "{}", test_case.get_pdu());
+  test_pdu pdu = test_case.get_pdu();
+  fmt::print(os, "{} {}", pdu.common, fmt::join(pdu.ues, " "));
   return os;
 }
 
 const std::vector<test_case_t> pusch_processor_validator_test_data = {
     {[] {
-       pusch_processor::pdu_t pdu = base_pdu;
-       pdu.bwp_size_rb            = MAX_NOF_PRBS + 1;
+       test_pdu pdu           = base_pdu;
+       pdu.common.bwp_size_rb = MAX_NOF_PRBS + 1;
        return pdu;
      },
      fmt::format(
@@ -68,22 +98,50 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
          MAX_NOF_PRBS + 1,
          MAX_NOF_PRBS)},
     {[] {
-       pusch_processor::pdu_t pdu = base_pdu;
-       pdu.nof_tx_layers          = max_supported_nof_layers + 1;
+       test_pdu pdu               = base_pdu;
+       pdu.ues.front().dmrs_ports = make_dmrs_ports(max_supported_nof_layers + 1);
        return pdu;
      },
-     R"(The number of transmit layers \(i\.e\., 3\) is out of the range \[1\.\.2\]\.)"},
+     R"(The total number of transmit layers \(i\.e\., 3\) is out of the range \[1\.\.2\]\.)"},
     {[] {
-       pusch_processor::pdu_t pdu = base_pdu;
-       pdu.nof_tx_layers          = 0;
+       test_pdu pdu = base_pdu;
+       pdu.ues.clear();
        return pdu;
      },
-     R"(The number of transmit layers \(i\.e\., 0\) is out of the range \[1\.\.2\]\.)"},
+     R"(The number of UEs \(i\.e\., 0\) is out of the range \[1\.\.8\]\.)"},
     {[] {
-       pusch_processor::pdu_t pdu = base_pdu;
+       test_pdu pdu = base_pdu;
+       pdu.ues.push_back(base_ue);
+       pdu.ues.back().context.rnti = to_rnti(8324);
+       pdu.ues.back().dmrs_ports   = dmrs_port_mask(DMRS_MAX_NPORTS);
+       pdu.ues.back().dmrs_ports.set(1);
+       return pdu;
+     },
+     R"(Multiple UEs per PUSCH transmission \(i\.e\., 2\) are not currently supported\.)"},
+    {[] {
+       test_pdu pdu               = base_pdu;
+       pdu.ues.front().dmrs_ports = dmrs_port_mask(DMRS_MAX_NPORTS);
+       return pdu;
+     },
+     R"(The number of DM-RS ports of rnti=.* \(i\.e\., 0\) is out of the range \[1\.\.4\]\.)"},
+    {[] {
+       test_pdu pdu               = base_pdu;
+       pdu.ues.front().dmrs_ports = make_dmrs_ports(pusch_constants::MAX_NOF_LAYERS + 1);
+       return pdu;
+     },
+     R"(The number of DM-RS ports of rnti=.* \(i\.e\., 5\) is out of the range \[1\.\.4\]\.)"},
+    {[] {
+       test_pdu pdu               = base_pdu;
+       pdu.ues.front().dmrs_ports = dmrs_port_mask(DMRS_MAX_NPORTS);
+       pdu.ues.front().dmrs_ports.set(2);
+       return pdu;
+     },
+     R"(The DM-RS ports of rnti=.* \(i\.e\., .*\) must be consecutive, starting at port 0\.)"},
+    {[] {
+       test_pdu pdu = base_pdu;
        // Configure one more receive port than the maximum supported to trigger the validation failure.
-       pdu.rx_ports.resize(pusch_constants::MAX_NOF_RX_PORTS + 1);
-       std::iota(pdu.rx_ports.begin(), pdu.rx_ports.end(), 0);
+       pdu.common.rx_ports.resize(pusch_constants::MAX_NOF_RX_PORTS + 1);
+       std::iota(pdu.common.rx_ports.begin(), pdu.common.rx_ports.end(), 0);
        return pdu;
      },
      fmt::format(
@@ -91,23 +149,23 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
          pusch_constants::MAX_NOF_RX_PORTS + 1,
          pusch_constants::MAX_NOF_RX_PORTS)},
     {[] {
-       pusch_processor::pdu_t pdu = base_pdu;
-       pdu.bwp_size_rb            = 1;
+       test_pdu pdu           = base_pdu;
+       pdu.common.bwp_size_rb = 1;
        return pdu;
      },
      R"(Invalid BWP configuration, i\.e\., \[0, 1\) for the given RB allocation, i\.e\., \[15, 16\)\.)"},
     {[] {
-       pusch_processor::pdu_t pdu                                      = base_pdu;
-       pdu.uci.nof_csi_part1                                           = 0;
-       pdu.uci.csi_part2_size.entries.front().parameters.front().width = 10;
+       test_pdu pdu                                                                = base_pdu;
+       pdu.ues.front().uci.nof_csi_part1                                           = 0;
+       pdu.ues.front().uci.csi_part2_size.entries.front().parameters.front().width = 10;
        return pdu;
      },
      R"(CSI Part 1 UCI field length \(i\.e\., 0\) does not correspond with the CSI Part 2 \(i\.e\., entries=\[params=\[offset=0 width=10\] map=\[1\]\]\)\.)"},
     {[] {
-       pusch_processor::pdu_t pdu = base_pdu;
-       pdu.uci.nof_harq_ack       = 1000;
-       pdu.uci.nof_csi_part1      = 700;
-       auto& part2                = pdu.uci.csi_part2_size;
+       test_pdu pdu                      = base_pdu;
+       pdu.ues.front().uci.nof_harq_ack  = 1000;
+       pdu.ues.front().uci.nof_csi_part1 = 700;
+       auto& part2                       = pdu.ues.front().uci.csi_part2_size;
        part2.entries.clear();
        auto& e0 = part2.entries.emplace_back();
        e0.map.emplace_back(300);
@@ -115,83 +173,89 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
      },
      R"(Total UCI size \(i\.e\., 2000\) exceeds the maximum size, i\.e\., 1706\.)"},
     {[] {
-       pusch_processor::pdu_t pdu = base_pdu;
-       pdu.dmrs_symbol_mask       = {true};
+       test_pdu pdu                = base_pdu;
+       pdu.common.dmrs_symbol_mask = {true};
        return pdu;
      },
      R"(The DM-RS symbol mask size \(i\.e\., 1\) must be equal to the slot size \(i\.e\., 14\)\.)"},
 
     {[] {
-       pusch_processor::pdu_t pdu = base_pdu;
-       pdu.dmrs_symbol_mask       = symbol_slot_mask(get_nsymb_per_slot(pdu.cp));
+       test_pdu pdu                = base_pdu;
+       pdu.common.dmrs_symbol_mask = symbol_slot_mask(get_nsymb_per_slot(pdu.common.cp));
        return pdu;
      },
      R"(The number of OFDM symbols carrying DM-RS must be greater than zero\.)"},
     {[] {
-       pusch_processor::pdu_t pdu = base_pdu;
-       pdu.dmrs_symbol_mask       = symbol_slot_mask(get_nsymb_per_slot(pdu.cp));
-       pdu.dmrs_symbol_mask.set(0);
-       pdu.start_symbol_index = 1;
-       pdu.nof_symbols        = 13;
+       test_pdu pdu                = base_pdu;
+       pdu.common.dmrs_symbol_mask = symbol_slot_mask(get_nsymb_per_slot(pdu.common.cp));
+       pdu.common.dmrs_symbol_mask.set(0);
+       pdu.common.start_symbol_index = 1;
+       pdu.common.nof_symbols        = 13;
        return pdu;
      },
      R"(The index of the first OFDM symbol carrying DM-RS \(i\.e\., 0\) must be equal to or greater than the first symbol allocated to transmission \(i\.e\., 1\)\.)"},
     {[] {
-       pusch_processor::pdu_t pdu = base_pdu;
-       pdu.dmrs_symbol_mask       = symbol_slot_mask(get_nsymb_per_slot(pdu.cp));
-       pdu.dmrs_symbol_mask.set(13);
-       pdu.dmrs_symbol_mask.set(0);
-       pdu.start_symbol_index = 0;
-       pdu.nof_symbols        = 13;
+       test_pdu pdu                = base_pdu;
+       pdu.common.dmrs_symbol_mask = symbol_slot_mask(get_nsymb_per_slot(pdu.common.cp));
+       pdu.common.dmrs_symbol_mask.set(13);
+       pdu.common.dmrs_symbol_mask.set(0);
+       pdu.common.start_symbol_index = 0;
+       pdu.common.nof_symbols        = 13;
        return pdu;
      },
      R"(The index of the last OFDM symbol carrying DM-RS \(i\.e\., 13\) must be less than or equal to the last symbol allocated to transmission \(i\.e\., 12\)\.)"},
     {[] {
-       pusch_processor::pdu_t pdu = base_pdu;
-       pdu.start_symbol_index     = 0;
-       pdu.nof_symbols            = 15;
+       test_pdu pdu                  = base_pdu;
+       pdu.common.start_symbol_index = 0;
+       pdu.common.nof_symbols        = 15;
        return pdu;
      },
      R"(The symbol allocation \(i\.e\., \[0, 15\)\) exceeds the slot size \(i\.e\., 14\)\.)"},
     {[] {
-       pusch_processor::pdu_t pdu                                   = base_pdu;
-       std::get<pusch_processor::dmrs_configuration>(pdu.dmrs).dmrs = dmrs_config_type::type2;
+       test_pdu pdu                                                        = base_pdu;
+       std::get<pusch_processor::dmrs_configuration>(pdu.common.dmrs).dmrs = dmrs_config_type::type2;
        return pdu;
      },
      R"(Only DM-RS Type 1 is currently supported\.)"},
     {[] {
-       pusch_processor::pdu_t pdu                                                          = base_pdu;
-       std::get<pusch_processor::dmrs_configuration>(pdu.dmrs).nof_cdm_groups_without_data = 1;
+       test_pdu pdu                                                                               = base_pdu;
+       std::get<pusch_processor::dmrs_configuration>(pdu.common.dmrs).nof_cdm_groups_without_data = 1;
        return pdu;
      },
      R"(Only two CDM groups without data are currently supported\.)"},
     {[] {
-       pusch_processor::pdu_t pdu = base_pdu;
-       pdu.dc_position            = MAX_NOF_SUBCARRIERS;
+       test_pdu pdu                                                                               = base_pdu;
+       std::get<pusch_processor::dmrs_configuration>(pdu.common.dmrs).nof_cdm_groups_without_data = 1;
+       pdu.ues.front().dmrs_ports                                                                 = make_dmrs_ports(3);
+       return pdu;
+     },
+     R"(The DM-RS ports of rnti=.* \(i\.e\., .*\) belong to CDM groups that carry data \(number of CDM groups without data is 1\)\.)"},
+    {[] {
+       test_pdu pdu           = base_pdu;
+       pdu.common.dc_position = MAX_NOF_SUBCARRIERS;
        return pdu;
      },
      fmt::format(R"(DC position \(i\.e\., {}\) is out of range \[0\.\.{}\)\.)",
                  MAX_NOF_SUBCARRIERS,
                  MAX_NOF_SUBCARRIERS)},
     {[] {
-       pusch_processor::pdu_t pdu = base_pdu;
-       pdu.dmrs                   = pusch_processor::dmrs_transform_precoding_configuration{.n_rs_id = 0};
-       pdu.nof_tx_layers          = 2;
+       test_pdu pdu               = base_pdu;
+       pdu.common.dmrs            = pusch_processor::dmrs_transform_precoding_configuration{.n_rs_id = 0};
+       pdu.ues.front().dmrs_ports = make_dmrs_ports(2);
        return pdu;
      },
      R"(Transform precoding is only possible with one layer\.)"},
     {[] {
-       pusch_processor::pdu_t pdu = base_pdu;
-       pdu.dmrs                   = pusch_processor::dmrs_transform_precoding_configuration{.n_rs_id = 0};
-       pdu.freq_alloc             = rb_allocation::make_custom({0, 2});
+       test_pdu pdu          = base_pdu;
+       pdu.common.dmrs       = pusch_processor::dmrs_transform_precoding_configuration{.n_rs_id = 0};
+       pdu.common.freq_alloc = rb_allocation::make_custom({0, 2});
        return pdu;
      },
      R"(Transform precoding is only possible with contiguous allocations\.)"},
     {[] {
-       pusch_processor::pdu_t pdu = base_pdu;
-       pdu.dmrs                   = pusch_processor::dmrs_transform_precoding_configuration{.n_rs_id = 0};
-       pdu.freq_alloc             = rb_allocation::make_type1(0, 7);
-       pdu.nof_tx_layers          = 1;
+       test_pdu pdu          = base_pdu;
+       pdu.common.dmrs       = pusch_processor::dmrs_transform_precoding_configuration{.n_rs_id = 0};
+       pdu.common.freq_alloc = rb_allocation::make_type1(0, 7);
        return pdu;
      },
      R"(Transform precoding is only possible with a valid number of PRB\.)"},
@@ -353,10 +417,13 @@ TEST_P(PuschProcessorFixture, PuschProcessorValidatortest)
   const test_case_t& param = GetParam();
 
   // Make sure the configuration is invalid.
-  error_type<std::string> validator_out = pdu_validator->is_valid(param.get_pdu());
+  test_pdu                pdu           = param.get_pdu();
+  error_type<std::string> validator_out = validate(*pdu_validator, pdu);
   ASSERT_FALSE(validator_out.has_value()) << "Validation should fail.";
   ASSERT_TRUE(std::regex_match(validator_out.error(), std::regex(param.expr)))
-      << "The assertion message doesn't match the expected pattern.";
+      << fmt::format("The assertion message doesn't match the expected pattern:\n  Message: \"{}\"\n  Pattern: \"{}\"",
+                     validator_out.error(),
+                     param.expr);
 }
 
 TEST_F(PuschProcessorFixture, PuschProcessorValidatorSuccessPath)
@@ -364,7 +431,7 @@ TEST_F(PuschProcessorFixture, PuschProcessorValidatorSuccessPath)
   ASSERT_NE(pdu_validator, nullptr);
 
   // The base PDU is fully valid and should exercise the success return path.
-  error_type<std::string> validator_out = pdu_validator->is_valid(base_pdu);
+  error_type<std::string> validator_out = validate(*pdu_validator, base_pdu);
   ASSERT_TRUE(validator_out.has_value()) << "Validation should succeed.";
 }
 

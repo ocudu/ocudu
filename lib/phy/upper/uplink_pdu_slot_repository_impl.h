@@ -56,7 +56,7 @@ public:
   // See the uplink_pdu_slot_repository interface for documentation.
   void add_pusch_pdu(const pusch_pdu& pdu) override
   {
-    unsigned end_symbol_index = pdu.pdu.start_symbol_index + pdu.pdu.nof_symbols - 1;
+    unsigned end_symbol_index = pdu.common.start_symbol_index + pdu.common.nof_symbols - 1;
     ocudu_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index {}.", end_symbol_index);
 
     pusch_repository[end_symbol_index].push_back(pdu);

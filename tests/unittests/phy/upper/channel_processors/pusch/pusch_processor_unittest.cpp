@@ -149,39 +149,42 @@ protected:
     unsigned numerology             = to_numerology_value(scs);
     unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(scs);
 
-    // Generate PDU.
-    pdu.slot                 = slot_point(numerology, slot_count_dist(rgen) % (10240 * nof_slots_per_subframe));
-    pdu.slot_offset          = slot_offset_dist(rgen);
-    pdu.rnti                 = to_rnti(rnti_dist(rgen));
-    pdu.bwp_start_rb         = bwp_start_dist(rgen);
-    pdu.bwp_size_rb          = std::min(static_cast<unsigned>(MAX_NOF_PRBS) - pdu.bwp_start_rb, bwp_size_dist(rgen));
-    pdu.cp                   = cyclic_prefix_conf;
-    pdu.mcs_descr.modulation = modulation;
-    pdu.mcs_descr.target_code_rate = target_code_rate_dist(rgen);
+    // Generate PDU with a single UE.
+    pusch_processor::ue_grant& ue = grant;
+    pdu.slot                      = slot_point(numerology, slot_count_dist(rgen) % (10240 * nof_slots_per_subframe));
+    pdu.slot_offset               = slot_offset_dist(rgen);
+    ue.context.rnti               = to_rnti(rnti_dist(rgen));
+    ue.context.harq_id            = to_harq_id(rnti_dist(rgen) % MAX_NOF_HARQS);
+    pdu.bwp_start_rb              = bwp_start_dist(rgen);
+    pdu.bwp_size_rb         = std::min(static_cast<unsigned>(MAX_NOF_PRBS) - pdu.bwp_start_rb, bwp_size_dist(rgen));
+    pdu.cp                  = cyclic_prefix_conf;
+    ue.mcs_descr.modulation = modulation;
+    ue.mcs_descr.target_code_rate = target_code_rate_dist(rgen);
 
     if (codeword_present) {
-      pdu.codeword.emplace();
-      pdu.codeword.value().rv              = rv_dist(rgen);
-      pdu.codeword.value().ldpc_base_graph = static_cast<ldpc_base_graph_type>(ldpc_base_graph_dist(rgen));
-      pdu.codeword.value().new_data        = bool_dist(rgen) == 0;
-      pdu.codeword.value().last_repetition = bool_dist(rgen) == 0;
+      ue.codeword.emplace();
+      ue.codeword.value().rv              = rv_dist(rgen);
+      ue.codeword.value().ldpc_base_graph = static_cast<ldpc_base_graph_type>(ldpc_base_graph_dist(rgen));
+      ue.codeword.value().new_data        = bool_dist(rgen) == 0;
+      ue.codeword.value().last_repetition = bool_dist(rgen) == 0;
     }
 
     // Fill UCI configuration.
-    pdu.uci.nof_harq_ack          = nof_harq_ack_bits;
-    pdu.uci.nof_csi_part1         = nof_csi_part1_bits;
-    pdu.uci.csi_part2_size        = {};
-    pdu.uci.alpha_scaling         = 1.0F;
-    pdu.uci.beta_offset_harq_ack  = 20.0F;
-    pdu.uci.beta_offset_csi_part1 = 20.0F;
-    pdu.uci.beta_offset_csi_part2 = 20.0F;
+    ue.uci.nof_harq_ack          = nof_harq_ack_bits;
+    ue.uci.nof_csi_part1         = nof_csi_part1_bits;
+    ue.uci.csi_part2_size        = {};
+    ue.uci.alpha_scaling         = 1.0F;
+    ue.uci.beta_offset_harq_ack  = 20.0F;
+    ue.uci.beta_offset_csi_part1 = 20.0F;
+    ue.uci.beta_offset_csi_part2 = 20.0F;
 
     unsigned rb_alloc_start   = bwp_start_dist(rgen) % pdu.bwp_size_rb;
     unsigned rb_alloc_count   = std::min(pdu.bwp_size_rb - rb_alloc_start, bwp_size_dist(rgen));
     unsigned nof_symbols_slot = get_nsymb_per_slot(pdu.cp);
 
-    pdu.n_id          = n_id_dist(rgen);
-    pdu.nof_tx_layers = 1;
+    ue.n_id       = n_id_dist(rgen);
+    ue.dmrs_ports = dmrs_port_mask(DMRS_MAX_NPORTS);
+    ue.dmrs_ports.set(0);
     pdu.rx_ports.resize(nof_rx_ports);
     std::generate(pdu.rx_ports.begin(), pdu.rx_ports.end(), []() { return rx_port_dist(rgen); });
     pdu.dmrs               = pusch_processor::dmrs_configuration{.dmrs                        = dmrs_config_type::type1,
@@ -191,9 +194,9 @@ protected:
     pdu.freq_alloc         = rb_allocation::make_type1(rb_alloc_start, rb_alloc_count);
     pdu.start_symbol_index = start_symbol_index_dist(rgen);
     pdu.nof_symbols        = nof_symbols_slot - pdu.start_symbol_index;
-    pdu.tbs_lbrm           = units::bytes(tbs_lbrm_bytes_dist(rgen));
+    ue.tbs_lbrm            = units::bytes(tbs_lbrm_bytes_dist(rgen));
     pdu.dmrs_symbol_mask   = symbol_slot_mask(nof_symbols_slot);
-    pdu.n_rapid            = n_rapid_dist(rgen);
+    ue.context.n_rapid     = n_rapid_dist(rgen);
 
     for (unsigned i_symbol = pdu.start_symbol_index, i_symbol_end = pdu.start_symbol_index + pdu.nof_symbols;
          i_symbol != i_symbol_end;
@@ -255,7 +258,8 @@ protected:
   static std::uniform_real_distribution<float>   target_code_rate_dist;
   static std::uniform_int_distribution<unsigned> n_rapid_dist;
 
-  pusch_processor::pdu_t pdu;
+  pusch_processor::common_parameters pdu;
+  pusch_processor::ue_grant          grant;
 };
 
 dmrs_pusch_estimator_spy* PuschProcessorFixture::estimator_spy     = nullptr;
@@ -304,6 +308,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ASSERT_NE(decoder_spy, nullptr);
   ASSERT_NE(uci_dec_spy, nullptr);
 
+  // The PDU contains a single UE.
+  const pusch_processor::ue_grant& ue = grant;
+
   // Calculate number of symbols carrying DM-RS.
   unsigned nof_dmrs_symbols = pdu.dmrs_symbol_mask.count();
 
@@ -328,26 +335,26 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   // Get UL-SCH information.
   ulsch_configuration ulsch_config;
   ulsch_config.tbs                         = units::bytes(transport_block.size()).to_bits();
-  ulsch_config.mcs_descr                   = pdu.mcs_descr;
-  ulsch_config.nof_harq_ack_bits           = units::bits(pdu.uci.nof_harq_ack);
-  ulsch_config.nof_csi_part1_bits          = units::bits(pdu.uci.nof_csi_part1);
+  ulsch_config.mcs_descr                   = ue.mcs_descr;
+  ulsch_config.nof_harq_ack_bits           = units::bits(ue.uci.nof_harq_ack);
+  ulsch_config.nof_csi_part1_bits          = units::bits(ue.uci.nof_csi_part1);
   ulsch_config.nof_csi_part2_bits          = 0_bits;
-  ulsch_config.alpha_scaling               = pdu.uci.alpha_scaling;
-  ulsch_config.beta_offset_harq_ack        = pdu.uci.beta_offset_harq_ack;
-  ulsch_config.beta_offset_csi_part1       = pdu.uci.beta_offset_csi_part1;
-  ulsch_config.beta_offset_csi_part2       = pdu.uci.beta_offset_csi_part2;
+  ulsch_config.alpha_scaling               = ue.uci.alpha_scaling;
+  ulsch_config.beta_offset_harq_ack        = ue.uci.beta_offset_harq_ack;
+  ulsch_config.beta_offset_csi_part1       = ue.uci.beta_offset_csi_part1;
+  ulsch_config.beta_offset_csi_part2       = ue.uci.beta_offset_csi_part2;
   ulsch_config.nof_rb                      = rb_mask.count();
   ulsch_config.start_symbol_index          = pdu.start_symbol_index;
   ulsch_config.nof_symbols                 = pdu.nof_symbols;
   ulsch_config.dmrs_type                   = dmrs_config.dmrs;
   ulsch_config.dmrs_symbol_mask            = pdu.dmrs_symbol_mask;
   ulsch_config.nof_cdm_groups_without_data = dmrs_config.nof_cdm_groups_without_data;
-  ulsch_config.nof_layers                  = pdu.nof_tx_layers;
+  ulsch_config.nof_layers                  = ue.dmrs_ports.count();
   ulsch_config.contains_dc                 = false;
   ulsch_information ulsch_info             = get_ulsch_information(ulsch_config);
 
   // Calculate the number of LLR.
-  unsigned nof_codeword_llr = nof_re * get_bits_per_symbol(pdu.mcs_descr.modulation) * pdu.nof_tx_layers;
+  unsigned nof_codeword_llr = nof_re * get_bits_per_symbol(ue.mcs_descr.modulation) * ue.dmrs_ports.count();
   demodulator_spy->set_codeword_size(nof_codeword_llr);
   demux_spy->set_ulsch_config(nof_codeword_llr,
                               ulsch_info.nof_ul_sch_bits.value(),
@@ -363,15 +370,17 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   resource_grid_reader_spy rg_spy;
 
   // Process PDU.
-  pusch_processor_result_notifier_spy result_notifier;
-  pusch_proc->process(transport_block, std::move(rm_buffer), result_notifier, rg_spy, pdu);
+  pusch_processor_result_notifier_spy     result_notifier;
+  pusch_processor::ue_specific_parameters ue_params = {
+      .grant = grant, .rm_buffer = std::move(rm_buffer), .data = transport_block};
+  pusch_proc->process(result_notifier, rg_spy, pdu, span<pusch_processor::ue_specific_parameters>(&ue_params, 1));
 
   // Extract results.
   const auto& sch_entries = result_notifier.get_sch_entries();
   const auto& uci_entries = result_notifier.get_uci_entries();
 
   // Make sure PDU is valid.
-  ASSERT_TRUE(validator->is_valid(pdu));
+  ASSERT_TRUE(validator->is_valid(pdu, {&ue_params, 1}));
 
   // Calling resource grid and buffer methods are not permitted.
   ASSERT_EQ(0, rg_spy.get_count());
@@ -394,26 +403,26 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ASSERT_EQ(rb_mask, estimator_entry.config.rb_mask);
   ASSERT_EQ(pdu.start_symbol_index, estimator_entry.config.first_symbol);
   ASSERT_EQ(pdu.nof_symbols, estimator_entry.config.nof_symbols);
-  ASSERT_EQ(pdu.nof_tx_layers, dmrs_sequence_config.nof_tx_layers);
+  ASSERT_EQ(ue.dmrs_ports.count(), dmrs_sequence_config.nof_tx_layers);
   ASSERT_EQ(span<const uint8_t>(pdu.rx_ports), span<const uint8_t>(estimator_entry.config.rx_ports));
 
   // Assert demodulator inputs.
   ASSERT_EQ(1, demodulator_spy->get_entries().size());
   const pusch_demodulator_spy::entry_t& demodulator_entry = demodulator_spy->get_entries().front();
   ASSERT_EQ(&rg_spy, demodulator_entry.grid);
-  ASSERT_EQ(pdu.rnti, demodulator_entry.config.rnti);
+  ASSERT_EQ(ue.context.rnti, demodulator_entry.config.rnti);
   ASSERT_EQ(rb_mask, demodulator_entry.config.rb_mask);
-  ASSERT_EQ(pdu.mcs_descr.modulation, demodulator_entry.config.modulation);
+  ASSERT_EQ(ue.mcs_descr.modulation, demodulator_entry.config.modulation);
   ASSERT_EQ(pdu.start_symbol_index, demodulator_entry.config.start_symbol_index);
   ASSERT_EQ(pdu.nof_symbols, demodulator_entry.config.nof_symbols);
   ASSERT_EQ(pdu.dmrs_symbol_mask, demodulator_entry.config.dmrs_symb_pos);
   ASSERT_EQ(dmrs_config.dmrs, demodulator_entry.config.dmrs_type);
   ASSERT_EQ(dmrs_config.nof_cdm_groups_without_data, demodulator_entry.config.nof_cdm_groups_without_data);
-  ASSERT_EQ(pdu.n_id, demodulator_entry.config.n_id);
-  ASSERT_EQ(pdu.nof_tx_layers, demodulator_entry.config.nof_tx_layers);
+  ASSERT_EQ(ue.n_id, demodulator_entry.config.n_id);
+  ASSERT_EQ(ue.dmrs_ports.count(), demodulator_entry.config.nof_tx_layers);
   ASSERT_EQ(false, demodulator_entry.config.enable_transform_precoding);
   ASSERT_EQ(span<const uint8_t>(pdu.rx_ports), span<const uint8_t>(demodulator_entry.config.rx_ports));
-  ASSERT_EQ(pdu.n_rapid, demodulator_entry.config.n_rapid);
+  ASSERT_EQ(ue.context.n_rapid, demodulator_entry.config.n_rapid);
 
   // Assert demux if UCI is multiplexed.
   ASSERT_EQ(1, demux_spy->get_demultiplex_entries().size());
@@ -424,8 +433,8 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
     ASSERT_TRUE(compare_result.has_value()) << compare_result.error();
   }
   ASSERT_EQ(demodulator_entry.scrambling_seq, demux_entry.input.get_scrambling_seq());
-  ASSERT_EQ(pdu.mcs_descr.modulation, demux_entry.config.modulation);
-  ASSERT_EQ(pdu.nof_tx_layers, demux_entry.config.nof_layers);
+  ASSERT_EQ(ue.mcs_descr.modulation, demux_entry.config.modulation);
+  ASSERT_EQ(ue.dmrs_ports.count(), demux_entry.config.nof_layers);
   ASSERT_EQ(pdu.freq_alloc.get_nof_rb(), demux_entry.config.nof_prb);
   ASSERT_EQ(pdu.start_symbol_index, demux_entry.config.start_symbol_index);
   ASSERT_EQ(pdu.nof_symbols, demux_entry.config.nof_symbols);
@@ -435,9 +444,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ASSERT_EQ(dmrs_config.nof_cdm_groups_without_data, demux_entry.config.nof_cdm_groups_without_data);
 
   // Assert decoder inputs only if the codeword is present.
-  if (pdu.codeword.has_value()) {
-    unsigned    nof_cb        = compute_nof_codeblocks(ulsch_config.tbs, pdu.codeword->ldpc_base_graph);
-    units::bits expected_Nref = ldpc::compute_N_ref(pdu.tbs_lbrm, nof_cb);
+  if (ue.codeword.has_value()) {
+    unsigned    nof_cb        = compute_nof_codeblocks(ulsch_config.tbs, ue.codeword->ldpc_base_graph);
+    units::bits expected_Nref = ldpc::compute_N_ref(ue.tbs_lbrm, nof_cb);
 
     ASSERT_EQ(1, decoder_spy->get_entries().size());
     const pusch_decoder_spy::entry_t& decoder_entry = decoder_spy->get_entries().front();
@@ -449,14 +458,14 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
           compare_sequences(span<const log_likelihood_ratio>(demux_entry.sch_data), decoder_entry.input.get_data());
       ASSERT_TRUE(compare_result.has_value()) << compare_result.error();
     }
-    ASSERT_EQ(pdu.codeword.value().ldpc_base_graph, decoder_entry.config.base_graph);
-    ASSERT_EQ(pdu.mcs_descr.modulation, decoder_entry.config.mod);
+    ASSERT_EQ(ue.codeword.value().ldpc_base_graph, decoder_entry.config.base_graph);
+    ASSERT_EQ(ue.mcs_descr.modulation, decoder_entry.config.mod);
     ASSERT_EQ(expected_Nref.value(), decoder_entry.config.Nref);
-    ASSERT_EQ(pdu.nof_tx_layers, decoder_entry.config.nof_layers);
+    ASSERT_EQ(ue.dmrs_ports.count(), decoder_entry.config.nof_layers);
     ASSERT_EQ(10, decoder_entry.config.nof_ldpc_iterations);
     ASSERT_EQ(true, decoder_entry.config.use_early_stop);
-    ASSERT_EQ(pdu.codeword.value().new_data, decoder_entry.config.new_data);
-    ASSERT_EQ(pdu.codeword.value().last_repetition, decoder_entry.config.last_repetition);
+    ASSERT_EQ(ue.codeword.value().new_data, decoder_entry.config.new_data);
+    ASSERT_EQ(ue.codeword.value().last_repetition, decoder_entry.config.last_repetition);
 
     ASSERT_EQ(sch_entries.size(), 1);
     const auto& sch_entry = sch_entries.back();
@@ -471,19 +480,19 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   }
 
   // Calculate the number of UCI decoded fields.
-  unsigned nof_uci_fields  = ((pdu.uci.nof_harq_ack > 0) ? 1 : 0) + ((pdu.uci.nof_csi_part1 > 0) ? 1 : 0);
+  unsigned nof_uci_fields  = ((ue.uci.nof_harq_ack > 0) ? 1 : 0) + ((ue.uci.nof_csi_part1 > 0) ? 1 : 0);
   unsigned uci_decoder_idx = 0;
   ASSERT_EQ(nof_uci_fields, uci_dec_spy->get_entries().size());
 
   // Assert HARQ-ACK decoder inputs.
-  if (pdu.uci.nof_harq_ack > 0) {
+  if (ue.uci.nof_harq_ack > 0) {
     const uci_decoder_spy::entry_t& uci_dec_entry = uci_dec_spy->get_entries()[uci_decoder_idx++];
     {
       error_type<std::string> compare_result = compare_sequences(span<const log_likelihood_ratio>(demux_entry.harq_ack),
                                                                  span<const log_likelihood_ratio>(uci_dec_entry.llr));
       ASSERT_TRUE(compare_result.has_value()) << compare_result.error();
     }
-    ASSERT_EQ(pdu.mcs_descr.modulation, uci_dec_entry.config.modulation);
+    ASSERT_EQ(ue.mcs_descr.modulation, uci_dec_entry.config.modulation);
 
     uci_payload_type packed_harq_ack(uci_dec_entry.message.begin(), uci_dec_entry.message.end());
 
@@ -498,14 +507,14 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   }
 
   // Assert CSI Part 1 decoder inputs.
-  if (pdu.uci.nof_csi_part1 > 0) {
+  if (ue.uci.nof_csi_part1 > 0) {
     const uci_decoder_spy::entry_t& uci_dec_entry = uci_dec_spy->get_entries()[uci_decoder_idx++];
     {
       error_type<std::string> compare_result = compare_sequences(
           span<const log_likelihood_ratio>(demux_entry.csi_part1), span<const log_likelihood_ratio>(uci_dec_entry.llr));
       ASSERT_TRUE(compare_result.has_value()) << compare_result.error();
     }
-    ASSERT_EQ(pdu.mcs_descr.modulation, uci_dec_entry.config.modulation);
+    ASSERT_EQ(ue.mcs_descr.modulation, uci_dec_entry.config.modulation);
 
     uci_payload_type packed_csi_part1(uci_dec_entry.message.begin(), uci_dec_entry.message.end());
 
@@ -518,13 +527,24 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
     ASSERT_EQ(uci_status::unknown, uci_entry.csi_part1.status);
     ASSERT_TRUE(uci_entry.csi_part1.payload.empty());
   }
+
+  // Assert that all the results carry the UE context.
+  for (const pusch_processor_result_data& sch_entry : sch_entries) {
+    ASSERT_EQ(ue.context.rnti, sch_entry.context.rnti);
+    ASSERT_EQ(ue.context.harq_id, sch_entry.context.harq_id);
+    ASSERT_EQ(ue.context.n_rapid, sch_entry.context.n_rapid);
+  }
+  for (const pusch_processor_result_control& uci_entry : uci_entries) {
+    ASSERT_EQ(ue.context.rnti, uci_entry.context.rnti);
+    ASSERT_EQ(ue.context.harq_id, uci_entry.context.harq_id);
+    ASSERT_EQ(ue.context.n_rapid, uci_entry.context.n_rapid);
+  }
 }
 
 TEST_P(PuschProcessorFixture, PuschProcessorWithoutLimitedBufferRateMatching)
 {
   // Without limited buffer rate matching (TS 38.212, Section 6.2.5), the circular buffer of the decoder is not limited.
-  pdu.tbs_lbrm = units::bytes(0);
-  ASSERT_TRUE(validator->is_valid(pdu));
+  grant.tbs_lbrm = units::bytes(0);
 
   // Generate transport block.
   std::vector<uint8_t> transport_block(tbs_dist(rgen));
@@ -537,11 +557,15 @@ TEST_P(PuschProcessorFixture, PuschProcessorWithoutLimitedBufferRateMatching)
   // Resource grid spy.
   resource_grid_reader_spy rg_spy;
 
+  pusch_processor::ue_specific_parameters ue_params = {
+      .grant = grant, .rm_buffer = std::move(rm_buffer), .data = transport_block};
+  ASSERT_TRUE(validator->is_valid(pdu, {&ue_params, 1}));
+
   // Process PDU.
   pusch_processor_result_notifier_spy result_notifier;
-  pusch_proc->process(transport_block, std::move(rm_buffer), result_notifier, rg_spy, pdu);
+  pusch_proc->process(result_notifier, rg_spy, pdu, span<pusch_processor::ue_specific_parameters>(&ue_params, 1));
 
-  if (pdu.codeword.has_value()) {
+  if (grant.codeword.has_value()) {
     ASSERT_EQ(1, decoder_spy->get_entries().size());
     ASSERT_EQ(0, decoder_spy->get_entries().front().config.Nref);
   } else {
@@ -566,8 +590,10 @@ TEST_P(PuschProcessorFixture, HealthTestFormatterInfo)
   resource_grid_reader_spy rg_spy;
 
   // Process PDU.
-  pusch_processor_result_notifier_spy result_notifier;
-  pusch_proc_info->process(transport_block, std::move(rm_buffer), result_notifier, rg_spy, pdu);
+  pusch_processor_result_notifier_spy     result_notifier;
+  pusch_processor::ue_specific_parameters ue_params = {
+      .grant = grant, .rm_buffer = std::move(rm_buffer), .data = transport_block};
+  pusch_proc_info->process(result_notifier, rg_spy, pdu, span<pusch_processor::ue_specific_parameters>(&ue_params, 1));
 
   // Clear decoder spy entries - It makes sure the soft buffer is unlocked before destroying the pool.
   decoder_spy_info->clear();
@@ -587,8 +613,10 @@ TEST_P(PuschProcessorFixture, HealthTestFormatterDebug)
   resource_grid_reader_spy rg_spy;
 
   // Process PDU.
-  pusch_processor_result_notifier_spy result_notifier;
-  pusch_proc_debug->process(transport_block, std::move(rm_buffer), result_notifier, rg_spy, pdu);
+  pusch_processor_result_notifier_spy     result_notifier;
+  pusch_processor::ue_specific_parameters ue_params = {
+      .grant = grant, .rm_buffer = std::move(rm_buffer), .data = transport_block};
+  pusch_proc_debug->process(result_notifier, rg_spy, pdu, span<pusch_processor::ue_specific_parameters>(&ue_params, 1));
 
   // Clear decoder spy entries - It makes sure the soft buffer is unlocked before destroying the pool.
   decoder_spy_debug->clear();

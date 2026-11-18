@@ -20,6 +20,7 @@
 #include "ocudu/phy/upper/upper_phy_rx_results_notifier.h"
 #include "ocudu/support/executors/task_executor.h"
 #include "ocudu/support/synchronization/stop_event.h"
+#include <algorithm>
 #include <utility>
 
 namespace ocudu {
@@ -39,28 +40,24 @@ public:
   using callback_func = unique_function<void(), default_unique_task_buffer_size, true>;
 
   /// \brief Creates a PUSCH processor result notifier adaptor.
+  ///
+  /// The UE context (RNTI, HARQ process identifier and RAPID) is taken from the PUSCH processor results. It selects the
+  /// data payload of the UE that matches the context.
+  ///
   /// \param[in] notifier_   Upper physical layer result notifier.
-  /// \param[in] rnti_       User RNTI.
   /// \param[in] slot_       Current slot.
-  /// \param[in] harq_id_    User HARQ process identifier.
-  /// \param[in] payload_    View to the data payload.
-  /// \param[in] n_rapid_    Random Access Preamble Index (RAPID) associated with msgA on PUSCH (Release 16), \c
-  /// std::nullopt if not used. \param[in] callback_   Callback function when the PUSCH transmission is completed.
-  pusch_processor_result_notifier& configure(upper_phy_rx_results_notifier& notifier_,
-                                             rnti_t                         rnti_,
-                                             slot_point                     slot_,
-                                             harq_id_t                      harq_id_,
-                                             span<const uint8_t>            payload_,
-                                             std::optional<unsigned>        n_rapid_,
-                                             callback_func                  callback_)
+  /// \param[in] ues_        Parameters and buffers of the UEs. They must remain valid until the transmission completes.
+  /// \param[in] callback_   Callback function when the PUSCH transmission is completed.
+  pusch_processor_result_notifier& configure(upper_phy_rx_results_notifier&                      notifier_,
+                                             slot_point                                          slot_,
+                                             span<const pusch_processor::ue_specific_parameters> ues_,
+                                             callback_func                                       callback_)
   {
-    notifier = &notifier_;
-    rnti     = rnti_;
-    slot     = slot_;
-    harq_id  = harq_id_;
-    payload  = payload_;
-    n_rapid  = n_rapid_;
-    callback = std::move(callback_);
+    notifier        = &notifier_;
+    slot            = slot_;
+    ues             = ues_;
+    nof_pending_sch = ues.size();
+    callback        = std::move(callback_);
     return *this;
   }
 
@@ -71,7 +68,7 @@ private:
     ocudu_assert(notifier != nullptr, "Invalid notifier.");
 
     ul_pusch_results_control result;
-    result.rnti = rnti;
+    result.rnti = uci.context.rnti;
     result.slot = slot;
     result.csi  = uci.csi;
 
@@ -95,36 +92,47 @@ private:
   // See interface for documentation.
   void on_sch(const pusch_processor_result_data& sch) override
   {
-    // Gets the notifier and invalidates. It makes sure the notifier is no longer available after the exchange.
-    upper_phy_rx_results_notifier* notifier_ = nullptr;
-    std::exchange(notifier_, notifier);
-    ocudu_assert(notifier_ != nullptr, "Invalid notifier.");
+    ocudu_assert(notifier != nullptr, "Invalid notifier.");
+    ocudu_assert(nof_pending_sch != 0, "All the UEs have already notified their data.");
+
+    // Select the UE that matches the context.
+    const auto* ue = std::find_if(ues.begin(), ues.end(), [&sch](const pusch_processor::ue_specific_parameters& entry) {
+      return (entry.grant.context.rnti == sch.context.rnti) && (entry.grant.context.harq_id == sch.context.harq_id);
+    });
+    ocudu_assert(ue != ues.end(), "No UE matches rnti={} h_id={}.", sch.context.rnti, sch.context.harq_id);
 
     // Notify the completion of PUSCH data.
     ul_pusch_results_data result;
-    result.rnti           = rnti;
+    result.rnti           = sch.context.rnti;
     result.slot           = slot;
     result.csi            = sch.csi;
-    result.harq_id        = harq_id;
+    result.harq_id        = sch.context.harq_id;
     result.decoder_result = sch.data;
-    result.payload        = (sch.data.tb_crc_ok) ? payload : span<const uint8_t>();
-    result.n_rapid        = n_rapid;
-    notifier_->on_new_pusch_results_data(result);
+    result.payload        = (sch.data.tb_crc_ok) ? span<const uint8_t>(ue->data) : span<const uint8_t>();
+    result.n_rapid        = sch.context.n_rapid;
+    notifier->on_new_pusch_results_data(result);
 
     l1_ul_tracer << instant_trace_event("on_sch", instant_trace_event::cpu_scope::thread);
+
+    // The transmission completes when all the UEs have notified their data.
+    unsigned prev_nof_pending_sch = nof_pending_sch.fetch_sub(1);
+    if (prev_nof_pending_sch != 1) {
+      return;
+    }
+
+    // Invalidate the notifier. It makes sure the notifier is no longer available after the completion.
+    notifier = nullptr;
 
     if (!callback.is_empty()) {
       callback();
     }
   }
 
-  upper_phy_rx_results_notifier* notifier = nullptr;
-  rnti_t                         rnti     = rnti_t::INVALID_RNTI;
-  slot_point                     slot     = slot_point();
-  harq_id_t                      harq_id  = harq_id_t::INVALID_HARQ_ID;
-  span<const uint8_t>            payload;
-  std::optional<unsigned>        n_rapid;
-  callback_func                  callback;
+  upper_phy_rx_results_notifier*                      notifier = nullptr;
+  slot_point                                          slot     = slot_point();
+  span<const pusch_processor::ue_specific_parameters> ues;
+  std::atomic<unsigned>                               nof_pending_sch = 0;
+  callback_func                                       callback;
 };
 
 } // namespace detail
@@ -238,6 +246,10 @@ private:
   uplink_pdu_slot_repository_impl pdu_repository;
   /// Pool of PUSCH processor adaptors.
   std::array<detail::pusch_processor_result_notifier_adaptor, MAX_PUSCH_PDUS_PER_SLOT> pusch_adaptors;
+  /// Parameters and buffers of the UEs of each PUSCH transmission, indexed as the PUSCH adaptors.
+  std::array<static_vector<pusch_processor::ue_specific_parameters, pusch_constants::MAX_NOF_MU_MIMO_UES>,
+             MAX_PUSCH_PDUS_PER_SLOT>
+      pusch_ues;
   /// Counter of used PUSCH adaptors. It shall not exceed \c MAX_PUSCH_PDUS_PER_SLOT.
   std::atomic<unsigned> count_pusch_adaptors;
   /// PRACH detector.

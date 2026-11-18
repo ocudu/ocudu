@@ -21,6 +21,14 @@ using namespace ocudu;
 
 namespace {
 
+/// Creates a DM-RS port mask that selects the first \c nof_ports ports.
+dmrs_port_mask make_dmrs_ports(unsigned nof_ports)
+{
+  dmrs_port_mask ports(DMRS_MAX_NPORTS);
+  ports.fill(0, nof_ports);
+  return ports;
+}
+
 class UplinkProcessorFixture : public ::testing::Test
 {
 public:
@@ -130,30 +138,33 @@ protected:
   static constexpr slot_point slot                         = {0, 9};
 
   const uplink_pdu_slot_repository::pusch_pdu pusch_pdu = {
-      .tb_size = units::bytes(8),
-      .pdu     = {.harq_id       = to_harq_id(0),
-                  .slot          = slot,
-                  .rnti          = to_rnti(8323),
-                  .bwp_size_rb   = 25,
-                  .bwp_start_rb  = 0,
-                  .cp            = cyclic_prefix::NORMAL,
-                  .mcs_descr     = {modulation_scheme::PI_2_BPSK, 0.1},
-                  .codeword      = {{0, ldpc_base_graph_type::BG2, true}},
-                  .uci           = {1, 20, uci_part2_size_description(pusch_csi2_size), 1, 20, 6.25, 6.25},
-                  .n_id          = 935,
-                  .nof_tx_layers = 1,
-                  .rx_ports      = {0, 1, 2, 3},
-                  .dmrs_symbol_mask =
-                      {false, false, true, false, false, false, false, false, false, false, false, true, false, false},
-                  .dmrs               = pusch_processor::dmrs_configuration{.dmrs                        = dmrs_config_type::type1,
-                                                                            .scrambling_id               = 0,
-                                                                            .n_scid                      = false,
-                                                                            .nof_cdm_groups_without_data = 2},
-                  .freq_alloc         = rb_allocation::make_type1(15, 1),
-                  .start_symbol_index = 0,
-                  .nof_symbols        = max_nof_symbols,
-                  .tbs_lbrm           = units::bytes(ldpc::MAX_CODEBLOCK_SIZE / 8),
-                  .dc_position        = std::nullopt}};
+      .common =
+          {
+              .slot         = slot,
+              .slot_offset  = 0,
+              .bwp_size_rb  = 25,
+              .bwp_start_rb = 0,
+              .cp           = cyclic_prefix::NORMAL,
+              .rx_ports     = {0, 1, 2, 3},
+              .dmrs_symbol_mask =
+                  {false, false, true, false, false, false, false, false, false, false, false, true, false, false},
+              .dmrs               = pusch_processor::dmrs_configuration{.dmrs                        = dmrs_config_type::type1,
+                                                                        .scrambling_id               = 0,
+                                                                        .n_scid                      = false,
+                                                                        .nof_cdm_groups_without_data = 2},
+              .freq_alloc         = rb_allocation::make_type1(15, 1),
+              .start_symbol_index = 0,
+              .nof_symbols        = max_nof_symbols,
+              .dc_position        = std::nullopt,
+          },
+      .ues = {{.grant   = {.context    = {.rnti = to_rnti(8323), .harq_id = to_harq_id(0), .n_rapid = std::nullopt},
+                           .mcs_descr  = {modulation_scheme::PI_2_BPSK, 0.1},
+                           .codeword   = {{0, ldpc_base_graph_type::BG2, true}},
+                           .uci        = {1, 20, uci_part2_size_description(pusch_csi2_size), 1, 20, 6.25, 6.25},
+                           .n_id       = 935,
+                           .tbs_lbrm   = units::bytes(ldpc::MAX_CODEBLOCK_SIZE / 8),
+                           .dmrs_ports = make_dmrs_ports(1)},
+               .tb_size = units::bytes(8)}}};
 
   const uplink_pdu_slot_repository::srs_pdu srs_pdu = {
       .context = {.slot                                             = slot,
@@ -428,7 +439,7 @@ TEST_F(UplinkProcessorFixture, pusch_normal_workflow)
   repository->add_pusch_pdu(pusch_pdu);
   shared_resource_grid grid = repository.release();
 
-  unsigned pusch_end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
+  unsigned pusch_end_symbol_index = pusch_pdu.common.start_symbol_index + pusch_pdu.common.nof_symbols - 1;
 
   // Notify reception of the previous reception symbol.
   ul_processor->get_slot_processor(slot).handle_rx_symbol(pusch_end_symbol_index - 1, true);
@@ -463,11 +474,11 @@ TEST_F(UplinkProcessorFixture, pusch_normal_workflow)
   ASSERT_TRUE(pusch_uci.has_value()) << "PUSCH UCI result must be present";
 
   ASSERT_TRUE(pusch_uci->harq_ack.has_value()) << "HARQ-ACK field must be present";
-  ASSERT_EQ(pusch_uci->harq_ack->payload.size(), pusch_pdu.pdu.uci.nof_harq_ack)
+  ASSERT_EQ(pusch_uci->harq_ack->payload.size(), pusch_pdu.ues.front().grant.uci.nof_harq_ack)
       << "HARQ-ACK payload bit count must match";
 
   ASSERT_TRUE(pusch_uci->csi1.has_value()) << "CSI Part 1 field must be present";
-  ASSERT_EQ(pusch_uci->csi1->payload.size(), pusch_pdu.pdu.uci.nof_csi_part1)
+  ASSERT_EQ(pusch_uci->csi1->payload.size(), pusch_pdu.ues.front().grant.uci.nof_csi_part1)
       << "CSI Part 1 payload bit count must match";
 
   ASSERT_TRUE(pusch_uci->csi2.has_value()) << "CSI Part 2 field must be present";
@@ -596,7 +607,7 @@ TEST_F(UplinkProcessorFixture, rx_symbol_bad_order)
   repository->add_pusch_pdu(pusch_pdu);
   shared_resource_grid grid = repository.release();
 
-  unsigned end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
+  unsigned end_symbol_index = pusch_pdu.common.start_symbol_index + pusch_pdu.common.nof_symbols - 1;
 
   // Notify reception of the previous reception symbol.
   ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index - 1, true);
@@ -637,7 +648,7 @@ TEST_F(UplinkProcessorFixture, pusch_wrong_slot)
   repository->add_pusch_pdu(pusch_pdu);
   shared_resource_grid grid = repository.release();
 
-  unsigned end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
+  unsigned end_symbol_index = pusch_pdu.common.start_symbol_index + pusch_pdu.common.nof_symbols - 1;
 
   // Notify reception of receive symbol for the wrong slot.
   ul_processor->get_slot_processor(slot - 1).handle_rx_symbol(end_symbol_index, true);
@@ -674,17 +685,17 @@ TEST_F(UplinkProcessorFixture, pusch_exceed_tb_size)
 {
   // Create PDU with a larger TB than the one the pool contains.
   uplink_pdu_slot_repository::pusch_pdu pusch_pdu_large = pusch_pdu;
-  pusch_pdu_large.tb_size                               = units::bytes(2 * max_nof_layers * 156 * max_nof_prb);
+  pusch_pdu_large.ues.front().tb_size                   = units::bytes(2 * max_nof_layers * 156 * max_nof_prb);
 
   // Get PDU repository, add PDU and release repository. Keep the grid alive until the end of the test.
-  unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(pusch_pdu_large.pdu.slot);
+  unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(pusch_pdu_large.common.slot);
   repository->add_pusch_pdu(pusch_pdu_large);
   shared_resource_grid grid = repository.release();
 
-  unsigned end_symbol_index = pusch_pdu_large.pdu.start_symbol_index + pusch_pdu_large.pdu.nof_symbols - 1;
+  unsigned end_symbol_index = pusch_pdu_large.common.start_symbol_index + pusch_pdu_large.common.nof_symbols - 1;
 
   // Notify reception of receive symbol.
-  ul_processor->get_slot_processor(pusch_pdu_large.pdu.slot).handle_rx_symbol(end_symbol_index, true);
+  ul_processor->get_slot_processor(pusch_pdu_large.common.slot).handle_rx_symbol(end_symbol_index, true);
   ASSERT_EQ(tap_spy->get_handle_ul_symbol_count(), max_nof_symbols);
   ASSERT_EQ(tap_spy->get_handle_quiet_grid_count(), 0);
 
@@ -704,7 +715,7 @@ TEST_F(UplinkProcessorFixture, pusch_locked_rx_buffer)
   repository->add_pusch_pdu(pusch_pdu);
   shared_resource_grid grid = repository.release();
 
-  unsigned end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
+  unsigned end_symbol_index = pusch_pdu.common.start_symbol_index + pusch_pdu.common.nof_symbols - 1;
 
   // Lock buffer pool to ensure it fails to retrieve a buffer.
   ASSERT_TRUE(buffer_pool_spy.try_lock());
@@ -740,7 +751,7 @@ TEST_F(UplinkProcessorFixture, pdu_fail_defer_workflow)
   pusch_executor.stop();
   srs_executor.stop();
 
-  unsigned end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
+  unsigned end_symbol_index = pusch_pdu.common.start_symbol_index + pusch_pdu.common.nof_symbols - 1;
 
   // Notify reception of receive symbol.
   ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index, true);
@@ -810,7 +821,7 @@ TEST_F(UplinkProcessorFixture, discard_slot_before_first_rx)
   const auto& pusch_uci = results_notifier.get_last_pusch_uci_result();
   ASSERT_TRUE(pusch_uci.has_value());
   ASSERT_TRUE(pusch_uci->harq_ack.has_value());
-  ASSERT_EQ(pusch_uci->harq_ack->payload.size(), pusch_pdu.pdu.uci.nof_harq_ack);
+  ASSERT_EQ(pusch_uci->harq_ack->payload.size(), pusch_pdu.ues.front().grant.uci.nof_harq_ack);
   ASSERT_EQ(pusch_uci->harq_ack->status, uci_status::unknown);
   ASSERT_FALSE(pusch_uci->csi1.has_value());
   ASSERT_FALSE(pusch_uci->csi2.has_value());
@@ -868,7 +879,7 @@ TEST_F(UplinkProcessorFixture, invalid_first_symbol)
   const auto& pusch_uci = results_notifier.get_last_pusch_uci_result();
   ASSERT_TRUE(pusch_uci.has_value());
   ASSERT_TRUE(pusch_uci->harq_ack.has_value());
-  ASSERT_EQ(pusch_uci->harq_ack->payload.size(), pusch_pdu.pdu.uci.nof_harq_ack);
+  ASSERT_EQ(pusch_uci->harq_ack->payload.size(), pusch_pdu.ues.front().grant.uci.nof_harq_ack);
   ASSERT_EQ(pusch_uci->harq_ack->status, uci_status::unknown);
   ASSERT_FALSE(pusch_uci->csi1.has_value());
   ASSERT_FALSE(pusch_uci->csi2.has_value());
@@ -904,7 +915,7 @@ TEST_F(UplinkProcessorFixture, invalid_middle_symbol_with_pusch)
   const auto& pusch_uci = results_notifier.get_last_pusch_uci_result();
   ASSERT_TRUE(pusch_uci.has_value());
   ASSERT_TRUE(pusch_uci->harq_ack.has_value());
-  ASSERT_EQ(pusch_uci->harq_ack->payload.size(), pusch_pdu.pdu.uci.nof_harq_ack);
+  ASSERT_EQ(pusch_uci->harq_ack->payload.size(), pusch_pdu.ues.front().grant.uci.nof_harq_ack);
   ASSERT_EQ(pusch_uci->harq_ack->status, uci_status::unknown);
   ASSERT_FALSE(pusch_uci->csi1.has_value());
   ASSERT_FALSE(pusch_uci->csi2.has_value());
@@ -961,7 +972,7 @@ TEST_F(UplinkProcessorFixture, discard_invalid_symbol_twice)
   // The PUCCH PDU ends at the first symbol of the slot and the PUSCH PDU ends later. Two invalid OFDM symbols must fit
   // in between.
   static constexpr unsigned pucch_end_symbol_index = 0;
-  const unsigned            pusch_end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
+  const unsigned pusch_end_symbol_index = pusch_pdu.common.start_symbol_index + pusch_pdu.common.nof_symbols - 1;
   ASSERT_GT(pusch_end_symbol_index, pucch_end_symbol_index + 2);
 
   // Get PDU repository, add PDUs and release repository. Keep the grid alive until the end of the test.
@@ -1003,7 +1014,7 @@ TEST_F(UplinkProcessorFixture, discard_invalid_symbol_twice)
   const auto& pusch_uci = results_notifier.get_last_pusch_uci_result();
   ASSERT_TRUE(pusch_uci.has_value());
   ASSERT_TRUE(pusch_uci->harq_ack.has_value());
-  ASSERT_EQ(pusch_uci->harq_ack->payload.size(), pusch_pdu.pdu.uci.nof_harq_ack);
+  ASSERT_EQ(pusch_uci->harq_ack->payload.size(), pusch_pdu.ues.front().grant.uci.nof_harq_ack);
   ASSERT_EQ(pusch_uci->harq_ack->status, uci_status::unknown);
   ASSERT_FALSE(pusch_uci->csi1.has_value());
   ASSERT_FALSE(pusch_uci->csi2.has_value());
@@ -1037,7 +1048,7 @@ TEST_F(UplinkProcessorFixture, pusch_execute_after_stop)
     repository->add_pusch_pdu(pusch_pdu);
   }
 
-  unsigned end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
+  unsigned end_symbol_index = pusch_pdu.common.start_symbol_index + pusch_pdu.common.nof_symbols - 1;
 
   // Get processor before stopping. Otherwise, the processor will not be available.
   uplink_slot_processor& processor = ul_processor->get_slot_processor(slot);
@@ -1106,7 +1117,7 @@ TEST_F(UplinkProcessorFixture, reserve_slot_twice_with_request)
 
 TEST_F(UplinkProcessorFixture, reserve_slot_twice_pending_exec)
 {
-  unsigned end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
+  unsigned end_symbol_index = pusch_pdu.common.start_symbol_index + pusch_pdu.common.nof_symbols - 1;
 
   // Get PDU repository, add PDU and release repository. Keep the grid alive until the end of the test.
   unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
@@ -1152,7 +1163,7 @@ TEST_F(UplinkProcessorFixture, reserve_slot_twice_no_request_grid_alive)
   ASSERT_FALSE(repository.is_valid());
 
   // Notify reception of a receiving symbol - an asynchronous task is not expected (because there are no request).
-  unsigned end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
+  unsigned end_symbol_index = pusch_pdu.common.start_symbol_index + pusch_pdu.common.nof_symbols - 1;
   ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index, true);
   ASSERT_EQ(tap_spy->get_handle_ul_symbol_count(), 0);
   ASSERT_EQ(tap_spy->get_handle_quiet_grid_count(), 1);
@@ -1208,7 +1219,7 @@ TEST_F(UplinkProcessorFixture, stop_while_pending_task)
   shared_resource_grid grid = repository.release();
 
   // Notify reception of receive symbol - an asynchronous task is expected.
-  unsigned end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
+  unsigned end_symbol_index = pusch_pdu.common.start_symbol_index + pusch_pdu.common.nof_symbols - 1;
   ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index, true);
   ASSERT_EQ(tap_spy->get_handle_ul_symbol_count(), max_nof_symbols);
   ASSERT_EQ(tap_spy->get_handle_quiet_grid_count(), 0);

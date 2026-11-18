@@ -10,6 +10,7 @@
 #include "ocudu/phy/upper/channel_processors/pusch/formatters.h"
 #include "ocudu/phy/upper/channel_processors/pusch/pusch_processor.h"
 #include "ocudu/support/memory_pool/bounded_object_pool.h"
+#include <algorithm>
 
 namespace ocudu {
 
@@ -34,18 +35,20 @@ public:
   }
 
   // See pusch_processor interface for documentation.
-  void process(span<uint8_t>                    data,
-               unique_rx_buffer                 rm_buffer,
-               pusch_processor_result_notifier& notifier_,
+  void process(pusch_processor_result_notifier& notifier_,
                const resource_grid_reader&      grid,
-               const pdu_t&                     pdu) override
+               const common_parameters&         common,
+               span<ue_specific_parameters>     ues) override
   {
     // Save original notifier.
     [[maybe_unused]] pusch_processor_result_notifier* prev_notifier = std::exchange(notifier, &notifier_);
     ocudu_assert(prev_notifier == nullptr, "PUSCH processor is in use.");
 
+    // Each UE notifies its data.
+    nof_pending_sch = ues.size();
+
     // Process.
-    processor->process(data, std::move(rm_buffer), *this, grid, pdu);
+    processor->process(*this, grid, common, ues);
   }
 
   /// Sets the unique pointer that will be released upon the completion of the PUSCH processing.
@@ -62,12 +65,22 @@ private:
   // See pusch_processor_result_notifier for documentation.
   void on_sch(const pusch_processor_result_data& sch) override
   {
+    unsigned prev_nof_pending_sch = nof_pending_sch.fetch_sub(1);
+    ocudu_assert(prev_nof_pending_sch != 0, "All the UEs have already notified their data.");
+
+    // Forward the data of the UE if other UEs are pending.
+    if (prev_nof_pending_sch != 1) {
+      ocudu_assert(notifier != nullptr, "Invalid notifier.");
+      notifier->on_sch(sch);
+      return;
+    }
+
     // Notify the completion of the processing.
     pusch_processor_result_notifier* current_notifier = std::exchange(notifier, nullptr);
     ocudu_assert(current_notifier != nullptr, "Invalid notifier.");
     current_notifier->on_sch(sch);
 
-    // Return the pusch processor identifier to the free list.
+    // Return the PUSCH processor identifier to the free list.
     unique_pool_ptr = nullptr;
   }
 
@@ -75,6 +88,8 @@ private:
   pool::ptr unique_pool_ptr;
   /// Current PUSCH processor notifier.
   pusch_processor_result_notifier* notifier = nullptr;
+  /// Number of UEs that have not notified their data yet.
+  std::atomic<unsigned> nof_pending_sch = 0;
   /// Wrapped PUSCH processor.
   std::unique_ptr<pusch_processor> processor;
 };
@@ -99,11 +114,10 @@ public:
   }
 
   // See interface for documentation.
-  void process(span<uint8_t>                    data,
-               unique_rx_buffer                 rm_buffer,
-               pusch_processor_result_notifier& notifier,
+  void process(pusch_processor_result_notifier& notifier,
                const resource_grid_reader&      grid,
-               const pdu_t&                     pdu) override
+               const common_parameters&         common,
+               span<ue_specific_parameters>     ues) override
   {
     // Get a processor and process normally.
     auto unique_processor = processors.get();
@@ -115,47 +129,74 @@ public:
       unique_processor->set_unique_ptr(std::move(unique_processor));
 
       // Process PUSCH.
-      processor.process(data, std::move(rm_buffer), notifier, grid, pdu);
+      processor.process(notifier, grid, common, ues);
       return;
     }
 
-    // No PUSCH processor is available and no UCI is present. Drop PUSCH reception.
-    if ((pdu.uci.nof_harq_ack == 0) && (pdu.uci.nof_csi_part1 == 0)) {
-      logger.warning(
-          pdu.slot.sfn(), pdu.slot.slot_index(), "PUSCH processing queue is full. Dropping PUSCH {:s}.", pdu);
+    // Determine all PUSCH are for data (UL-SCH). It will be false if at least one UE contains UCI.
+    bool only_ul_sch = std::none_of(ues.begin(), ues.end(), [](const ue_specific_parameters& ue) {
+      return (ue.grant.uci.nof_harq_ack > 0) || (ue.grant.uci.nof_csi_part1 > 0);
+    });
 
-      // Report data-related discarded result if shared channel data is present.
-      if (pdu.codeword.has_value()) {
-        notifier.on_sch({.data = {.tb_crc_ok = false, .nof_codeblocks_total = 0, .ldpc_decoder_stats = {}}, .csi = {}});
+    // Discard UL-SCH if only data is allocated.
+    if (only_ul_sch) {
+      for (auto& ue : ues) {
+        logger.warning(common.slot.sfn(),
+                       common.slot.slot_index(),
+                       "PUSCH processing queue is full. Dropping PUSCH {:s} for UE {:s}.",
+                       common,
+                       ue.grant);
+        unlock_rm_buffer_and_notify_discarded_sch(notifier, ue);
       }
-
       return;
     }
 
-    // Process UCI synchronously if UCI is present.
+    // Process PUSCH using the UCI processors. Same processing, it ignores UL-SCH.
     uci_processor_pool::ptr uci_processor = uci_processors->get();
     if (uci_processor) {
       logger.warning(
-          pdu.slot.sfn(), pdu.slot.slot_index(), "PUSCH processing queue is full. Processing UCI {:s}.", pdu);
-      uci_processor->process(data, std::move(rm_buffer), notifier, grid, pdu);
-    } else {
-      logger.warning(
-          pdu.slot.sfn(), pdu.slot.slot_index(), "PUSCH processing queue is full. Failed processing UCI {:s}.", pdu);
+          common.slot.sfn(), common.slot.slot_index(), "PUSCH processing queue is full. Processing UCI {:s}.", common);
+      uci_processor->process(notifier, grid, common, ues);
+      return;
+    }
 
-      // Report data-related discarded result if shared channel data is present.
-      if (pdu.codeword.has_value()) {
-        notifier.on_sch({.data = {.tb_crc_ok = false, .nof_codeblocks_total = 0, .ldpc_decoder_stats = {}}, .csi = {}});
+    // Failed to get a UCI processor, report discarded UCI and UL-SCH.
+    for (auto& ue : ues) {
+      logger.warning(common.slot.sfn(),
+                     common.slot.slot_index(),
+                     "PUSCH processing queue is full. Failed processing UCI {:s} for UE {:s}.",
+                     common,
+                     ue.grant);
+
+      // Notify the UCI before the data, as the data notification completes the transmission.
+      if ((ue.grant.uci.nof_harq_ack > 0) || (ue.grant.uci.nof_csi_part1 > 0)) {
+        notifier.on_uci(
+            {.context   = ue.grant.context,
+             .harq_ack  = {.payload = uci_payload_type(ue.grant.uci.nof_harq_ack), .status = uci_status::invalid},
+             .csi_part1 = {.payload = uci_payload_type(ue.grant.uci.nof_csi_part1), .status = uci_status::invalid},
+             .csi_part2 = {},
+             .csi       = {}});
       }
 
-      pusch_processor_result_data discarded_results;
-      notifier.on_uci({.harq_ack  = {.payload = uci_payload_type(pdu.uci.nof_harq_ack), .status = uci_status::invalid},
-                       .csi_part1 = {},
-                       .csi_part2 = {},
-                       .csi       = {}});
+      unlock_rm_buffer_and_notify_discarded_sch(notifier, ue);
     }
   }
 
 private:
+  /// Unlocks rate matching buffer and reports discarded data results for the UEs that carry shared channel data.
+  static void unlock_rm_buffer_and_notify_discarded_sch(pusch_processor_result_notifier& notifier,
+                                                        ue_specific_parameters&          ue)
+  {
+    if (ue.rm_buffer.is_valid()) {
+      ue.rm_buffer.unlock();
+    }
+    if (ue.grant.codeword.has_value()) {
+      notifier.on_sch({.context = ue.grant.context,
+                       .data    = {.tb_crc_ok = false, .nof_codeblocks_total = 0, .ldpc_decoder_stats = {}},
+                       .csi     = {}});
+    }
+  }
+
   /// Physical layer logger.
   ocudulog::basic_logger& logger;
   /// Actual PUSCH processor pool.

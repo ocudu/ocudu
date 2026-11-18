@@ -6,6 +6,7 @@
 #pragma once
 
 #include "ocudu/phy/upper/channel_processors/pusch/pusch_decoder_result.h"
+#include "ocudu/phy/upper/channel_processors/pusch/pusch_processor.h"
 #include "ocudu/phy/upper/channel_processors/uci/uci_status.h"
 #include "ocudu/phy/upper/channel_state_information.h"
 #include "ocudu/ran/uci/uci_payload_type.h"
@@ -27,6 +28,8 @@ struct pusch_uci_field {
 
 /// Groups the PUSCH processor UL-SCH data decode results.
 struct pusch_processor_result_data {
+  /// Context of the UE that transmitted the data.
+  pusch_processor::ue_context context;
   /// SCH decoding information.
   pusch_decoder_result data;
   /// Channel state information.
@@ -35,6 +38,8 @@ struct pusch_processor_result_data {
 
 /// Groups the PUSCH processor UL-SCH control decode results.
 struct pusch_processor_result_control {
+  /// Context of the UE that transmitted the control information.
+  pusch_processor::ue_context context;
   /// \brief Decoded HARQ-ACK information bits.
   /// \remark Leave empty if no HARQ-ACK information bits are multiplexed with the UL-SCH.
   pusch_uci_field harq_ack;
@@ -67,7 +72,7 @@ public:
 
   /// \brief Notifies the shared channel decoding.
   ///
-  /// The SCH result is always notified after on_csi(), if the \ref pusch_processor::pdu_t::codeword is
+  /// The SCH result is always notified after on_csi(), if the \ref pusch_processor::ue_grant::codeword is
   /// available.
   ///
   /// \param[in] sch Actual SCH decoding results.

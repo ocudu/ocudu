@@ -276,29 +276,29 @@ private:
       pusch_processor::codeword_description cw_descr = {rep_rv, ldpc_base_graph, i_rep == 0, i_rep == rep_end - 1};
 
       // Prepare PUSCH processor configuration.
-      pusch_config.push_back(pusch_processor::pdu_t{
-          .harq_id            = INVALID_HARQ_ID,
+      pusch_config.push_back(pusch_processor::common_parameters{
           .slot               = slot_point(to_numerology_value(scs), 0) + cfg.ul_slot_offset,
           .slot_offset        = cfg.ul_slot_offset,
-          .rnti               = rnti,
           .bwp_size_rb        = cfg.bwp_size_rb,
           .bwp_start_rb       = bwp_start_rb,
           .cp                 = cp_prefix,
-          .mcs_descr          = mcs_descr,
-          .codeword           = cw_descr,
-          .uci                = {},
-          .n_id               = n_id,
-          .nof_tx_layers      = cfg.nof_layers,
           .rx_ports           = rx_ports,
           .dmrs_symbol_mask   = dmrs_symbols,
           .dmrs               = dmrs_config,
           .freq_alloc         = freq_alloc,
           .start_symbol_index = 0,
           .nof_symbols        = nof_ofdm_symbols,
-          .tbs_lbrm           = tbs_lbrm_default,
           .dc_position =
               cfg.enable_dc_position ? std::optional(cfg.bwp_size_rb * NOF_SUBCARRIERS_PER_RB / 2) : std::nullopt,
-          .n_rapid = std::nullopt,
+      });
+      pusch_grants.push_back(pusch_processor::ue_grant{
+          .context    = {.rnti = rnti, .harq_id = INVALID_HARQ_ID, .n_rapid = std::nullopt},
+          .mcs_descr  = mcs_descr,
+          .codeword   = cw_descr,
+          .uci        = {},
+          .n_id       = n_id,
+          .tbs_lbrm   = tbs_lbrm_default,
+          .dmrs_ports = dmrs_ports,
       });
     }
 
@@ -410,6 +410,8 @@ private:
 
       // Process PUSCH.
       std::vector<pusch_processor_notifier_adaptor> rx_notifiers(cfg.rep_rv_sequence.size());
+      // The UE parameters must remain valid until the processing completes.
+      std::vector<pusch_processor::ue_specific_parameters> rx_ues(cfg.rep_rv_sequence.size());
       for (unsigned i_rep = 0, rep_end = cfg.rep_rv_sequence.size(); i_rep != rep_end; ++i_rep) {
         bool new_data = (i_rep == 0);
 
@@ -419,8 +421,11 @@ private:
         report_error_if_not(buffer, "Invalid buffer.");
 
         // Fork PUSCH reception.
-        receiver->process(
-            rx_data, std::move(buffer), rx_notifiers[i_rep], rx_grids[i_rep]->get_reader(), pusch_config[i_rep]);
+        rx_ues[i_rep] = {.grant = pusch_grants[i_rep], .rm_buffer = std::move(buffer), .data = rx_data};
+        receiver->process(rx_notifiers[i_rep],
+                          rx_grids[i_rep]->get_reader(),
+                          pusch_config[i_rep],
+                          span<pusch_processor::ue_specific_parameters>(&rx_ues[i_rep], 1));
       }
 
       // Wait for all PUSCH processing to complete.
@@ -504,8 +509,9 @@ private:
   std::vector<std::unique_ptr<pdsch_processor>> tx_processors;
   std::unique_ptr<rx_buffer_pool_controller>    buffer_pool;
 
-  std::vector<pdsch_processor::pdu_t> pdsch_config;
-  std::vector<pusch_processor::pdu_t> pusch_config;
+  std::vector<pdsch_processor::pdu_t>             pdsch_config;
+  std::vector<pusch_processor::common_parameters> pusch_config;
+  std::vector<pusch_processor::ue_grant>          pusch_grants;
 
   std::vector<uint8_t> tx_data;
   std::vector<uint8_t> rx_data;

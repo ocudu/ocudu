@@ -31,6 +31,12 @@ constexpr unsigned MAX_MODULATION_ORDER = 8;
 /// As per TS 38.211 Section 6.3.1.3.
 constexpr unsigned MAX_NOF_LAYERS = 4;
 
+/// Maximum number of UEs that share a PUSCH transmission (MU-MIMO).
+constexpr unsigned MAX_NOF_MU_MIMO_UES = 8;
+
+/// Maximum total number of transmission layers over all the UEs that share a PUSCH transmission (MU-MIMO).
+constexpr unsigned MAX_NOF_MU_MIMO_LAYERS = 8;
+
 /// \brief Maximum number of receive ports for receiving PUSCH.
 constexpr unsigned MAX_NOF_RX_PORTS = 8;
 

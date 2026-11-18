@@ -67,13 +67,15 @@ public:
   /// \param[in] notifier_            PUSCH processor result notifier.
   /// \param[in] csi_part_1_feedback_ Uplink control information field CSI Part 1 feedback notifier.
   /// \param[in] csi                  Channel state information.
-  /// \return A PUSCH processor notifier adaptor.
+  /// \param[in] context              Context of the UE, reported with the results.
   void new_transmission(pusch_processor_result_notifier&    notifier_,
                         pusch_processor_csi_part1_feedback& csi_part_1_feedback_,
-                        const channel_state_information&    csi)
+                        const channel_state_information&    csi,
+                        const pusch_processor::ue_context&  context)
   {
     notifier            = &notifier_;
     csi_part_1_feedback = &csi_part_1_feedback_;
+    uci_payload.context = context;
     uci_payload.csi     = csi;
 
     uci_payload.harq_ack.clear();
@@ -227,8 +229,9 @@ private:
   void on_sch_data(const pusch_decoder_result& result) override
   {
     pusch_processor_result_data result_data;
-    result_data.data = result;
-    result_data.csi  = uci_payload.csi;
+    result_data.context = uci_payload.context;
+    result_data.data    = result;
+    result_data.csi     = uci_payload.csi;
     notifier->on_sch(result_data);
   }
 

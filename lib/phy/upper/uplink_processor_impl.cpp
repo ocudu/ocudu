@@ -296,63 +296,74 @@ void uplink_processor_impl::process_pusch(const uplink_pdu_slot_repository::pusc
     return;
   }
 
-  const pusch_processor::pdu_t& proc_pdu = pdu.pdu;
+  // Select the PUSCH adaptor and the UE buffers storage for this transmission.
+  // Assume that count_pusch_adaptors will not exceed MAX_PUSCH_PDUS_PER_SLOT.
+  unsigned notifier_adaptor_id = count_pusch_adaptors.fetch_add(1, std::memory_order_acq_rel);
+  static_vector<pusch_processor::ue_specific_parameters, pusch_constants::MAX_NOF_MU_MIMO_UES>& ues =
+      pusch_ues[notifier_adaptor_id];
+  ues.clear();
 
-  // Temporal sanity check as PUSCH is only supported for data. Remove the check when the UCI is supported for PUSCH.
-  ocudu_assert(proc_pdu.codeword.has_value(), "PUSCH PDU doesn't contain data. Currently, that mode is not supported.");
+  // Reserve the buffers of each UE.
+  for (const uplink_pdu_slot_repository::pusch_ue_pdu& ue_pdu : pdu.ues) {
+    const pusch_processor::ue_grant& ue = ue_pdu.grant;
 
-  // Create buffer identifier.
-  trx_buffer_identifier id(proc_pdu.rnti, pdu.pdu.harq_id);
+    // Temporal sanity check as PUSCH is only supported for data. Remove the check when the UCI is supported for PUSCH.
+    ocudu_assert(ue.codeword.has_value(), "PUSCH PDU doesn't contain data. Currently, that mode is not supported.");
 
-  // Determine the number of codeblocks from the TBS and base graph.
-  unsigned nof_codeblocks = compute_nof_codeblocks(pdu.tb_size.to_bits(), proc_pdu.codeword->ldpc_base_graph);
+    // Create buffer identifier.
+    trx_buffer_identifier id(ue.context.rnti, ue.context.harq_id);
 
-  // Extract new data flag.
-  bool new_data = proc_pdu.codeword->new_data;
+    // Determine the number of codeblocks from the TBS and base graph.
+    unsigned nof_codeblocks = compute_nof_codeblocks(ue_pdu.tb_size.to_bits(), ue.codeword->ldpc_base_graph);
 
-  // Reserve receive buffer.
-  unique_rx_buffer rm_buffer = rm_buffer_pool.reserve(current_slot, id, nof_codeblocks, new_data);
+    // Extract new data flag.
+    bool new_data = ue.codeword->new_data;
 
-  // Skip processing if the buffer is not valid. The pool shall log the context and the reason of the failure.
-  if (!rm_buffer) {
-    notify_discard_pusch(pdu);
-    return;
+    // Reserve receive buffer.
+    unique_rx_buffer rm_buffer = rm_buffer_pool.reserve(current_slot, id, nof_codeblocks, new_data);
+
+    // Skip processing if the buffer is not valid. The pool shall log the context and the reason of the failure.
+    if (!rm_buffer) {
+      ues.clear();
+      notify_discard_pusch(pdu);
+      return;
+    }
+
+    // Retrieves transport block data.
+    span<uint8_t> data = rx_payload_pool.acquire_payload_buffer(ue_pdu.tb_size);
+    if (data.empty()) {
+      logger.warning(pdu.common.slot.sfn(),
+                     pdu.common.slot.slot_index(),
+                     "UL rnti={} h_id={}: insufficient available payload data in the buffer pool for TB of size {}",
+                     ue.context.rnti,
+                     ue.context.harq_id,
+                     ue_pdu.tb_size);
+      ues.clear();
+      notify_discard_pusch(pdu);
+      return;
+    }
+
+    ues.push_back({.grant = ue, .rm_buffer = std::move(rm_buffer), .data = data});
   }
 
-  // Retrieves transport block data and starts PUSCH processing.
-  auto data = rx_payload_pool.acquire_payload_buffer(pdu.tb_size);
-  if (data.empty()) {
-    logger.warning(pdu.pdu.slot.sfn(),
-                   pdu.pdu.slot.slot_index(),
-                   "UL rnti={} h_id={}: insufficient available payload data in the buffer pool for TB of size {}",
-                   pdu.pdu.rnti,
-                   pdu.pdu.harq_id,
-                   pdu.tb_size);
-    notify_discard_pusch(pdu);
-    return;
-  }
+  // Configure the notifier adaptor.
+  pusch_processor_result_notifier& processor_notifier = pusch_adaptors[notifier_adaptor_id].configure(
+      notifier, pdu.common.slot, ues, [this]() { state_machine.on_finish_processing_pdu(); });
 
   // Try to enqueue asynchronous processing.
-  bool success =
-      task_executors.pusch_executor.defer([this, data, rm_buffer2 = std::move(rm_buffer), &pdu, stop_token]() mutable {
-        // Select and configure notifier adaptor.
-        // Assume that count_pusch_adaptors will not exceed MAX_PUSCH_PDUS_PER_SLOT.
-        unsigned notifier_adaptor_id = count_pusch_adaptors.fetch_add(1, std::memory_order_acq_rel);
-        pusch_processor_result_notifier& processor_notifier = pusch_adaptors[notifier_adaptor_id].configure(
-            notifier, pdu.pdu.rnti, pdu.pdu.slot, pdu.pdu.harq_id, data, pdu.pdu.n_rapid, [this]() {
-              state_machine.on_finish_processing_pdu();
-            });
+  bool success = task_executors.pusch_executor.defer([this, &processor_notifier, &ues, &pdu, stop_token]() {
+    trace_point tp = l1_ul_tracer.now();
 
-        trace_point tp = l1_ul_tracer.now();
+    pusch_proc->process(processor_notifier, grid->get_reader(), pdu.common, ues);
 
-        pusch_proc->process(data, std::move(rm_buffer2), processor_notifier, grid->get_reader(), pdu.pdu);
-
-        l1_ul_tracer << trace_event("process_pusch", tp);
-      });
+    l1_ul_tracer << trace_event("process_pusch", tp);
+  });
 
   // Report the execution failure.
   if (!success) {
-    logger.warning(pdu.pdu.slot.sfn(), pdu.pdu.slot.slot_index(), "Failed to execute PUSCH. Ignoring processing.");
+    logger.warning(
+        pdu.common.slot.sfn(), pdu.common.slot.slot_index(), "Failed to execute PUSCH. Ignoring processing.");
+    ues.clear();
     notify_discard_pusch(pdu);
   }
 }
@@ -506,18 +517,21 @@ void uplink_processor_impl::process_srs(const uplink_pdu_slot_repository::srs_pd
 
 void uplink_processor_impl::notify_discard_pusch(const uplink_pdu_slot_repository::pusch_pdu& pdu)
 {
-  // Report data-related discarded result if shared channel data is present.
-  if (pdu.pdu.codeword.has_value()) {
-    ul_pusch_results_data discarded_results =
-        ul_pusch_results_data::create_discarded(pdu.pdu.rnti, pdu.pdu.slot, pdu.pdu.harq_id);
-    notifier.on_new_pusch_results_data(discarded_results);
-  }
+  for (const uplink_pdu_slot_repository::pusch_ue_pdu& ue_pdu : pdu.ues) {
+    const pusch_processor::ue_grant& ue = ue_pdu.grant;
+    // Report data-related discarded result if shared channel data is present.
+    if (ue.codeword.has_value()) {
+      ul_pusch_results_data discarded_results =
+          ul_pusch_results_data::create_discarded(ue.context.rnti, pdu.common.slot, ue.context.harq_id);
+      notifier.on_new_pusch_results_data(discarded_results);
+    }
 
-  // Report control-related discarded result if HARQ-ACK feedback is present.
-  if (pdu.pdu.uci.nof_harq_ack > 0) {
-    ul_pusch_results_control discarded_results =
-        ul_pusch_results_control::create_discarded(pdu.pdu.rnti, pdu.pdu.slot, pdu.pdu.uci.nof_harq_ack);
-    notifier.on_new_pusch_results_control(discarded_results);
+    // Report control-related discarded result if HARQ-ACK feedback is present.
+    if (ue.uci.nof_harq_ack > 0) {
+      ul_pusch_results_control discarded_results =
+          ul_pusch_results_control::create_discarded(ue.context.rnti, pdu.common.slot, ue.uci.nof_harq_ack);
+      notifier.on_new_pusch_results_control(discarded_results);
+    }
   }
 
   state_machine.on_finish_processing_pdu();

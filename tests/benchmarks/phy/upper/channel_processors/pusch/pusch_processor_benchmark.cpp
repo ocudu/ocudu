@@ -35,7 +35,7 @@
 using namespace ocudu;
 
 // A test case consists of a PUSCH PDU configuration and a Transport Block Size.
-using test_case_type = std::tuple<pusch_processor::pdu_t, unsigned>;
+using test_case_type = std::tuple<pusch_processor::common_parameters, pusch_processor::ue_grant, unsigned>;
 
 namespace {
 
@@ -374,24 +374,26 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
           units::bits tbs         = tbs_calculator_calculate(tbs_config).to_bits();
 
           // Build the PUSCH PDU configuration.
-          pusch_processor::pdu_t config = {};
-          config.slot                   = slot_point(to_numerology_value(profile.scs), 0);
-          config.rnti                   = to_rnti(1);
-          config.bwp_size_rb            = nof_prb;
-          config.bwp_start_rb           = 0;
-          config.cp                     = profile.cp;
-          config.mcs_descr              = mcs;
-          config.codeword.emplace(pusch_processor::codeword_description{
+          pusch_processor::common_parameters config = {};
+          config.slot                               = slot_point(to_numerology_value(profile.scs), 0);
+          pusch_processor::ue_grant ue              = {};
+          ue.context.rnti                           = to_rnti(1);
+          config.bwp_size_rb                        = nof_prb;
+          config.bwp_start_rb                       = 0;
+          config.cp                                 = profile.cp;
+          ue.mcs_descr                              = mcs;
+          ue.codeword.emplace(pusch_processor::codeword_description{
               rv, get_ldpc_base_graph(mcs.get_normalised_target_code_rate(), units::bits(tbs)), true, true});
-          config.uci.alpha_scaling         = 1.0;
-          config.uci.beta_offset_harq_ack  = 5.0;
-          config.uci.beta_offset_csi_part1 = 5.0;
-          config.uci.beta_offset_csi_part2 = 5.0;
-          config.uci.nof_harq_ack          = nof_harq_ack;
-          config.uci.nof_csi_part1         = nof_csi_part1;
-          config.uci.csi_part2_size        = uci_part2_size_description(nof_csi_part2);
-          config.n_id                      = 0;
-          config.nof_tx_layers             = nof_layers;
+          ue.uci.alpha_scaling         = 1.0;
+          ue.uci.beta_offset_harq_ack  = 5.0;
+          ue.uci.beta_offset_csi_part1 = 5.0;
+          ue.uci.beta_offset_csi_part2 = 5.0;
+          ue.uci.nof_harq_ack          = nof_harq_ack;
+          ue.uci.nof_csi_part1         = nof_csi_part1;
+          ue.uci.csi_part2_size        = uci_part2_size_description(nof_csi_part2);
+          ue.n_id                      = 0;
+          ue.dmrs_ports                = dmrs_port_mask(DMRS_MAX_NPORTS);
+          ue.dmrs_ports.fill(0, nof_layers);
           config.rx_ports.resize(profile.nof_rx_ports);
           std::iota(config.rx_ports.begin(), config.rx_ports.end(), 0);
           config.dmrs_symbol_mask   = dmrs_mask;
@@ -402,9 +404,9 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
           config.freq_alloc         = rb_allocation::make_type1(config.bwp_start_rb, nof_prb);
           config.start_symbol_index = 0;
           config.nof_symbols        = profile.nof_symbols;
-          config.tbs_lbrm           = tbs_lbrm_default;
+          ue.tbs_lbrm               = tbs_lbrm_default;
 
-          test_case_set.emplace_back(config, tbs.value());
+          test_case_set.emplace_back(config, ue, tbs.value());
         }
       }
     }
@@ -657,13 +659,14 @@ static std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_va
   return std::make_tuple(std::move(processor), std::move(validator));
 }
 
-static void thread_process(pusch_processor&              proc,
-                           const pusch_processor::pdu_t& config,
-                           unsigned                      tbs,
-                           const resource_grid_reader&   grid)
+static void thread_process(pusch_processor&                          proc,
+                           const pusch_processor::common_parameters& config,
+                           const pusch_processor::ue_grant&          ue,
+                           unsigned                                  tbs,
+                           const resource_grid_reader&               grid)
 {
   // Compute the number of codeblocks.
-  unsigned nof_codeblocks = compute_nof_codeblocks(units::bits(tbs), config.codeword.value().ldpc_base_graph);
+  unsigned nof_codeblocks = compute_nof_codeblocks(units::bits(tbs), ue.codeword.value().ldpc_base_graph);
 
   // Buffer pool configuration.
   rx_buffer_pool_config buffer_pool_config = {};
@@ -674,7 +677,7 @@ static void thread_process(pusch_processor&              proc,
       100 * get_nof_slots_per_subframe(to_subcarrier_spacing(config.slot.numerology()));
   buffer_pool_config.external_soft_bits = false;
 
-  trx_buffer_identifier buffer_id = trx_buffer_identifier(config.rnti, 0);
+  trx_buffer_identifier buffer_id = trx_buffer_identifier(ue.context.rnti, 0);
 
   // Create buffer pool.
   std::unique_ptr<rx_buffer_pool_controller> buffer_pool = create_rx_buffer_pool(buffer_pool_config);
@@ -704,8 +707,9 @@ static void thread_process(pusch_processor&              proc,
     unique_rx_buffer rm_buffer = buffer_pool->get_pool().reserve(config.slot, buffer_id, nof_codeblocks, true);
 
     // Process PDU.
+    pusch_processor::ue_specific_parameters ue_params = {.grant = ue, .rm_buffer = std::move(rm_buffer), .data = data};
     [&]() noexcept OCUDU_RTSAN_NONBLOCKING {
-      proc.process(data, std::move(rm_buffer), result_notifier, grid, config);
+      proc.process(result_notifier, grid, config, span<pusch_processor::ue_specific_parameters>(&ue_params, 1));
     }();
 
     // Wait for finish the task.
@@ -817,12 +821,15 @@ int main(int argc, char** argv)
 
   for (const test_case_type& test_case : test_case_set) {
     // Get the PUSCH configuration.
-    const pusch_processor::pdu_t& config = std::get<0>(test_case);
+    const pusch_processor::common_parameters& config = std::get<0>(test_case);
+    // Get the UE grant.
+    const pusch_processor::ue_grant& ue = std::get<1>(test_case);
     // Get the TBS in bits.
-    unsigned tbs = std::get<1>(test_case);
+    unsigned tbs = std::get<2>(test_case);
 
     // Make sure the configuration is valid.
-    report_fatal_error_if_not(validator->is_valid(config), "validator->is_valid(config)");
+    pusch_processor::ue_specific_parameters ue_params = {.grant = ue, .rm_buffer = unique_rx_buffer(), .data = {}};
+    report_fatal_error_if_not(validator->is_valid(config, {&ue_params, 1}), "validator->is_valid(config, ue)");
 
     // Reset finish counter.
     finish_count  = 0;
@@ -836,8 +843,8 @@ int main(int argc, char** argv)
       unique_thread& thread = threads[thread_id];
 
       // Create thread.
-      thread = unique_thread("thread_" + std::to_string(thread_id), [&proc = *processor, &config, &tbs, &grid] {
-        thread_process(proc, config, tbs, grid->get_reader());
+      thread = unique_thread("thread_" + std::to_string(thread_id), [&proc = *processor, &config, &ue, &tbs, &grid] {
+        thread_process(proc, config, ue, tbs, grid->get_reader());
       });
     }
 
@@ -855,10 +862,10 @@ int main(int argc, char** argv)
     fmt::format_to(std::back_inserter(meas_description),
                    "PUSCH RB={:<3} Mod={:<6} R={:<5.3f} rv={} n_layers={} - {:>5.1f} Mbps",
                    config.freq_alloc.get_nof_rb(),
-                   to_string(config.mcs_descr.modulation),
-                   config.mcs_descr.get_normalised_target_code_rate(),
-                   config.codeword.value().rv,
-                   config.nof_tx_layers,
+                   to_string(ue.mcs_descr.modulation),
+                   ue.mcs_descr.get_normalised_target_code_rate(),
+                   ue.codeword.value().rv,
+                   ue.dmrs_ports.count(),
                    peak_throughput_Mbps);
 
     // Run the benchmark.

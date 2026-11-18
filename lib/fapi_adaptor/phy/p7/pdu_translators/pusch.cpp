@@ -11,8 +11,8 @@
 using namespace ocudu;
 using namespace fapi_adaptor;
 
-/// Fills the optional codeword description parameter of the PUSCH PDU, if present.
-static void fill_codeword(uplink_pdu_slot_repository::pusch_pdu& pdu, const fapi::ul_pusch_pdu& fapi_pdu)
+/// Fills the optional codeword description parameter of the PUSCH UE grant, if present.
+static void fill_codeword(uplink_pdu_slot_repository::pusch_ue_pdu& pdu, const fapi::ul_pusch_pdu& fapi_pdu)
 {
   if (!fapi_pdu.pusch_data.has_value()) {
     return;
@@ -25,18 +25,18 @@ static void fill_codeword(uplink_pdu_slot_repository::pusch_pdu& pdu, const fapi
 
   pdu.tb_size = fapi_pdu.pusch_data->tb_size;
 
-  pdu.pdu.codeword = std::optional<pusch_processor::codeword_description>(cw);
+  pdu.grant.codeword = std::optional<pusch_processor::codeword_description>(cw);
 }
 
 /// Fills the \c rb_allocation parameter of the PUSCH PDU.
-static void fill_rb_allocation(pusch_processor::pdu_t& proc_pdu, const fapi::ul_pusch_pdu& fapi_pdu)
+static void fill_rb_allocation(pusch_processor::common_parameters& proc_pdu, const fapi::ul_pusch_pdu& fapi_pdu)
 {
   proc_pdu.freq_alloc = rb_allocation::make_type1(
       fapi_pdu.resource_allocation_1.vrbs.start(), fapi_pdu.resource_allocation_1.vrbs.length(), std::nullopt);
 }
 
-/// Fills the \c UCI parameters of the PUSCH PDU.
-static void fill_uci(pusch_processor::pdu_t&              proc_pdu,
+/// Fills the \c UCI parameters of the PUSCH UE grant.
+static void fill_uci(pusch_processor::ue_grant&           proc_pdu,
                      const fapi::ul_pusch_pdu&            fapi_pdu,
                      uci_part2_correspondence_repository& part2_repo)
 {
@@ -85,18 +85,13 @@ void ocudu::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_pdu_slot_repository::
                                                     uci_part2_correspondence_repository&   part2_repo,
                                                     unsigned                               ntn_k_mac_slots)
 {
-  // Fill the PUSCH processor parameters.
-  pusch_processor::pdu_t& proc_pdu    = pdu.pdu;
-  proc_pdu.slot                       = slot;
-  proc_pdu.slot_offset                = ntn_k_mac_slots;
-  proc_pdu.rnti                       = fapi_pdu.rnti;
-  proc_pdu.bwp_start_rb               = fapi_pdu.bwp.start();
-  proc_pdu.bwp_size_rb                = fapi_pdu.bwp.length();
-  proc_pdu.cp                         = fapi_pdu.cp;
-  proc_pdu.mcs_descr.modulation       = fapi_pdu.qam_mod_order;
-  proc_pdu.mcs_descr.target_code_rate = fapi_pdu.target_code_rate;
-  proc_pdu.n_id                       = fapi_pdu.nid_pusch;
-  proc_pdu.nof_tx_layers              = fapi_pdu.num_layers;
+  // Fill the PUSCH processor common parameters.
+  pusch_processor::common_parameters& proc_pdu = pdu.common;
+  proc_pdu.slot                                = slot;
+  proc_pdu.slot_offset                         = ntn_k_mac_slots;
+  proc_pdu.bwp_start_rb                        = fapi_pdu.bwp.start();
+  proc_pdu.bwp_size_rb                         = fapi_pdu.bwp.length();
+  proc_pdu.cp                                  = fapi_pdu.cp;
   // This value is defined in field UL DMRS symbol position in SCF-222 v4.0 Section 3.4.3.2, in table PUSCH PDU, DMRS
   // subsection.
   proc_pdu.dmrs_symbol_mask = fapi_pdu.ul_dmrs_symb_pos;
@@ -114,7 +109,6 @@ void ocudu::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_pdu_slot_repository::
   }
   proc_pdu.start_symbol_index = fapi_pdu.symbols.start();
   proc_pdu.nof_symbols        = fapi_pdu.symbols.length();
-  proc_pdu.tbs_lbrm           = fapi_pdu.tb_size_lbrm_bytes;
 
   if (fapi_pdu.tx_direct_current_location < 3300) {
     proc_pdu.dc_position = static_cast<unsigned>(fapi_pdu.tx_direct_current_location);
@@ -122,15 +116,22 @@ void ocudu::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_pdu_slot_repository::
 
   fill_rb_allocation(proc_pdu, fapi_pdu);
 
-  fill_codeword(pdu, fapi_pdu);
-
-  fill_uci(proc_pdu, fapi_pdu, part2_repo);
-
-  proc_pdu.harq_id = fapi_pdu.harq_id;
-
   // Fill the antenna port indices starting from 0.
   proc_pdu.rx_ports.resize(num_rx_ant);
   std::iota(proc_pdu.rx_ports.begin(), proc_pdu.rx_ports.end(), 0);
 
-  proc_pdu.n_rapid = fapi_pdu.rapid;
+  // Fill the UE grant. Each FAPI PUSCH PDU carries a single UE.
+  pdu.ues.clear();
+  uplink_pdu_slot_repository::pusch_ue_pdu& ue_pdu = pdu.ues.emplace_back();
+  pusch_processor::ue_grant&                ue     = ue_pdu.grant;
+  ue.context                    = {.rnti = fapi_pdu.rnti, .harq_id = fapi_pdu.harq_id, .n_rapid = fapi_pdu.rapid};
+  ue.mcs_descr.modulation       = fapi_pdu.qam_mod_order;
+  ue.mcs_descr.target_code_rate = fapi_pdu.target_code_rate;
+  ue.n_id                       = fapi_pdu.nid_pusch;
+  ue.tbs_lbrm                   = fapi_pdu.tb_size_lbrm_bytes;
+  ue.dmrs_ports                 = fapi_pdu.dmrs_ports;
+
+  fill_codeword(ue_pdu, fapi_pdu);
+
+  fill_uci(ue, fapi_pdu, part2_repo);
 }

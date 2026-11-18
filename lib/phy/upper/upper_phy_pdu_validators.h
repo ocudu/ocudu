@@ -55,9 +55,10 @@ public:
   {
     return pucch->is_valid(config);
   }
-  error_type<std::string> is_valid(const pusch_processor::pdu_t& config) const override
+  error_type<std::string> is_valid(const pusch_processor::common_parameters&           common,
+                                   span<const pusch_processor::ue_specific_parameters> ues) const override
   {
-    return pusch->is_valid(config);
+    return pusch->is_valid(common, ues);
   }
   error_type<std::string> is_valid(const srs_estimator_configuration& config) const override
   {

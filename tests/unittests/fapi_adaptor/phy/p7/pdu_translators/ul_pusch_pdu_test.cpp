@@ -39,18 +39,20 @@ TEST(fapi_phy_ul_pusch_adaptor_test, valid_pdu_pass)
                             *std::get<std::unique_ptr<uci_part2_correspondence_repository>>(uci_part2_tools),
                             ntn_k_mac_slots);
 
-  const pusch_processor::pdu_t& phy_pdu = pdu.pdu;
+  const pusch_processor::common_parameters& phy_pdu = pdu.common;
+  ASSERT_EQ(1, pdu.ues.size());
+  const pusch_processor::ue_grant& ue = pdu.ues.front().grant;
   ASSERT_EQ(slot, phy_pdu.slot);
   ASSERT_EQ(ntn_k_mac_slots, phy_pdu.slot_offset);
   ASSERT_EQ(fapi_pdu.symbols.start(), phy_pdu.start_symbol_index);
   ASSERT_EQ(fapi_pdu.symbols.length(), phy_pdu.nof_symbols);
-  ASSERT_EQ(fapi_pdu.rnti, phy_pdu.rnti);
+  ASSERT_EQ(fapi_pdu.rnti, ue.context.rnti);
   ASSERT_EQ(fapi_pdu.bwp.start(), phy_pdu.bwp_start_rb);
   ASSERT_EQ(fapi_pdu.bwp.length(), phy_pdu.bwp_size_rb);
   ASSERT_EQ(fapi_pdu.cp, phy_pdu.cp);
-  ASSERT_EQ(fapi_pdu.qam_mod_order, phy_pdu.mcs_descr.modulation);
-  ASSERT_EQ(fapi_pdu.nid_pusch, phy_pdu.n_id);
-  ASSERT_EQ(fapi_pdu.num_layers, phy_pdu.nof_tx_layers);
+  ASSERT_EQ(fapi_pdu.qam_mod_order, ue.mcs_descr.modulation);
+  ASSERT_EQ(fapi_pdu.nid_pusch, ue.n_id);
+  ASSERT_EQ(fapi_pdu.dmrs_ports, ue.dmrs_ports);
   ASSERT_EQ(nof_antenna_ports, phy_pdu.rx_ports.size());
 
   if (fapi_pdu.tx_direct_current_location < 3300) {
@@ -74,7 +76,7 @@ TEST(fapi_phy_ul_pusch_adaptor_test, valid_pdu_pass)
     ASSERT_EQ(fapi_pdu.nscid, dmrs_config.n_scid);
     ASSERT_EQ(tp_disabled->num_dmrs_cdm_grps_no_data, dmrs_config.nof_cdm_groups_without_data);
   }
-  ASSERT_EQ(fapi_pdu.tb_size_lbrm_bytes, phy_pdu.tbs_lbrm);
+  ASSERT_EQ(fapi_pdu.tb_size_lbrm_bytes, ue.tbs_lbrm);
 
   // RB allocation.
   rb_allocation alloc = rb_allocation::make_type1(
@@ -83,14 +85,14 @@ TEST(fapi_phy_ul_pusch_adaptor_test, valid_pdu_pass)
   ASSERT_EQ(alloc, phy_pdu.freq_alloc);
 
   // Codeword.
-  ASSERT_TRUE(phy_pdu.codeword.has_value());
-  ASSERT_EQ(fapi_pdu.pusch_data->rv_index, phy_pdu.codeword.value().rv);
-  ASSERT_EQ(fapi_pdu.pusch_data->new_data, phy_pdu.codeword.value().new_data);
-  ASSERT_EQ(fapi_pdu.ldpc_base_graph, phy_pdu.codeword.value().ldpc_base_graph);
-  ASSERT_EQ(fapi_pdu.pusch_data->tb_size.value(), pdu.tb_size.value());
-  ASSERT_EQ(fapi_pdu.pusch_data->harq_process_id, pdu.pdu.harq_id);
-  ASSERT_TRUE(phy_pdu.codeword.value().last_repetition);
+  ASSERT_TRUE(ue.codeword.has_value());
+  ASSERT_EQ(fapi_pdu.pusch_data->rv_index, ue.codeword.value().rv);
+  ASSERT_EQ(fapi_pdu.pusch_data->new_data, ue.codeword.value().new_data);
+  ASSERT_EQ(fapi_pdu.ldpc_base_graph, ue.codeword.value().ldpc_base_graph);
+  ASSERT_EQ(fapi_pdu.pusch_data->tb_size.value(), pdu.ues.front().tb_size.value());
+  ASSERT_EQ(fapi_pdu.pusch_data->harq_process_id, ue.context.harq_id);
+  ASSERT_TRUE(ue.codeword.value().last_repetition);
 
   // Rapid.
-  ASSERT_EQ(fapi_pdu.rapid, phy_pdu.n_rapid);
+  ASSERT_EQ(fapi_pdu.rapid, ue.context.n_rapid);
 }

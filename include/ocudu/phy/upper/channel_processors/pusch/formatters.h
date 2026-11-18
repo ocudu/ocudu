@@ -94,9 +94,9 @@ struct formatter<ocudu::pusch_processor::uci_description> {
   }
 };
 
-/// \brief Custom formatter for \c pusch_processor::pdu_t.
+/// \brief Custom formatter for \c pusch_processor::ue_grant.
 template <>
-struct formatter<ocudu::pusch_processor::pdu_t> {
+struct formatter<ocudu::pusch_processor::ue_grant> {
   /// Helper used to parse formatting options and format fields.
   ocudu::delimited_formatter helper;
 
@@ -110,10 +110,51 @@ struct formatter<ocudu::pusch_processor::pdu_t> {
   }
 
   template <typename FormatContext>
-  auto format(const ocudu::pusch_processor::pdu_t& pdu, FormatContext& ctx) const
+  auto format(const ocudu::pusch_processor::ue_grant& ue, FormatContext& ctx) const
   {
-    helper.format_always(ctx, "rnti={}", pdu.rnti);
-    helper.format_always(ctx, "harq_id={}", underlying(pdu.harq_id));
+    helper.format_always(ctx, "rnti={}", ue.context.rnti);
+    helper.format_always(ctx, "harq_id={}", underlying(ue.context.harq_id));
+    if (ue.context.n_rapid.has_value()) {
+      helper.format_always(ctx, "n_rapid={}", *ue.context.n_rapid);
+    }
+
+    // UCI description.
+    helper.format_always(ctx, ue.uci);
+
+    helper.format_always(ctx, "mod={}", to_string(ue.mcs_descr.modulation));
+    helper.format_if_verbose(ctx, "tcr={}", ue.mcs_descr.get_normalised_target_code_rate());
+
+    // PUSCH data codeword if available.
+    if (ue.codeword.has_value()) {
+      helper.format_always(ctx, *ue.codeword);
+    }
+
+    helper.format_if_verbose(ctx, "n_id={}", ue.n_id);
+    helper.format_if_verbose(ctx, "tbs_lbrm={}bytes", ue.tbs_lbrm);
+    helper.format_if_verbose(ctx, "dmrs_ports={:n}", ue.dmrs_ports);
+
+    return ctx.out();
+  }
+};
+
+/// \brief Custom formatter for \c pusch_processor::common_parameters.
+template <>
+struct formatter<ocudu::pusch_processor::common_parameters> {
+  /// Helper used to parse formatting options and format fields.
+  ocudu::delimited_formatter helper;
+
+  /// Default constructor.
+  formatter() = default;
+
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return helper.parse(ctx);
+  }
+
+  template <typename FormatContext>
+  auto format(const ocudu::pusch_processor::common_parameters& pdu, FormatContext& ctx) const
+  {
     if (pdu.slot_offset != 0) {
       helper.format_always(ctx, "ue_ul_slot={}", pdu.slot - pdu.slot_offset);
       helper.format_if_verbose(ctx, "slot_offset={}", pdu.slot_offset);
@@ -122,24 +163,10 @@ struct formatter<ocudu::pusch_processor::pdu_t> {
     helper.format_always(ctx, "prb={}", pdu.freq_alloc);
     helper.format_always(ctx, "symb=[{}, {})", pdu.start_symbol_index, pdu.start_symbol_index + pdu.nof_symbols);
 
-    // UCI description.
-    helper.format_always(ctx, pdu.uci);
-
     // Verbose parameters.
-    helper.format_always(ctx, "mod={}", to_string(pdu.mcs_descr.modulation));
-    helper.format_if_verbose(ctx, "tcr={}", pdu.mcs_descr.get_normalised_target_code_rate());
-
-    // PUSCH data codeword if available.
-    if (pdu.codeword.has_value()) {
-      helper.format_always(ctx, *pdu.codeword);
-    }
-
-    helper.format_if_verbose(ctx, "n_id={}", pdu.n_id);
     helper.format_if_verbose(ctx, "dmrs_mask={}", pdu.dmrs_symbol_mask);
-    helper.format_if_verbose(ctx, "tbs_lbrm={}bytes", pdu.tbs_lbrm);
     helper.format_if_verbose(ctx, "slot={}", pdu.slot);
     helper.format_if_verbose(ctx, "cp={}", pdu.cp.to_string());
-    helper.format_if_verbose(ctx, "nof_layers={}", pdu.nof_tx_layers);
     helper.format_if_verbose(ctx, "ports={}", ocudu::span<const uint8_t>(pdu.rx_ports));
     helper.format_if_verbose(ctx, "dc_position={}", pdu.dc_position);
 
