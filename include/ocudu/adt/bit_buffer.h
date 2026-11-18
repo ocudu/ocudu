@@ -190,16 +190,48 @@ public:
   /// \param[in] value_   Consecutive bits to insert.
   /// \param[in] startpos Starting bit position.
   /// \param[in] count    Number of bits to insert.
-  ///  \remark An assertion is triggered if the number of bits is larger than the number of bits per word.
+  ///  \remark An assertion is triggered if the number of bits is larger than the number of bits of \c Integer.
   ///  \remark An assertion is triggered if \c value_ exceeds the number of bits to insert.
   ///  \remark An assertion is triggered if range of bits exceed the maximum size of the buffer.
   template <typename Integer>
   void insert(Integer value_, unsigned startpos, unsigned count)
   {
-    ocudu_assert(count <= bits_per_word,
-                 "The number of bits to insert (i.e., {}) exceeds the number of bits per word (i.e., {}).",
-                 count,
-                 static_cast<unsigned>(bits_per_word));
+    // The paths below insert at most one word of bits, so wider values are split here.
+    if (count > bits_per_word) {
+      ocudu_assert(count <= sizeof(Integer) * 8,
+                   "The number of bits to insert (i.e., {}) exceeds the number of bits of the value type (i.e., {}).",
+                   count,
+                   sizeof(Integer) * 8);
+      ocudu_assert((count == sizeof(Integer) * 8) || ((value_ >> count) == 0),
+                   "The value (i.e., {}) number of bits exceeds the number of bits to insert (i.e., {}).",
+                   value_,
+                   count);
+      ocudu_assert(startpos + count <= size(),
+                   "The bit range starting at {} for {} bits exceed the buffer size (i.e., {}).",
+                   startpos,
+                   count,
+                   size());
+      // Head: a partial first word keeps its leading bits, so it needs a read-modify-write.
+      unsigned head_count = (bits_per_word - startpos % bits_per_word) % bits_per_word;
+      if (head_count != 0) {
+        count -= head_count;
+        word_t   head_mask = mask_lsb_ones<word_t>(head_count);
+        unsigned i_word    = startpos / bits_per_word;
+        buffer[i_word]     = (buffer[i_word] & ~head_mask) | (static_cast<word_t>(value_ >> count) & head_mask);
+        startpos += head_count;
+      }
+      // Body: whole words are fully overwritten, so they are stored without reading them.
+      for (; count >= bits_per_word; count -= bits_per_word, startpos += bits_per_word) {
+        buffer[startpos / bits_per_word] = static_cast<word_t>(value_ >> (count - bits_per_word));
+      }
+      // Tail: a partial last word keeps its trailing bits, so it needs a read-modify-write.
+      if (count != 0) {
+        unsigned i_word = startpos / bits_per_word;
+        buffer[i_word]  = (buffer[i_word] & mask_msb_zeros<word_t>(count)) |
+                         static_cast<word_t>(static_cast<word_t>(value_) << (bits_per_word - count));
+      }
+      return;
+    }
     ocudu_assert(value_ < (1U << count),
                  "The value (i.e., {}) number of bits exceeds the number of bits to insert (i.e., {}).",
                  value_,
