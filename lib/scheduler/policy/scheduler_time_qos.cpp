@@ -6,6 +6,7 @@
 #include "scheduler_time_qos.h"
 #include "../slicing/slice_ue_repository.h"
 #include "../support/dmrs_helpers.h"
+#include "../support/mcs_calculator.h"
 #include "../ue_scheduling/grant_params_selector.h"
 #include <algorithm>
 
@@ -84,13 +85,10 @@ void ue_history_repository::save_ul_newtx_grants(pdu_span<ul_sched_info> ul_gran
   }
 }
 
-// [Implementation-defined] MCS tables of reference for the estimation of the maximum TBS.
-static constexpr pdsch_mcs_table ref_dl_mcs_table = pdsch_mcs_table::qam256;
-static constexpr pusch_mcs_table ref_ul_mcs_table = pusch_mcs_table::qam256;
-
 rate_estimator::rate_estimator(const cell_configuration& cell_cfg)
 {
-  // The maximum TBS only depends on the number of layers and the MCS of the UE, so it is computed once for every pair.
+  // The maximum TBS only depends on the MCS table, the number of layers and the MCS of the UE, so it is computed once
+  // for every combination. The MCS indexes above the maximum of each table are not reachable.
   const tbs_calculator_configuration dl_tbs_cfg_ref{
       .nof_symb_sh      = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
       .nof_oh_prb       = 0,
@@ -109,9 +107,12 @@ rate_estimator::rate_estimator(const cell_configuration& cell_cfg)
     tbs_calculator_configuration tbs_cfg = dl_tbs_cfg_ref;
     tbs_cfg.nof_dmrs_prb                 = calculate_nof_dmrs_per_rb(dmrs);
     tbs_cfg.nof_layers                   = nof_layers;
-    for (unsigned mcs = 0; mcs != NOF_MCS_INDEXES; ++mcs) {
-      tbs_cfg.mcs_descr               = pdsch_mcs_get_config(ref_dl_mcs_table, mcs);
-      dl_max_tbs[nof_layers - 1][mcs] = tbs_calculator_calculate(tbs_cfg).value();
+    for (unsigned table_idx = 0; table_idx != NOF_DL_MCS_TABLES; ++table_idx) {
+      const auto table = static_cast<pdsch_mcs_table>(table_idx);
+      for (unsigned mcs = 0, max_mcs = get_max_mcs_dl(table).value(); mcs <= max_mcs; ++mcs) {
+        tbs_cfg.mcs_descr                          = pdsch_mcs_get_config(table, mcs);
+        dl_max_tbs[table_idx][nof_layers - 1][mcs] = tbs_calculator_calculate(tbs_cfg).value();
+      }
     }
   }
 
@@ -125,39 +126,53 @@ rate_estimator::rate_estimator(const cell_configuration& cell_cfg)
     const pusch_time_domain_resource_allocation pusch_td_cfg{
         2, sch_mapping_type::typeA, {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP}};
     const dmrs_uplink_config dmrs_cfg{};
-    auto                     dmrs = make_dmrs_info_dedicated(
-        pusch_td_cfg, cell_cfg.params.pci, cell_cfg.params.dmrs_typeA_pos, dmrs_cfg, nof_layers, false);
-    tbs_calculator_configuration tbs_cfg = ul_tbs_cfg_ref;
-    tbs_cfg.nof_dmrs_prb                 = calculate_nof_dmrs_per_rb(dmrs);
-    tbs_cfg.nof_layers                   = nof_layers;
-    for (unsigned mcs = 0; mcs != NOF_MCS_INDEXES; ++mcs) {
-      tbs_cfg.mcs_descr               = pusch_mcs_get_config(ref_ul_mcs_table, mcs, false, false);
-      ul_max_tbs[nof_layers - 1][mcs] = tbs_calculator_calculate(tbs_cfg).value();
+    for (unsigned tp = 0; tp != 2; ++tp) {
+      const bool                   use_transform_precoder = tp != 0;
+      const auto                   dmrs                   = make_dmrs_info_dedicated(pusch_td_cfg,
+                                                 cell_cfg.params.pci,
+                                                 cell_cfg.params.dmrs_typeA_pos,
+                                                 dmrs_cfg,
+                                                 nof_layers,
+                                                 use_transform_precoder);
+      tbs_calculator_configuration tbs_cfg                = ul_tbs_cfg_ref;
+      tbs_cfg.nof_dmrs_prb                                = calculate_nof_dmrs_per_rb(dmrs);
+      tbs_cfg.nof_layers                                  = nof_layers;
+      for (unsigned table_idx = 0; table_idx != NOF_UL_MCS_TABLES; ++table_idx) {
+        const auto table = static_cast<pusch_mcs_table>(table_idx);
+        for (unsigned mcs = 0, max_mcs = get_max_mcs_ul(table, use_transform_precoder).value(); mcs <= max_mcs; ++mcs) {
+          tbs_cfg.mcs_descr = pusch_mcs_get_config(table, mcs, use_transform_precoder, false);
+          ul_max_tbs[table_idx][tp][nof_layers - 1][mcs] = tbs_calculator_calculate(tbs_cfg).value();
+        }
+      }
     }
   }
 }
 
 unsigned rate_estimator::estimate_max_dl_tbs(const ue_cell& ue_cc) const
 {
-  auto mcs = ue_cc.link_adaptation_controller().calculate_dl_mcs(ref_dl_mcs_table);
+  const pdsch_config*   pdsch_ded = ue_cc.cfg().init_bwp().dl.pdsch().ded();
+  const pdsch_mcs_table mcs_table = pdsch_ded != nullptr ? pdsch_ded->mcs_table : pdsch_mcs_table::qam64;
+
+  auto mcs = ue_cc.link_adaptation_controller().calculate_dl_mcs(mcs_table);
   if (not mcs.has_value()) {
     // CQI is either 0 or above 15, which means no DL.
     return 0;
   }
   const unsigned nof_layers = ue_cc.channel_state_manager().get_nof_dl_layers();
   ocudu_assert(nof_layers >= 1 and nof_layers <= MAX_NOF_LAYERS, "Invalid number of DL layers {}", nof_layers);
-  return dl_max_tbs[nof_layers - 1][mcs->value()];
+  return dl_max_tbs[static_cast<unsigned>(mcs_table)][nof_layers - 1][mcs->value()];
 }
 
 unsigned rate_estimator::estimate_max_ul_tbs(const ue_cell& ue_cc) const
 {
-  static constexpr bool use_transform_precoder = false;
+  const pusch_config*   pusch_ded              = ue_cc.cfg().init_bwp().ul.pusch_ded();
+  const pusch_mcs_table mcs_table              = pusch_ded != nullptr ? pusch_ded->mcs_table : pusch_mcs_table::qam64;
+  const bool            use_transform_precoder = ue_cc.cfg().use_pusch_transform_precoding_dci_0_1();
 
-  const sch_mcs_index mcs =
-      ue_cc.link_adaptation_controller().calculate_ul_mcs(ref_ul_mcs_table, use_transform_precoder);
-  const unsigned nof_layers = ue_cc.channel_state_manager().get_nof_ul_layers();
+  const sch_mcs_index mcs = ue_cc.link_adaptation_controller().calculate_ul_mcs(mcs_table, use_transform_precoder);
+  const unsigned      nof_layers = ue_cc.channel_state_manager().get_nof_ul_layers();
   ocudu_assert(nof_layers >= 1 and nof_layers <= MAX_NOF_LAYERS, "Invalid number of UL layers {}", nof_layers);
-  return ul_max_tbs[nof_layers - 1][mcs.value()];
+  return ul_max_tbs[static_cast<unsigned>(mcs_table)][use_transform_precoder][nof_layers - 1][mcs.value()];
 }
 
 scheduler_time_qos::scheduler_time_qos(const time_qos_scheduler_config& policy_cfg_,

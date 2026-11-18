@@ -98,13 +98,16 @@ private:
   static constexpr size_t MAX_NOF_LAYERS  = 4;
   static constexpr size_t NOF_MCS_INDEXES = sch_mcs_index::max() + 1;
 
+  static constexpr size_t NOF_DL_MCS_TABLES = 4;
+  static constexpr size_t NOF_UL_MCS_TABLES = 3;
+
   /// Maximum TBS in bytes, indexed by number of layers minus one and MCS index.
   using max_tbs_table = std::array<std::array<unsigned, NOF_MCS_INDEXES>, MAX_NOF_LAYERS>;
 
-  /// Maximum DL TBS per number of layers and MCS of the reference MCS table.
-  max_tbs_table dl_max_tbs{};
-  /// Maximum UL TBS per number of layers and MCS of the reference MCS table.
-  max_tbs_table ul_max_tbs{};
+  /// Maximum DL TBS per PDSCH MCS table.
+  std::array<max_tbs_table, NOF_DL_MCS_TABLES> dl_max_tbs{};
+  /// Maximum UL TBS per PUSCH MCS table and use of transform precoding.
+  std::array<std::array<max_tbs_table, 2>, NOF_UL_MCS_TABLES> ul_max_tbs{};
 };
 
 /// Time-domain QoS-aware scheduler policy.
