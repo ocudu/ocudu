@@ -27,7 +27,12 @@ static void add_shifted_node(span<uint8_t> out, const uint8_t* doubled_node, uns
   }
 }
 
-/// Reads the 64 bits starting at bit \c pos, most significant bit first. Nine bytes from \c pos / 8 must be readable.
+/// \brief Reads 64 consecutive bits from an MSB-first packed buffer.
+///
+/// \param[in] data Packed bits, most significant bit first.
+/// \param[in] pos  Position of the first bit to read.
+/// \return The 64 bits, with the bit at \c pos in the most significant position.
+/// \remark The nine bytes starting at byte <tt>pos / 8</tt> must be readable.
 static uint64_t load_bits(const uint8_t* data, unsigned pos)
 {
   uint64_t word;
@@ -39,7 +44,7 @@ static uint64_t load_bits(const uint8_t* data, unsigned pos)
 
 /// Writes the 64 bits at \c node starting at bit \c pos, most significant bit first. The bits before \c pos are
 /// preserved, and nine bytes from \c pos / 8 must be writable.
-static void store_bits(uint8_t* data, unsigned pos, const uint8_t* node)
+static void store_64bits(uint8_t* data, unsigned pos, const uint8_t* node)
 {
   uint64_t word;
   std::memcpy(&word, node, sizeof(word));
@@ -101,6 +106,7 @@ void ldpc_encoder_generic::load_input(const bit_buffer& in)
   // The padding after the message allows reading every node with a constant size.
   std::array<uint8_t, MAX_MESSAGE_SIZE / 8 + max_node_nof_bytes> message;
   ocuduvec::copy(span<uint8_t>(message).first(in.get_buffer().size()), in.get_buffer());
+  ocuduvec::zero(span<uint8_t>(message).subspan(in.get_buffer().size(), max_node_nof_bytes));
 
   if (lifting_size % 8 != 0) {
     for (unsigned i_node = 0; i_node != bg_K; ++i_node) {
@@ -109,9 +115,15 @@ void ldpc_encoder_generic::load_input(const bit_buffer& in)
     return;
   }
 
+  // Each systematic node occupies a whole number of bytes of the message and is stored twice in a row (same layout as
+  // double_node when lifting_size is byte-aligned).
+  unsigned nof_bytes = get_node_nof_bytes();
   for (unsigned i_node = 0; i_node != bg_K; ++i_node) {
-    std::memcpy(nodes[i_node].data(), message.data() + i_node * get_node_nof_bytes(), max_node_nof_bytes);
-    double_node(nodes[i_node]);
+    span<const uint8_t> message_padded_node =
+        span<const uint8_t>(message).subspan(i_node * nof_bytes, max_node_nof_bytes);
+    span<uint8_t> node = nodes[i_node];
+    ocuduvec::copy(node.first(max_node_nof_bytes), message_padded_node);
+    ocuduvec::copy(node.subspan(nof_bytes, max_node_nof_bytes), message_padded_node);
   }
 }
 
@@ -196,7 +208,8 @@ void ldpc_encoder_generic::write_codeblock(span<uint8_t> out, unsigned offset) c
       compute_check_node(node, i_node - bg_K, bg_K + bg_hr_parity_nodes);
     }
     if (!is_in_place) {
-      store_bits(packed.get_buffer().data(), i_packed_bit, node.data());
+      // All lifting sizes greater than 64 are multiples of 8, so unaligned nodes fit in 64 bits.
+      store_64bits(packed.get_buffer().data(), i_packed_bit, node.data());
     }
   }
   ocuduvec::bit_unpack(out, packed, node_offset);

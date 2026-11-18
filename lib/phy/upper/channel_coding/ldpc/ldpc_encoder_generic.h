@@ -25,11 +25,21 @@ protected:
   /// Returns the number of bytes of a packed lifted node.
   unsigned get_node_nof_bytes() const { return divide_ceil(lifting_size, 8U); }
 
-  /// Computes the sum of the variable nodes connected to a check node, modulo 2.
-  /// \param[out] out           Packed sum, with room for \c max_node_nof_bytes bytes. The bits beyond the lifting size
-  ///                           are left undefined.
-  /// \param[in]  i_check       Check node index.
-  /// \param[in]  nof_var_nodes Number of variable nodes considered, starting from the first one.
+  /// \brief Computes the sum of the variable nodes connected to a check node, modulo 2.
+  ///
+  /// Only the variable nodes with index lower than \c nof_var_nodes are added:
+  /// - High-rate check nodes: \c nof_var_nodes is \f$K_{BG}\f$, so only the systematic nodes are added. The result is
+  ///   an intermediate sum for solving the high-rate parity nodes.
+  /// - Extended region check nodes: \c nof_var_nodes is \f$K_{BG} + 4\f$, so the systematic and the four high-rate
+  ///   parity nodes are added. The result is the parity node of the check node.
+  ///
+  /// where \f$K_{BG}\f$ is the number of systematic nodes of the base graph, that is, 22 for BG1 and 10 for BG2.
+  ///
+  /// \param[out] out           Packed sum of one lifted node, with room for \c max_node_nof_bytes bytes. The bits
+  ///                           beyond the lifting size are left undefined.
+  /// \param[in]  i_check       Index of the check node, that is, the row of the base graph.
+  /// \param[in]  nof_var_nodes Number of leading variable nodes added to the sum. The variable nodes from this index
+  ///                           onward are excluded.
   virtual void compute_check_node(span<uint8_t> out, unsigned i_check, unsigned nof_var_nodes) const;
 
   /// \brief Calls a function for each variable node connected to a check node.
