@@ -77,9 +77,9 @@ static cell_pdsch_rrm_config make_cell_pdsch_rrm_config(const ran_cell_config& c
   const pdsch_builder_params& params = cell_cfg.init_bwp.pdsch;
 
   cell_pdsch_rrm_config pdsch;
-  pdsch.x_ov_head                        = params.x_ov_head;
-  pdsch.dmrs_type_a.additional_positions = params.additional_positions;
-  pdsch.rbg_sz                           = params.rbg_sz;
+  pdsch.x_ov_head    = params.x_ov_head;
+  pdsch.dmrs_add_pos = params.additional_positions;
+  pdsch.rbg_sz       = params.rbg_sz;
 
   // According to TS 38.214 Section 5.1.2.3, the PRB bundle size must match the VRB-to-PRB mapping type.
   switch (params.interleaving_bundle_size) {

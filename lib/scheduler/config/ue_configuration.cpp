@@ -58,7 +58,8 @@ void search_space_info::update_pdsch_time_domain_list(const ue_cell_configuratio
         pdsch_cfg_list[i].resize(ue_cell_cfg.cell_cfg_common.params.init_bwp.pdsch.max_nof_layers);
         for (unsigned j = 0, je = pdsch_cfg_list[i].size(); j != je; ++j) {
           pdsch_cfg_list[i][j] = sched_helper::get_pdsch_config_f1_1_c_rnti(ue_cell_cfg.cell_cfg_common,
-                                                                            cell_pdsch->dmrs_type_a,
+                                                                            cell_pdsch->dmrs_add_pos,
+                                                                            cell_pdsch->dmrs_max_len,
                                                                             bwp->dl.ue_cfg()->pdsch.mcs_table,
                                                                             ue_cell_cfg.pdsch_nof_oh_prb(),
                                                                             pdsch_td_res,
@@ -79,7 +80,7 @@ pdsch_config_params search_space_info::get_pdsch_config(unsigned              pd
   if (pdsch_cfg.dmrs.dmrs_ports != dmrs_ports or
       pdsch_cfg.dmrs.num_dmrs_cdm_grps_no_data != nof_cdm_groups_without_data) {
     ocudu_assert(get_dl_dci_format() == dci_dl_format::f1_1, "Only DCI f1_1 signals the PDSCH DM-RS ports");
-    set_pdsch_dmrs_ports(pdsch_cfg.dmrs, cell_pdsch->dmrs_type_a, dmrs_ports, nof_cdm_groups_without_data);
+    set_pdsch_dmrs_ports(pdsch_cfg.dmrs, cell_pdsch->dmrs_max_len, dmrs_ports, nof_cdm_groups_without_data);
   }
   return pdsch_cfg;
 }
@@ -298,8 +299,8 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
         break;
       }
     }
-    dci_sz_cfg.pdsch_dmrs_A_type                 = cell_pdsch.dmrs_type_a.type;
-    dci_sz_cfg.pdsch_dmrs_A_max_len              = cell_pdsch.dmrs_type_a.max_length;
+    dci_sz_cfg.pdsch_dmrs_A_type                 = dmrs_config_type::type1;
+    dci_sz_cfg.pdsch_dmrs_A_max_len              = cell_pdsch.dmrs_max_len;
     dci_sz_cfg.dl_harq_process_number_field_size = static_cast<unsigned>(ue_pdsch->dci_harq_field_size);
   }
   dci_sz_cfg.multiple_scells     = is_ue_configured_multiple_serving_cells;

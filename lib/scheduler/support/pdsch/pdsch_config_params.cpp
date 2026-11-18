@@ -69,7 +69,8 @@ sched_helper::get_pdsch_config_f1_0_c_rnti(const cell_configuration&            
 
 pdsch_config_params
 sched_helper::get_pdsch_config_f1_1_c_rnti(const cell_configuration&                    cell_cfg_common,
-                                           const dmrs_downlink_config&                  dmrs_cfg,
+                                           dmrs_additional_positions                    dmrs_add_pos,
+                                           dmrs_max_length                              dmrs_max_len,
                                            pdsch_mcs_table                              mcs_table,
                                            unsigned                                     nof_oh_prb,
                                            const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
@@ -88,7 +89,8 @@ sched_helper::get_pdsch_config_f1_1_c_rnti(const cell_configuration&            
   pdsch.dmrs = make_dmrs_info_dedicated(pdsch_td_cfg,
                                         cell_cfg_common.params.pci,
                                         cell_cfg_common.params.dmrs_typeA_pos,
-                                        dmrs_cfg,
+                                        dmrs_add_pos,
+                                        dmrs_max_len,
                                         get_su_pdsch_dmrs_ports(nof_layers));
 
   // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.

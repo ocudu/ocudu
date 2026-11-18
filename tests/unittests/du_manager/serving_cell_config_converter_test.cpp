@@ -223,10 +223,10 @@ TEST(serving_cell_config_converter_test, test_pdsch_cfg_conversion_of_cell_value
 {
   auto dest_cfg = make_initial_du_ue_resource_config();
 
-  cell_rrm_config cell_rrm                        = default_cell_rrm();
-  cell_rrm.pdsch.dmrs_type_a.additional_positions = dmrs_additional_positions::pos1;
-  cell_rrm.pdsch.rbg_sz                           = rbg_size::config2;
-  cell_rrm.pdsch.prb_bundle_size                  = pdsch_prb_bundle_size::n4;
+  cell_rrm_config cell_rrm       = default_cell_rrm();
+  cell_rrm.pdsch.dmrs_add_pos    = dmrs_additional_positions::pos1;
+  cell_rrm.pdsch.rbg_sz          = rbg_size::config2;
+  cell_rrm.pdsch.prb_bundle_size = pdsch_prb_bundle_size::n4;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
   odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg, cell_rrm);

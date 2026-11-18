@@ -80,12 +80,12 @@ inline dmrs_port_mask get_su_pdsch_dmrs_ports(unsigned nof_layers)
 
 /// \brief Finds the value of the Antenna port(s) field of DCI format 1_1 that signals the DM-RS of a PDSCH.
 /// \return The row of TS 38.212 Tables 7.3.1.2.2-1/2/3/4, or \c std::nullopt if no row matches the DM-RS.
-inline std::optional<unsigned> find_pdsch_antenna_ports_row_index(const dmrs_information&     dmrs,
-                                                                  const dmrs_downlink_config& dmrs_dl_cfg_ded)
+inline std::optional<unsigned> find_pdsch_antenna_ports_row_index(const dmrs_information& dmrs,
+                                                                  dmrs_max_length         dmrs_max_len)
 {
   // Double-symbol DM-RS is not supported, hence the DM-RS always uses a single front-load symbol.
   return find_pdsch_antenna_port_mapping_row_index(
-      dmrs.config_type, dmrs_dl_cfg_ded.max_length, {dmrs.num_dmrs_cdm_grps_no_data, dmrs.dmrs_ports, 1});
+      dmrs.config_type, dmrs_max_len, {dmrs.num_dmrs_cdm_grps_no_data, dmrs.dmrs_ports, 1});
 }
 
 /// \brief Sets the DM-RS ports of a PDSCH scheduled by DCI f1_1.
@@ -94,10 +94,10 @@ inline std::optional<unsigned> find_pdsch_antenna_ports_row_index(const dmrs_inf
 /// \param nof_cdm_groups_without_data Number of DM-RS CDM groups without data. If not set, it is the minimum number
 ///                                    of CDM groups that the DM-RS ports require.
 /// \remark An assertion is triggered if DCI f1_1 cannot signal the DM-RS ports and CDM groups.
-inline void set_pdsch_dmrs_ports(dmrs_information&           dmrs,
-                                 const dmrs_downlink_config& dmrs_dl_cfg_ded,
-                                 const dmrs_port_mask&       dmrs_ports,
-                                 std::optional<unsigned>     nof_cdm_groups_without_data = std::nullopt)
+inline void set_pdsch_dmrs_ports(dmrs_information&       dmrs,
+                                 dmrs_max_length         dmrs_max_len,
+                                 const dmrs_port_mask&   dmrs_ports,
+                                 std::optional<unsigned> nof_cdm_groups_without_data = std::nullopt)
 {
   ocudu_assert(dmrs_ports.any(), "A PDSCH requires at least one DM-RS port");
 
@@ -109,7 +109,7 @@ inline void set_pdsch_dmrs_ports(dmrs_information&           dmrs,
       nof_cdm_groups_without_data.value_or(get_min_nof_cdm_groups_without_data(dmrs.config_type, dmrs_ports));
   dmrs.dmrs_ports = dmrs_ports;
 
-  ocudu_assert(find_pdsch_antenna_ports_row_index(dmrs, dmrs_dl_cfg_ded).has_value(),
+  ocudu_assert(find_pdsch_antenna_ports_row_index(dmrs, dmrs_max_len).has_value(),
                "DCI f1_1 cannot signal DM-RS ports {:#x} with {} CDM group(s) without data",
                dmrs.dmrs_ports.to_uint64(),
                dmrs.num_dmrs_cdm_grps_no_data);
@@ -152,15 +152,15 @@ inline dmrs_information make_dmrs_info_common(const pdsch_time_domain_resource_a
 inline dmrs_information make_dmrs_info_dedicated(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
                                                  pci_t                                        pci,
                                                  dmrs_typeA_position                          dmrs_typeA_pos,
-                                                 const dmrs_downlink_config&                  dmrs_dl_cfg_ded,
+                                                 dmrs_additional_positions                    dmrs_add_pos,
+                                                 dmrs_max_length                              dmrs_max_len,
                                                  const dmrs_port_mask&                        dmrs_ports,
                                                  std::optional<unsigned> nof_cdm_groups_without_data = std::nullopt)
 {
   dmrs_information dmrs{};
 
   // See TS 38.211, 7.4.1.1.2.
-  if (dmrs_dl_cfg_ded.additional_positions == dmrs_additional_positions::pos3 and
-      dmrs_typeA_pos != dmrs_typeA_position::pos2) {
+  if (dmrs_add_pos == dmrs_additional_positions::pos3 and dmrs_typeA_pos != dmrs_typeA_position::pos2) {
     ocudu_assertion_failure("Invalid PDSCH DMRS configuration. Cause: DMRS Additional Position of pos3 is only "
                             "supported when DMRS TypeA position is equal to pos2.");
   }
@@ -168,13 +168,14 @@ inline dmrs_information make_dmrs_info_dedicated(const pdsch_time_domain_resourc
     ocudu_terminate("Mapping type B not supported");
   }
 
-  dmrs.dmrs_symb_pos = make_pdsch_dmrs_symbol_mask(pdsch_td_cfg, dmrs_typeA_pos, dmrs_dl_cfg_ded.additional_positions);
-  dmrs.config_type   = dmrs_dl_cfg_ded.type;
+  dmrs.dmrs_symb_pos = make_pdsch_dmrs_symbol_mask(pdsch_td_cfg, dmrs_typeA_pos, dmrs_add_pos);
+  // [Implementation-defined] The scheduler always uses the DMRS configuration type 1.
+  dmrs.config_type = dmrs_config_type::type1;
   // TODO: See TS 38.211, 7.4.1.1.1.
   dmrs.dmrs_scrambling_id = pci;
   dmrs.low_papr_dmrs      = false;
   dmrs.n_scid             = false;
-  set_pdsch_dmrs_ports(dmrs, dmrs_dl_cfg_ded, dmrs_ports, nof_cdm_groups_without_data);
+  set_pdsch_dmrs_ports(dmrs, dmrs_max_len, dmrs_ports, nof_cdm_groups_without_data);
 
   return dmrs;
 }

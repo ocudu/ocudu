@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "ocudu/ran/dmrs/dmrs_downlink_config.h"
+#include "ocudu/ran/dmrs/dmrs.h"
 #include "ocudu/ran/pdsch/pdsch_mcs.h"
 #include "ocudu/ran/resource_allocation/ofdm_symbol_range.h"
 #include "ocudu/scheduler/config/serving_cell_config.h"
@@ -50,7 +50,8 @@ pdsch_config_params get_pdsch_config_f1_0_c_rnti(const cell_configuration&      
 ///
 /// Returns parameters needed to compute the number of PRBs, MCS and TBS.
 pdsch_config_params get_pdsch_config_f1_1_c_rnti(const cell_configuration&                    cell_cfg_common,
-                                                 const dmrs_downlink_config&                  dmrs_cfg,
+                                                 dmrs_additional_positions                    dmrs_add_pos,
+                                                 dmrs_max_length                              dmrs_max_len,
                                                  pdsch_mcs_table                              mcs_table,
                                                  unsigned                                     nof_oh_prb,
                                                  const pdsch_time_domain_resource_allocation& pdsch_td_cfg,

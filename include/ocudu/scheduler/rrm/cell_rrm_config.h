@@ -8,7 +8,7 @@
 #include "ocudu/adt/span.h"
 #include "ocudu/adt/static_vector.h"
 #include "ocudu/ran/csi_rs/csi_meas_config.h"
-#include "ocudu/ran/dmrs/dmrs_downlink_config.h"
+#include "ocudu/ran/dmrs/dmrs.h"
 #include "ocudu/ran/pdsch/pdsch_prb_bundling.h"
 #include "ocudu/ran/pdsch/pdsch_time_domain_resource.h"
 #include "ocudu/ran/pucch/pucch_configuration.h"
@@ -39,8 +39,10 @@ struct cell_pucch_rrm_config {
 struct cell_pdsch_rrm_config {
   /// \c xOverhead of the \c PDSCH-ServingCellConfig of the UEs.
   x_overhead x_ov_head = x_overhead::not_set;
-  /// DMRS configuration of the PDSCH of mapping type A.
-  dmrs_downlink_config dmrs_type_a;
+  /// Additional DMRS positions of the PDSCH of mapping type A.
+  dmrs_additional_positions dmrs_add_pos = dmrs_additional_positions::pos2;
+  /// Maximum number of front-loaded DMRS symbols of the PDSCH of mapping type A.
+  dmrs_max_length dmrs_max_len = dmrs_max_length::len1;
   /// RBG size of the PDSCH resource allocation type 0. See TS 38.331, \c rbg-Size.
   rbg_size rbg_sz = rbg_size::config1;
   /// Size of the static PRB bundle of the PDSCH. If absent, the UE applies a size of 2 PRBs. See TS 38.331, \c

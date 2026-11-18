@@ -104,11 +104,11 @@ void rate_estimator::build_dl_max_tbs(const cell_configuration& cell_cfg)
   for (unsigned nof_layers = 1; nof_layers <= max_dl_layers; ++nof_layers) {
     const pdsch_time_domain_resource_allocation pdsch_td_cfg{
         0, sch_mapping_type::typeA, {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP}};
-    const dmrs_downlink_config   dmrs_cfg{};
     const dmrs_information       dmrs    = make_dmrs_info_dedicated(pdsch_td_cfg,
                                                            cell_cfg.params.pci,
                                                            cell_cfg.params.dmrs_typeA_pos,
-                                                           dmrs_cfg,
+                                                           dmrs_additional_positions::pos2,
+                                                           dmrs_max_length::len1,
                                                            get_su_pdsch_dmrs_ports(nof_layers));
     tbs_calculator_configuration tbs_cfg = dl_tbs_cfg_ref;
     tbs_cfg.nof_dmrs_prb                 = calculate_nof_dmrs_per_rb(dmrs);

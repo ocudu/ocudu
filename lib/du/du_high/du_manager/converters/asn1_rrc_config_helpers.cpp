@@ -1020,15 +1020,13 @@ calculate_pdcch_config_diff(asn1::rrc_nr::pdcch_cfg_s& out, const pdcch_config& 
   // TODO: Remaining.
 }
 
-static void make_asn1_rrc_dmrs_dl_for_pdsch(asn1::rrc_nr::dmrs_dl_cfg_s& out, const dmrs_downlink_config& cfg)
+static void make_asn1_rrc_dmrs_dl_for_pdsch(asn1::rrc_nr::dmrs_dl_cfg_s& out,
+                                            dmrs_additional_positions    add_pos,
+                                            dmrs_max_length              max_len)
 {
-  if (cfg.type == dmrs_config_type::type2) {
-    out.dmrs_type_present = true;
-  }
-
-  if (cfg.additional_positions != ocudu::dmrs_additional_positions::pos2) {
+  if (add_pos != ocudu::dmrs_additional_positions::pos2) {
     out.dmrs_add_position_present = true;
-    switch (cfg.additional_positions) {
+    switch (add_pos) {
       case dmrs_additional_positions::pos0:
         out.dmrs_add_position = dmrs_dl_cfg_s::dmrs_add_position_opts::pos0;
         break;
@@ -1039,22 +1037,12 @@ static void make_asn1_rrc_dmrs_dl_for_pdsch(asn1::rrc_nr::dmrs_dl_cfg_s& out, co
         out.dmrs_add_position = dmrs_dl_cfg_s::dmrs_add_position_opts::pos3;
         break;
       default:
-        ocudu_assertion_failure("Invalid DMRS DL Add. Position={}", fmt::underlying(cfg.additional_positions));
+        ocudu_assertion_failure("Invalid DMRS DL Add. Position={}", fmt::underlying(add_pos));
     }
   }
 
-  if (cfg.max_length == dmrs_max_length::len2) {
+  if (max_len == dmrs_max_length::len2) {
     out.max_len_present = true;
-  }
-
-  if (cfg.scrambling_id0.has_value()) {
-    out.scrambling_id0_present = true;
-    out.scrambling_id0         = cfg.scrambling_id0.value();
-  }
-
-  if (cfg.scrambling_id1.has_value()) {
-    out.scrambling_id1_present = true;
-    out.scrambling_id1         = cfg.scrambling_id1.value();
   }
 }
 
@@ -1186,7 +1174,7 @@ static void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s&   out,
   // The cell parameters are the same for all the UEs. The UE gets them with its first PDSCH configuration.
   if (src_ue == nullptr) {
     out.dmrs_dl_for_pdsch_map_type_a_present = true;
-    make_asn1_rrc_dmrs_dl_for_pdsch(out.dmrs_dl_for_pdsch_map_type_a.set_setup(), cell.dmrs_type_a);
+    make_asn1_rrc_dmrs_dl_for_pdsch(out.dmrs_dl_for_pdsch_map_type_a.set_setup(), cell.dmrs_add_pos, cell.dmrs_max_len);
 
     out.tci_states_to_add_mod_list.push_back(make_asn1_rrc_tci_state(make_default_tci_state()));
 

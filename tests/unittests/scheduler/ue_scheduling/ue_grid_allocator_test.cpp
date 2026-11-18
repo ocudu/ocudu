@@ -78,8 +78,8 @@ class ue_grid_allocator_test : public ::testing::TestWithParam<duplex_mode>
       // A HARQ process of the cell is allowed to operate in UL HARQ mode B.
       req.ran.ntn_params->ul_harq_mode_b = true;
     }
-    req.rrm.pdsch.dmrs_type_a.max_length = params.pdsch_dmrs_max_length;
-    req.rrm.pdsch.rbg_sz                 = params.pdsch_rbg_size;
+    req.rrm.pdsch.dmrs_max_len = params.pdsch_dmrs_max_length;
+    req.rrm.pdsch.rbg_sz       = params.pdsch_rbg_size;
     if (params.pdsch_repetitions) {
       // The cell has a Rel-16 PDSCH TDRA list that mirrors the common list and appends a repetition entry.
       const auto& common_list = req.ran.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;

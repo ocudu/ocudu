@@ -284,7 +284,7 @@ void ocudu::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
   f1_1.dmrs_seq_initialization = 0;
 
   const std::optional<unsigned> antenna_ports_row =
-      find_pdsch_antenna_ports_row_index(dmrs, ss_info.cell_pdsch->dmrs_type_a);
+      find_pdsch_antenna_ports_row_index(dmrs, ss_info.cell_pdsch->dmrs_max_len);
   ocudu_assert(antenna_ports_row.has_value(),
                "DCI f1_1 cannot signal DM-RS ports {:#x} with {} CDM group(s) without data",
                dmrs.dmrs_ports.to_uint64(),

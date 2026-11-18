@@ -8,7 +8,7 @@
 #include "ocudu/ran/csi_report/csi_report_configuration.h"
 #include "ocudu/ran/csi_rs/csi_meas_config.h"
 #include "ocudu/ran/csi_rs/csi_report_config.h"
-#include "ocudu/ran/dmrs/dmrs_downlink_config.h"
+#include "ocudu/ran/dmrs/dmrs.h"
 #include "ocudu/ran/pucch/pucch_configuration.h"
 #include "ocudu/ran/pucch/pucch_constants.h"
 #include "ocudu/scheduler/config/ran_cell_config.h"
@@ -55,8 +55,10 @@ struct cell_pdsch_res_config {
   /// Overhead that the PDSCH scheduling assumes for the UEs with a dedicated configuration, as per TS 38.214,
   /// Section 5.1.3.2 (\c xOverhead).
   x_overhead x_ov_head = x_overhead::not_set;
-  /// DMRS configuration of the PDSCH of mapping type A.
-  dmrs_downlink_config dmrs_type_a;
+  /// Additional DMRS positions of the PDSCH of mapping type A.
+  dmrs_additional_positions dmrs_add_pos = dmrs_additional_positions::pos2;
+  /// Maximum number of front-loaded DMRS symbols of the PDSCH of mapping type A.
+  dmrs_max_length dmrs_max_len = dmrs_max_length::len1;
   /// RBG size of the PDSCH resource allocation type 0.
   rbg_size rbg_sz = rbg_size::config1;
   /// DCI format 1_1 time domain allocation list of the UEs with PDSCH repetitions. Empty if the cell has none.
@@ -64,7 +66,8 @@ struct cell_pdsch_res_config {
 
   bool operator==(const cell_pdsch_res_config& other) const
   {
-    return x_ov_head == other.x_ov_head and dmrs_type_a == other.dmrs_type_a and rbg_sz == other.rbg_sz and
+    return x_ov_head == other.x_ov_head and dmrs_add_pos == other.dmrs_add_pos and
+           dmrs_max_len == other.dmrs_max_len and rbg_sz == other.rbg_sz and
            rep_td_alloc_list == other.rep_td_alloc_list;
   }
 };
