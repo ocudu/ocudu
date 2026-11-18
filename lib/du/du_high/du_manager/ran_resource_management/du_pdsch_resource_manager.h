@@ -36,21 +36,20 @@ private:
   void apply_config(cell_group_config& cell_grp_cfg, const std::optional<ue_capability_summary>& ue_caps);
 
   pdsch_mcs_table select_mcs_table(du_cell_index_t cell_idx, const std::optional<ue_capability_summary>& ue_caps) const;
-  vrb_to_prb::mapping_type          select_interleaving(du_cell_index_t                             cell_idx,
-                                                        const std::optional<ue_capability_summary>& ue_caps) const;
-  pdsch_config::resource_allocation select_res_alloc(du_cell_index_t                             cell_idx,
-                                                     const std::optional<ue_capability_summary>& ue_caps) const;
+  vrb_to_prb::mapping_type select_interleaving(du_cell_index_t                             cell_idx,
+                                               const std::optional<ue_capability_summary>& ue_caps) const;
+  resource_allocation      select_res_alloc(du_cell_index_t                             cell_idx,
+                                            const std::optional<ue_capability_summary>& ue_caps) const;
   unsigned select_max_nof_harqs(du_cell_index_t cell_idx, const std::optional<ue_capability_summary>& ue_caps) const;
   unsigned select_max_mimo_layers(du_cell_index_t cell_idx, const std::optional<ue_capability_summary>& ue_caps) const;
-  unsigned select_dci_harq_field_size(du_cell_index_t                             cell_idx,
-                                      const std::optional<ue_capability_summary>& ue_caps) const;
+  harq_process_num_field_size select_dci_harq_field_size(du_cell_index_t                             cell_idx,
+                                                         const std::optional<ue_capability_summary>& ue_caps) const;
   harq_dl_feedback_disabled_mask
   select_disabled_harq_feedback(du_cell_index_t cell_idx, const std::optional<ue_capability_summary>& ue_caps) const;
 
-  /// \brief Select dedicated TDRA list. If dedicated TDRA list is applicable for UE build it and return. If dedicated
-  /// TDRA list is not applicable, return empty vector.
-  std::vector<pdsch_time_domain_resource_allocation>
-  select_td_alloc_list(du_cell_index_t cell_idx, const std::optional<ue_capability_summary>& ue_caps) const;
+  /// \brief Selects the maximum number of PDSCH repetitions of the UE. A value of 1 means no repetitions.
+  unsigned select_max_nof_repetitions(du_cell_index_t                             cell_idx,
+                                      const std::optional<ue_capability_summary>& ue_caps) const;
 
   span<const du_cell_config> cell_cfg_list;
   const du_test_mode_config& test_cfg;

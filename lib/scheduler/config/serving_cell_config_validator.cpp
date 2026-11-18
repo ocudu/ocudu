@@ -67,15 +67,10 @@ validator_result config_validators::validate_pdcch_cfg(const serving_cell_config
   return {};
 }
 
-static validator_result validate_zp_csi_rs(const serving_cell_config& ue_cell_cfg)
+static validator_result validate_zp_csi_rs(const serving_cell_config& ue_cell_cfg, const cell_csi_rrm_config& cell_csi)
 {
-  if (not ue_cell_cfg.init_dl_bwp.pdsch_cfg.has_value()) {
-    return {};
-  }
-  const auto& pdsch_cfg = ue_cell_cfg.init_dl_bwp.pdsch_cfg.value();
-
-  const auto& zp_list = pdsch_cfg.zp_csi_rs_res_list;
-  VERIFY(not zp_list.empty() == pdsch_cfg.p_zp_csi_rs_res.has_value(),
+  const auto& zp_list = cell_csi.zp_csi_rs_res_list;
+  VERIFY(not zp_list.empty() == cell_csi.p_zp_csi_rs_res.has_value(),
          "Only periodic ZP-CSI-RS-ResourceId is supported");
   VERIFY(not zp_list.empty() == ue_cell_cfg.csi_meas_cfg.has_value(),
          "CSI-MeasConfig must be configured if and only if ZP-CSI-RS is configured");
@@ -87,9 +82,9 @@ static validator_result validate_zp_csi_rs(const serving_cell_config& ue_cell_cf
 
   // Consistency of ZP-CSI-RS resources and periodic resource set.
   VERIFY(has_unique_ids(zp_list, &zp_csi_rs_resource::id), "Duplication of ZP-CSI-RS-ResourceId");
-  VERIFY(pdsch_cfg.p_zp_csi_rs_res->id == (zp_csi_rs_res_set_id_t)0,
+  VERIFY(cell_csi.p_zp_csi_rs_res->id == (zp_csi_rs_res_set_id_t)0,
          "Only ZP-CSI-RS-ResourceId=0 is allowed for periodic ZP-CSI-RS");
-  VERIFY(are_all_unique(pdsch_cfg.p_zp_csi_rs_res->zp_csi_rs_res_list), "Duplication of ZP-CSI-RS-ResourceId");
+  VERIFY(are_all_unique(cell_csi.p_zp_csi_rs_res->zp_csi_rs_res_list), "Duplication of ZP-CSI-RS-ResourceId");
 
   // CSI-IM resources should match with ZP-CSI-RS.
   for (const auto& csi_im : csi_cfg.csi_im_res_list) {
@@ -106,22 +101,6 @@ static validator_result validate_zp_csi_rs(const serving_cell_config& ue_cell_cf
            csi_im.symbol_location);
   }
 
-  return {};
-}
-
-validator_result config_validators::validate_pdsch_cfg(const serving_cell_config& ue_cell_cfg)
-{
-  const auto& init_dl_bwp = ue_cell_cfg.init_dl_bwp;
-  if (not init_dl_bwp.pdsch_cfg.has_value()) {
-    return {};
-  }
-  const pdsch_config& pdsch_cfg = init_dl_bwp.pdsch_cfg.value();
-  const auto&         dl_lst    = pdsch_cfg.pdsch_td_alloc_list;
-  for (const auto& pdsch : dl_lst) {
-    VERIFY(pdsch.k0 <= SCHEDULER_MAX_K0, "k0={} value exceeds maximum supported k0", pdsch.k0);
-  }
-
-  // TODO: Validate other parameters.
   return {};
 }
 
@@ -349,10 +328,11 @@ config_validators::validate_nzp_csi_rs_list(span<const nzp_csi_rs_resource>     
 }
 
 validator_result config_validators::validate_csi_meas_cfg(const serving_cell_config&                    ue_cell_cfg,
+                                                          const cell_csi_rrm_config&                    cell_csi,
                                                           const std::optional<tdd_ul_dl_config_common>& tdd_cfg_common,
                                                           const ul_config_common&                       ul_cfg_common)
 {
-  HANDLE_ERROR(validate_zp_csi_rs(ue_cell_cfg));
+  HANDLE_ERROR(validate_zp_csi_rs(ue_cell_cfg, cell_csi));
 
   if (not ue_cell_cfg.csi_meas_cfg.has_value()) {
     return {};

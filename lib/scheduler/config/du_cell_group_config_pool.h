@@ -37,18 +37,17 @@ public:
   const bwp_downlink_common& dl_common() const { return bwp_dl_cmn; }
 
   // Builds the UE-dedicated BWP config.
-  sched_bwp_config add_ded_cfg(const bwp_downlink_dedicated* dl_ded,
-                               const bwp_uplink_dedicated*   ul_ded,
-                               const ue_bwp_config&          ue_bwp_cfg);
+  sched_bwp_config add_ded_cfg(const bwp_downlink_dedicated*                     dl_ded,
+                               const bwp_uplink_dedicated*                       ul_ded,
+                               const ue_bwp_config&                              ue_bwp_cfg,
+                               span<const pdsch_time_domain_resource_allocation> ded_pdsch_td_list);
 
   const sched_bwp_config& cell_cfg() const { return common_bwp_cfg; }
 
 private:
-  /// \brief Retrieve the DL TD resource mapper to use for a UE with the given dedicated DL BWP config (or \c nullptr
-  /// for the cell-wide common config). Builds a new mapper and interns it in \c dl_td_mapper_pool, unless an equal
-  /// one already exists in the pool (flyweight pattern). The dedicated list may carry repetition rows (TS 38.214,
-  /// Table 5.1.2.1.1-1).
-  const dl_time_domain_mapper& get_dl_td_mapper(const bwp_downlink_dedicated* dl_ded);
+  /// \brief Retrieve the DL TD resource mapper for the given dedicated PDSCH TDRA list (empty: the common list).
+  /// Builds and interns a new mapper in \c dl_td_mapper_pool unless an equal one is already there (flyweight).
+  const dl_time_domain_mapper& get_dl_td_mapper(span<const pdsch_time_domain_resource_allocation> ded_pdsch_td_list);
 
   /// \brief Retrieve the UL TD resource mapper for a UE with the given dedicated UL BWP config (or \c nullptr for
   /// the cell-wide common config). Builds and interns a new mapper in \c ul_td_mapper_pool unless an equal one is

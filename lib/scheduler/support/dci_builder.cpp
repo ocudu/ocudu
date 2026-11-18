@@ -284,7 +284,7 @@ void ocudu::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
   f1_1.dmrs_seq_initialization = 0;
 
   const std::optional<unsigned> antenna_ports_row =
-      find_pdsch_antenna_ports_row_index(dmrs, ss_info.bwp->dl.pdsch().ded()->pdsch_mapping_type_a_dmrs.value());
+      find_pdsch_antenna_ports_row_index(dmrs, ss_info.cell_pdsch->dmrs_type_a);
   ocudu_assert(antenna_ports_row.has_value(),
                "DCI f1_1 cannot signal DM-RS ports {:#x} with {} CDM group(s) without data",
                dmrs.dmrs_ports.to_uint64(),
@@ -299,7 +299,7 @@ void ocudu::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
                  "Resource allocation type 0 is not configured");
     ocudu_assert(not enable_interleaving, "Resource allocation type 0 requires non-interleaved VRB-to-PRB mapping");
     // See 38.214, clause 5.1.2.2.1 - The RBG bitmap maps RBG 0 to the MSB.
-    const nominal_rbg_size P = get_nominal_rbg_size(active_dl_bwp.crbs.length(), ss_info.bwp->dl.pdsch().ded()->rbg_sz);
+    const nominal_rbg_size P = get_nominal_rbg_size(active_dl_bwp.crbs.length(), ss_info.cell_pdsch->rbg_sz);
     f1_1.frequency_resource  = convert_vrbs_to_rbgs(vrbs.type0(), active_dl_bwp.crbs, P).to_uint64();
   } else {
     ocudu_assert(dci_sz_cfg.pdsch_res_allocation_type != resource_allocation::resource_allocation_type_0,

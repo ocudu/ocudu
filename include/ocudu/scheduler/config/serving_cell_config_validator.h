@@ -9,6 +9,7 @@
 #include "ocudu/scheduler/config/bwp_configuration.h"
 #include "ocudu/scheduler/config/pucch_resource_builder_params.h"
 #include "ocudu/scheduler/config/serving_cell_config.h"
+#include "ocudu/scheduler/rrm/cell_rrm_config.h"
 #include "ocudu/support/config/validator_result.h"
 
 namespace ocudu {
@@ -19,11 +20,6 @@ namespace config_validators {
 /// \param[in] dl_cfg_common Cell DL common configuration.
 /// \return In case an invalid parameter is detected, returns a string containing an error message.
 validator_result validate_pdcch_cfg(const serving_cell_config& ue_cell_cfg, const dl_config_common& dl_cfg_common);
-
-/// \brief Validates PDSCH Config in \c sched_ue_creation_request_message used to create a UE.
-/// \param[in] ue_cell_cfg UE serving cell configuration to be validated.
-/// \return In case an invalid parameter is detected, returns a string containing an error message.
-validator_result validate_pdsch_cfg(const serving_cell_config& ue_cell_cfg);
 
 /// \brief Validates PUSCH Config in \c sched_ue_creation_request_message used to create a UE.
 /// \param[in] ul_config Uplink configuration to be validated.
@@ -49,9 +45,11 @@ validator_result validate_nzp_csi_rs_list(span<const nzp_csi_rs_resource>       
 /// The DU builds these from the cell configuration. Thus, the DU calls this function once per cell, with the default
 /// UE configuration of the cell.
 /// \param[in] ue_cell_cfg UE serving cell configuration to be validated.
+/// \param[in] cell_csi CSI-RS parameters of the cell, which hold the ZP-CSI-RS resources.
 /// \param[in] tdd_cfg_common TDD configuration, if any.
 /// \return In case an invalid parameter is detected, returns a string containing an error message.
 validator_result validate_csi_meas_cfg(const serving_cell_config&                    ue_cell_cfg,
+                                       const cell_csi_rrm_config&                    cell_csi,
                                        const std::optional<tdd_ul_dl_config_common>& tdd_cfg_common,
                                        const ul_config_common&                       ul_cfg_common);
 

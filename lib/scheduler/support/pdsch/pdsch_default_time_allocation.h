@@ -39,18 +39,6 @@ pdsch_default_time_allocation_default_A_get(cyclic_prefix cp, unsigned row_index
 span<const pdsch_time_domain_resource_allocation>
 pdsch_default_time_allocations_default_A_table(cyclic_prefix cp, dmrs_typeA_position dmrs_pos);
 
-/// \brief Determines the time domain resource allocation table to be used for PDSCH as per TS 38.214, clause 5.1.2.1.1.
-///
-/// \param[in] ss_cfg Search Space configuration.
-/// \param[in] active_bwp_dl_common Active DL BWP common configuration.
-/// \param[in] active_bwp_dl_ded Active DL BWP UE-dedicated configuration.
-/// \param[in] dmrs_typeA_pos DM-RS for mapping Type A position.
-/// \return A list of valid PDSCH time-domain allocation configurations to choose from.
-span<const pdsch_time_domain_resource_allocation>
-get_c_rnti_pdsch_time_domain_list(const search_space_configuration& ss_cfg,
-                                  const sched_bwp_config&           active_bwp,
-                                  dmrs_typeA_position               dmrs_typeA_pos);
-
 /// \brief Determines the time domain resource allocation table to be used for PDSCH scheduled with SI-RNTI Type0 common
 /// as per TS 38.214, clause 5.1.2.1.1-1.
 ///

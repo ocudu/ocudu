@@ -8,7 +8,7 @@ add_subdirectory(du_low)
 
 set(SOURCES du_cell_config_validation.cpp du_update_config_helpers.cpp)
 add_library(ocudu_du_config_validators STATIC ${SOURCES})
-target_link_libraries(ocudu_du_config_validators sched_config rrc_nr_asn1)
+target_link_libraries(ocudu_du_config_validators sched_config sched_rrm rrc_nr_asn1)
 
 add_library(ocudu_o_du STATIC
         o_du_impl.cpp

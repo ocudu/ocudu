@@ -72,7 +72,7 @@ unsigned precomputed_pdsch_layer_configs(unsigned nof_dl_antennas)
         << nof_dl_antennas;
 
     // The UE derives TBS_LBRM from maxMIMO-Layers, the MCS table and the size of its BWP (TS 38.212, Section 5.4.2.1).
-    EXPECT_EQ(ue_cell_cfg.init_bwp().dl.pdsch().ded()->mcs_table, pdsch_mcs_table::qam256);
+    EXPECT_EQ(ue_cell_cfg.init_bwp().dl.ue_cfg()->pdsch.mcs_table, pdsch_mcs_table::qam256);
     EXPECT_EQ(ue_cell_cfg.pdsch_tbs_lbrm(),
               tbs_calculator_dlsch_lbrm(
                   max_configs, modulation_scheme::QAM256, ue_cell_cfg.init_bwp().dl.cfg().crbs.length()))

@@ -13,6 +13,7 @@
 #include "ocudu/scheduler/config/cg_builder_params.h"
 #include "ocudu/scheduler/config/serving_cell_config_builder.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
+#include "ocudu/support/math/pow2_utils.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
@@ -389,6 +390,8 @@ TEST_P(du_ran_resource_manager_tester, when_the_ue_has_dl_harq_processes_without
   const ue_rrm_config& rrm = ue_res->value().cell_group.cells.at(SERVING_PCELL_IDX).rrm;
   ASSERT_EQ(rrm.pdsch.nof_harqs, ue_capability_summary::default_max_harq_process_num);
   ASSERT_EQ(rrm.pusch.nof_harqs, ue_capability_summary::default_max_harq_process_num);
+  ASSERT_EQ(static_cast<unsigned>(rrm.pdsch.dci_harq_field_size),
+            log2_ceil(ue_capability_summary::default_max_harq_process_num));
   ASSERT_FALSE(ue_res->update(to_du_cell_index(0), srb1_creation_req(ue_idx1)).failed());
   ASSERT_TRUE(ue_res->value().srbs.contains(srb_id_t::srb1));
   ASSERT_FALSE(ue_res->value().srbs[srb_id_t::srb1].mac_cfg.allowed_dl_harq_feedback.has_value())
@@ -402,6 +405,8 @@ TEST_P(du_ran_resource_manager_tester, when_the_ue_has_dl_harq_processes_without
   // The UE gets the HARQ processes of the cell, as it reports to support them.
   EXPECT_EQ(rrm.pdsch.nof_harqs, nof_harqs);
   EXPECT_EQ(rrm.pusch.nof_harqs, nof_harqs);
+  // The HARQ process number field of the DCI has the bits for all the processes.
+  EXPECT_EQ(static_cast<unsigned>(rrm.pdsch.dci_harq_field_size), log2_ceil(nof_harqs));
 }
 
 TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_use_different_sr_offsets)

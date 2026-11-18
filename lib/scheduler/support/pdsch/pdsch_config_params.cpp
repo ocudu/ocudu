@@ -69,7 +69,8 @@ sched_helper::get_pdsch_config_f1_0_c_rnti(const cell_configuration&            
 
 pdsch_config_params
 sched_helper::get_pdsch_config_f1_1_c_rnti(const cell_configuration&                    cell_cfg_common,
-                                           const pdsch_config&                          pdsch_cfg,
+                                           const dmrs_downlink_config&                  dmrs_cfg,
+                                           pdsch_mcs_table                              mcs_table,
                                            unsigned                                     nof_oh_prb,
                                            const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
                                            unsigned                                     nof_layers)
@@ -87,15 +88,15 @@ sched_helper::get_pdsch_config_f1_1_c_rnti(const cell_configuration&            
   pdsch.dmrs = make_dmrs_info_dedicated(pdsch_td_cfg,
                                         cell_cfg_common.params.pci,
                                         cell_cfg_common.params.dmrs_typeA_pos,
-                                        pdsch_cfg.pdsch_mapping_type_a_dmrs.value(),
+                                        dmrs_cfg,
                                         get_su_pdsch_dmrs_ports(nof_layers));
 
   // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   pdsch.nof_oh_prb                   = nof_oh_prb;
   pdsch.symbols                      = pdsch_td_cfg.symbols;
-  pdsch.mcs_table                    = pdsch_cfg.mcs_table;
+  pdsch.mcs_table                    = mcs_table;
   pdsch.tb_scaling_field             = tb_scaling_field;
-  pdsch.max_nof_cws_scheduled_by_dci = pdsch_cfg.is_max_cw_sched_by_dci_is_two ? 2 : 1;
+  pdsch.max_nof_cws_scheduled_by_dci = 1;
 
   return pdsch;
 }

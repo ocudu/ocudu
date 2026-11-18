@@ -60,7 +60,8 @@ protected:
         return sched_helper::get_pdsch_config_f1_0_c_rnti(cell_cfg, ue_cc.cfg().pdsch_nof_oh_prb(), pdsch_td_cfg);
       case dci_dl_rnti_config_type::c_rnti_f1_1:
         return sched_helper::get_pdsch_config_f1_1_c_rnti(cell_cfg,
-                                                          *ue_cc.cfg().bwp(to_bwp_id(0)).dl.pdsch().ded(),
+                                                          cell_cfg.bwp_res[to_bwp_id(0)].dl().pdsch.dmrs_type_a,
+                                                          ue_cc.cfg().bwp(to_bwp_id(0)).dl.ue_cfg()->pdsch.mcs_table,
                                                           ue_cc.cfg().pdsch_nof_oh_prb(),
                                                           pdsch_td_cfg,
                                                           ue_cc.channel_state_manager().get_nof_dl_layers());

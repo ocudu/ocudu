@@ -51,6 +51,12 @@ struct test_params {
   std::chrono::milliseconds ntn_k_mac{0};
   /// Number of DL antenna ports of the cell.
   unsigned nof_dl_ports = 1;
+  /// Whether the cell allocates PDSCH repetitions to the UEs.
+  bool pdsch_repetitions = false;
+  /// Maximum number of front-loaded DM-RS symbols that the cell configures for the PDSCH.
+  dmrs_max_length pdsch_dmrs_max_length = dmrs_max_length::len1;
+  /// RBG size of the PDSCH resource allocation type 0 of the cell.
+  rbg_size pdsch_rbg_size = rbg_size::config1;
 };
 
 class ue_grid_allocator_test : public ::testing::TestWithParam<duplex_mode>
@@ -71,6 +77,14 @@ class ue_grid_allocator_test : public ::testing::TestWithParam<duplex_mode>
       }
       // A HARQ process of the cell is allowed to operate in UL HARQ mode B.
       req.ran.ntn_params->ul_harq_mode_b = true;
+    }
+    req.rrm.pdsch.dmrs_type_a.max_length = params.pdsch_dmrs_max_length;
+    req.rrm.pdsch.rbg_sz                 = params.pdsch_rbg_size;
+    if (params.pdsch_repetitions) {
+      // The cell has a Rel-16 PDSCH TDRA list that mirrors the common list and appends a repetition entry.
+      const auto& common_list = req.ran.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
+      req.rrm.pdsch.rep_td_alloc_list.assign(common_list.begin(), common_list.end());
+      req.rrm.pdsch.rep_td_alloc_list.push_back(common_list.front());
     }
     return req;
   }
@@ -360,8 +374,9 @@ class ue_grid_allocator_default_cfg_test : public ue_grid_allocator_test
 {
 protected:
   ue_grid_allocator_default_cfg_test(
-      const scheduler_expert_config& sched_cfg_ = config_helpers::make_default_scheduler_expert_config()) :
-    ue_grid_allocator_test(test_params{sched_cfg_})
+      const scheduler_expert_config& sched_cfg_ = config_helpers::make_default_scheduler_expert_config(),
+      rbg_size                       rbg_sz     = rbg_size::config1) :
+    ue_grid_allocator_test(test_params{.sched_cfg = sched_cfg_, .pdsch_rbg_size = rbg_sz})
   {
   }
 };
@@ -373,9 +388,9 @@ TEST_P(ue_grid_allocator_default_cfg_test, when_using_non_fallback_dci_format_us
   sched_ue_creation_request_message ue_creation_req =
       sched_config_helper::create_default_sched_ue_creation_request(cell_cfg.params);
   // Change PDSCH MCS table to be used when using non-fallback DCI format.
-  (*ue_creation_req.cfg.cells)[0].ded->serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = ocudu::pdsch_mcs_table::qam256;
-  ue_creation_req.ue_index                                                            = to_du_ue_index(0);
-  ue_creation_req.crnti                                                               = to_rnti(0x4601);
+  (*ue_creation_req.cfg.cells)[0].ded->rrm.pdsch.mcs_table = ocudu::pdsch_mcs_table::qam256;
+  ue_creation_req.ue_index                                 = to_du_ue_index(0);
+  ue_creation_req.crnti                                    = to_rnti(0x4601);
 
   const ue& u = add_ue(ue_creation_req);
 
@@ -392,9 +407,9 @@ TEST_P(ue_grid_allocator_default_cfg_test, ue_pdsch_uses_the_tbs_lbrm_the_ue_der
 
   sched_ue_creation_request_message ue_creation_req =
       sched_config_helper::create_default_sched_ue_creation_request(cell_cfg.params);
-  (*ue_creation_req.cfg.cells)[0].ded->serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = ocudu::pdsch_mcs_table::qam256;
-  ue_creation_req.ue_index                                                            = to_du_ue_index(0);
-  ue_creation_req.crnti                                                               = to_rnti(0x4601);
+  (*ue_creation_req.cfg.cells)[0].ded->rrm.pdsch.mcs_table = ocudu::pdsch_mcs_table::qam256;
+  ue_creation_req.ue_index                                 = to_du_ue_index(0);
+  ue_creation_req.crnti                                    = to_rnti(0x4601);
   const unsigned max_mimo_layers = *(*ue_creation_req.cfg.cells)[0].ded->rrm.pdsch.max_nof_layers;
 
   const ue& u = add_ue(ue_creation_req);
@@ -987,18 +1002,20 @@ protected:
   const lcid_t             drb_lcid = uint_to_lcid(4);
 
   ue_grid_allocator_pdsch_repetition_test() :
-    ue_grid_allocator_test(test_params{[]() {
-      auto cfg                       = config_helpers::make_default_scheduler_expert_config();
-      cfg.ue.pdsch_cqi_rep_threshold = 6.0F;
-      // Disable OLLA so the effective CQI equals the reported wideband CQI, making the repetition trigger
-      // deterministic.
-      cfg.ue.olla_cqi_inc = 0;
-      return cfg;
-    }()})
+    ue_grid_allocator_test(test_params{.sched_cfg =
+                                           []() {
+                                             auto cfg = config_helpers::make_default_scheduler_expert_config();
+                                             cfg.ue.pdsch_cqi_rep_threshold = 6.0F;
+                                             // Disable OLLA so the effective CQI equals the reported wideband CQI,
+                                             // making the repetition trigger deterministic.
+                                             cfg.ue.olla_cqi_inc = 0;
+                                             return cfg;
+                                           }(),
+                                       .pdsch_repetitions = true})
   {
   }
 
-  // Adds a UE configured with a Rel-16 PDSCH TDRA list that mirrors the common list and appends a repetition entry.
+  // Adds a UE that the cell configures with PDSCH repetitions.
   const ue& add_repetition_ue()
   {
     sched_ue_creation_request_message req =
@@ -1008,15 +1025,8 @@ protected:
     req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(drb_lcid));
     (*req.cfg.cells)[0].ded->serv_cell_cfg.init_dl_bwp.pdcch_cfg = cell_cfg.bwp_res[to_bwp_id(0)].dl().ded_pdcchs[0];
 
-    auto&       pdsch_cfg   = (*req.cfg.cells)[0].ded->serv_cell_cfg.init_dl_bwp.pdsch_cfg.value();
-    const auto& common_list = cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
-    for (const auto& common_alloc : common_list) {
-      pdsch_cfg.pdsch_td_alloc_list.push_back(common_alloc);
-    }
-    rep_time_resource                               = pdsch_cfg.pdsch_td_alloc_list.size();
-    pdsch_time_domain_resource_allocation rep_alloc = common_list.front();
-    rep_alloc.rep_number                            = nof_reps;
-    pdsch_cfg.pdsch_td_alloc_list.push_back(rep_alloc);
+    (*req.cfg.cells)[0].ded->rrm.pdsch.max_nof_repetitions = nof_reps;
+    rep_time_resource = cell_cfg.params.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.size();
 
     return add_ue(req);
   }
@@ -1126,9 +1136,10 @@ INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
 class ue_grid_allocator_dl_mimo_test : public ue_grid_allocator_test
 {
 protected:
-  ue_grid_allocator_dl_mimo_test() :
-    ue_grid_allocator_test(
-        test_params{.sched_cfg = config_helpers::make_default_scheduler_expert_config(), .nof_dl_ports = 4})
+  explicit ue_grid_allocator_dl_mimo_test(dmrs_max_length dmrs_len = dmrs_max_length::len1) :
+    ue_grid_allocator_test(test_params{.sched_cfg             = config_helpers::make_default_scheduler_expert_config(),
+                                       .nof_dl_ports          = 4,
+                                       .pdsch_dmrs_max_length = dmrs_len})
   {
   }
 
@@ -1225,7 +1236,13 @@ TEST_P(ue_grid_allocator_dl_mimo_test, single_user_pdsch_uses_the_dmrs_ports_of_
 
 // With maxLength=2, the scheduler still transmits a single-symbol DM-RS, which DCI f1_1 signals with the rows of
 // TS 38.212 Table 7.3.1.2.2-2 that have one front-load symbol.
-TEST_P(ue_grid_allocator_dl_mimo_test, single_user_pdsch_with_dmrs_max_length_2_uses_single_symbol_dmrs)
+class ue_grid_allocator_dl_mimo_dmrs_len2_test : public ue_grid_allocator_dl_mimo_test
+{
+protected:
+  ue_grid_allocator_dl_mimo_dmrs_len2_test() : ue_grid_allocator_dl_mimo_test(dmrs_max_length::len2) {}
+};
+
+TEST_P(ue_grid_allocator_dl_mimo_dmrs_len2_test, single_user_pdsch_with_dmrs_max_length_2_uses_single_symbol_dmrs)
 {
   // TS 38.212 Table 7.3.1.2.2-2, values 0, 2, 9 and 10.
   static constexpr std::array<unsigned, 4> expected_cdm_groups   = {1, 1, 2, 2};
@@ -1237,9 +1254,8 @@ TEST_P(ue_grid_allocator_dl_mimo_test, single_user_pdsch_with_dmrs_max_length_2_
     ue_creation_req.ue_index = to_du_ue_index(nof_layers - 1);
     ue_creation_req.crnti    = to_rnti(0x4601 + nof_layers - 1);
 
-    bwp_downlink_dedicated& dl_bwp = (*ue_creation_req.cfg.cells)[0].ded->serv_cell_cfg.init_dl_bwp;
-    dl_bwp.pdcch_cfg               = cell_cfg.bwp_res[to_bwp_id(0)].dl().ded_pdcchs[0];
-    dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs->max_length = dmrs_max_length::len2;
+    (*ue_creation_req.cfg.cells)[0].ded->serv_cell_cfg.init_dl_bwp.pdcch_cfg =
+        cell_cfg.bwp_res[to_bwp_id(0)].dl().ded_pdcchs[0];
 
     const ue& u = add_ue(ue_creation_req);
     report_ri(u, nof_layers);
@@ -1322,6 +1338,10 @@ TEST_P(ue_grid_allocator_dl_mimo_test, retx_keeps_the_dmrs_ports_of_the_original
 
 INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
                          ue_grid_allocator_dl_mimo_test,
+                         testing::Values(duplex_mode::FDD, duplex_mode::TDD));
+
+INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
+                         ue_grid_allocator_dl_mimo_dmrs_len2_test,
                          testing::Values(duplex_mode::FDD, duplex_mode::TDD));
 
 class ue_grid_allocator_ul_dmrs_ports_test : public ue_grid_allocator_test
@@ -1566,19 +1586,21 @@ INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
 class ue_grid_allocator_ra_type0_test : public ue_grid_allocator_default_cfg_test
 {
 protected:
-  const crb_interval     bwp_crbs = cell_cfg.params.dl_cfg_common.init_dl_bwp.generic_params.crbs;
-  const nominal_rbg_size P        = get_nominal_rbg_size(bwp_crbs.length(), rbg_size::config1);
+  ue_grid_allocator_ra_type0_test() :
+    ue_grid_allocator_default_cfg_test(config_helpers::make_default_scheduler_expert_config(), rbg_size::config2)
+  {
+  }
 
-  const ue& add_ue_with_res_alloc(pdsch_config::resource_allocation res_alloc,
-                                  unsigned                          max_pdsch_nof_rbs = MAX_NOF_PRBS)
+  const crb_interval     bwp_crbs = cell_cfg.params.dl_cfg_common.init_dl_bwp.generic_params.crbs;
+  const nominal_rbg_size P        = get_nominal_rbg_size(bwp_crbs.length(), rbg_size::config2);
+
+  const ue& add_ue_with_res_alloc(resource_allocation res_alloc, unsigned max_pdsch_nof_rbs = MAX_NOF_PRBS)
   {
     sched_ue_creation_request_message req =
         sched_config_helper::create_default_sched_ue_creation_request(cell_cfg.params);
-    req.ue_index            = to_du_ue_index(0);
-    req.crnti               = to_rnti(0x4601);
-    pdsch_config& pdsch_cfg = (*req.cfg.cells)[0].ded->serv_cell_cfg.init_dl_bwp.pdsch_cfg.value();
-    pdsch_cfg.res_alloc     = res_alloc;
-    pdsch_cfg.rbg_sz        = rbg_size::config1;
+    req.ue_index                                            = to_du_ue_index(0);
+    req.crnti                                               = to_rnti(0x4601);
+    (*req.cfg.cells)[0].ded->rrm.pdsch.res_alloc            = res_alloc;
     req.cfg.res_alloc_cfg.emplace().pdsch_grant_size_limits = {0, max_pdsch_nof_rbs};
     return add_ue(req);
   }
@@ -1610,7 +1632,7 @@ protected:
 TEST_P(ue_grid_allocator_ra_type0_test,
        when_free_rbgs_fit_more_vrbs_than_any_free_interval_then_dynamic_switch_selects_type0)
 {
-  const ue&  u = add_ue_with_res_alloc(pdsch_config::resource_allocation::dynamic_switch);
+  const ue&  u = add_ue_with_res_alloc(resource_allocation::dynamic_switch);
   vrb_bitmap blocked;
   ASSERT_TRUE(run_until(
       [&]() {
@@ -1636,7 +1658,7 @@ TEST_P(ue_grid_allocator_ra_type0_test,
 
 TEST_P(ue_grid_allocator_ra_type0_test, when_a_free_interval_fits_the_grant_then_dynamic_switch_selects_type1)
 {
-  const ue& u = add_ue_with_res_alloc(pdsch_config::resource_allocation::dynamic_switch);
+  const ue& u = add_ue_with_res_alloc(resource_allocation::dynamic_switch);
   ASSERT_TRUE(run_until([&]() { allocate_dl_newtx_grant(slice_ues[u.ue_index], units::bytes{20}, false); },
                         [&]() { return ue_pdsch(u.crnti) != nullptr; }));
 
@@ -1651,7 +1673,7 @@ TEST_P(ue_grid_allocator_ra_type0_test, when_a_free_interval_fits_the_grant_then
 
 TEST_P(ue_grid_allocator_ra_type0_test, when_only_type0_is_configured_then_small_grants_use_whole_rbgs)
 {
-  const ue& u = add_ue_with_res_alloc(pdsch_config::resource_allocation::resource_allocation_type_0);
+  const ue& u = add_ue_with_res_alloc(resource_allocation::resource_allocation_type_0);
   ASSERT_TRUE(run_until([&]() { allocate_dl_newtx_grant(slice_ues[u.ue_index], units::bytes{20}, false); },
                         [&]() { return ue_pdsch(u.crnti) != nullptr; }));
 
@@ -1666,7 +1688,7 @@ TEST_P(ue_grid_allocator_ra_type0_test, when_only_type0_is_configured_then_small
 
 TEST_P(ue_grid_allocator_ra_type0_test, when_type0_newtx_is_retransmitted_then_retx_keeps_nof_vrbs_and_can_use_type1)
 {
-  const ue& u     = add_ue_with_res_alloc(pdsch_config::resource_allocation::dynamic_switch);
+  const ue& u     = add_ue_with_res_alloc(resource_allocation::dynamic_switch);
   ue_cell&  ue_cc = ues[u.ue_index].get_pcell();
   ASSERT_TRUE(run_until(
       [&]() {
@@ -1702,7 +1724,7 @@ TEST_P(ue_grid_allocator_ra_type0_test, when_type0_newtx_is_retransmitted_then_r
 
 TEST_P(ue_grid_allocator_ra_type0_test, when_type0_only_grant_budget_is_below_rbg_size_then_a_whole_rbg_is_allocated)
 {
-  const ue& u = add_ue_with_res_alloc(pdsch_config::resource_allocation::resource_allocation_type_0);
+  const ue& u = add_ue_with_res_alloc(resource_allocation::resource_allocation_type_0);
 
   ASSERT_TRUE(run_until(
       [&]() {
@@ -1727,8 +1749,8 @@ TEST_P(ue_grid_allocator_ra_type0_test, when_type0_only_grant_budget_is_below_rb
 TEST_P(ue_grid_allocator_ra_type0_test, when_ue_rb_limit_is_not_a_multiple_of_rbg_size_then_type0_grant_and_retx_fit_it)
 {
   const unsigned max_ue_rbs = 2 * to_underlying(P) + 1;
-  const ue&      u = add_ue_with_res_alloc(pdsch_config::resource_allocation::resource_allocation_type_0, max_ue_rbs);
-  ue_cell&       ue_cc = ues[u.ue_index].get_pcell();
+  const ue&      u          = add_ue_with_res_alloc(resource_allocation::resource_allocation_type_0, max_ue_rbs);
+  ue_cell&       ue_cc      = ues[u.ue_index].get_pcell();
   ASSERT_TRUE(run_until([&]() { allocate_dl_newtx_grant(slice_ues[u.ue_index], units::bytes{100000}, false); },
                         [&]() { return ue_pdsch(u.crnti) != nullptr; }));
   const dl_msg_alloc& newtx = *ue_pdsch(u.crnti);
@@ -2753,17 +2775,15 @@ protected:
   {
   }
 
-  const ue& add_ue(pdsch_config::resource_allocation res_alloc)
+  const ue& add_ue(resource_allocation res_alloc)
   {
     sched_ue_creation_request_message req =
         sched_config_helper::create_default_sched_ue_creation_request(cell_cfg.params);
     req.ue_index                                                 = to_du_ue_index(0);
     req.crnti                                                    = to_rnti(0x4601);
     (*req.cfg.cells)[0].ded->serv_cell_cfg.init_dl_bwp.pdcch_cfg = cell_cfg.bwp_res[to_bwp_id(0)].dl().ded_pdcchs[0];
-    pdsch_config& pdsch_cfg = (*req.cfg.cells)[0].ded->serv_cell_cfg.init_dl_bwp.pdsch_cfg.value();
-    pdsch_cfg.mcs_table     = mcs_table;
-    pdsch_cfg.res_alloc     = res_alloc;
-    pdsch_cfg.rbg_sz        = rbg_size::config1;
+    (*req.cfg.cells)[0].ded->rrm.pdsch.mcs_table                 = mcs_table;
+    (*req.cfg.cells)[0].ded->rrm.pdsch.res_alloc                 = res_alloc;
     return ue_grid_allocator_test::add_ue(req);
   }
 
@@ -2937,7 +2957,7 @@ protected:
 
 TEST_P(ue_grid_allocator_csi_rs_qam64_test, pdsch_rate_matched_around_csi_rs_does_not_exceed_max_effective_code_rate)
 {
-  const ue&                      u           = add_ue(pdsch_config::resource_allocation::resource_allocation_type_1);
+  const ue&                      u           = add_ue(resource_allocation::resource_allocation_type_1);
   const std::vector<csi_rs_info> csi_rs_list = make_eight_port_csi_rs();
 
   const dl_msg_alloc* grant = allocate_pdsch_with_csi_rs(u, csi_rs_list);
@@ -2948,7 +2968,7 @@ TEST_P(ue_grid_allocator_csi_rs_qam64_test, pdsch_rate_matched_around_csi_rs_doe
 TEST_P(ue_grid_allocator_csi_rs_qam64_test,
        non_contiguous_pdsch_rate_matched_around_csi_rs_does_not_exceed_max_effective_code_rate)
 {
-  const ue&                      u           = add_ue(pdsch_config::resource_allocation::resource_allocation_type_0);
+  const ue&                      u           = add_ue(resource_allocation::resource_allocation_type_0);
   const std::vector<csi_rs_info> csi_rs_list = make_eight_port_csi_rs();
 
   const dl_msg_alloc* grant = allocate_pdsch_with_csi_rs(u, csi_rs_list, true);
@@ -2966,7 +2986,7 @@ protected:
 
 TEST_P(ue_grid_allocator_csi_rs_qam256_test, pdsch_rate_matched_around_csi_rs_does_not_exceed_max_effective_code_rate)
 {
-  const ue&                      u           = add_ue(pdsch_config::resource_allocation::resource_allocation_type_1);
+  const ue&                      u           = add_ue(resource_allocation::resource_allocation_type_1);
   const std::vector<csi_rs_info> csi_rs_list = make_eight_port_csi_rs();
 
   const dl_msg_alloc* grant = allocate_pdsch_with_csi_rs(u, csi_rs_list);
@@ -2986,7 +3006,7 @@ protected:
 
 TEST_P(ue_grid_allocator_csi_rs_qam256_mcs20_test, mcs_is_lowered_according_to_the_csi_rs_overhead)
 {
-  const ue& u = add_ue(pdsch_config::resource_allocation::resource_allocation_type_1);
+  const ue& u = add_ue(resource_allocation::resource_allocation_type_1);
 
   const dl_msg_alloc* grant = allocate_pdsch_with_csi_rs(u, make_eight_port_csi_rs());
   ASSERT_NE(grant, nullptr);
@@ -2998,7 +3018,7 @@ TEST_P(ue_grid_allocator_csi_rs_qam256_mcs20_test, mcs_is_lowered_according_to_t
 
 TEST_P(ue_grid_allocator_csi_rs_qam256_mcs20_test, mcs_is_lowered_with_any_csi_rs_overhead)
 {
-  const ue& u = add_ue(pdsch_config::resource_allocation::resource_allocation_type_1);
+  const ue& u = add_ue(resource_allocation::resource_allocation_type_1);
 
   const dl_msg_alloc* grant = allocate_pdsch_with_csi_rs(u, make_single_port_csi_rs());
   ASSERT_NE(grant, nullptr);
@@ -3019,7 +3039,7 @@ protected:
 
 TEST_P(ue_grid_allocator_csi_rs_qam64_mcs17_test, mcs_with_a_higher_spectral_efficiency_is_skipped)
 {
-  const ue& u = add_ue(pdsch_config::resource_allocation::resource_allocation_type_1);
+  const ue& u = add_ue(resource_allocation::resource_allocation_type_1);
 
   const dl_msg_alloc* grant = allocate_pdsch_with_csi_rs(u, make_single_port_csi_rs());
   ASSERT_NE(grant, nullptr);

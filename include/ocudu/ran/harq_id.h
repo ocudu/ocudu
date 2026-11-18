@@ -6,6 +6,7 @@
 #pragma once
 
 #include "ocudu/adt/bounded_bitset.h"
+#include "ocudu/support/ocudu_assert.h"
 
 namespace ocudu {
 
@@ -27,6 +28,15 @@ using harq_dl_feedback_disabled_mask = bounded_bitset<MAX_NOF_HARQS, true>;
 
 /// Bitset mask for UL HARQ mode configuration.
 using harq_ul_mode_mask = bounded_bitset<MAX_NOF_HARQS, true>;
+
+/// Number of bits of the HARQ process number field of the DCI formats that schedule a PDSCH or a PUSCH.
+enum class harq_process_num_field_size : uint8_t { n4 = 4, n5 = 5 };
+
+constexpr harq_process_num_field_size to_harq_process_num_field_size(unsigned nof_bits)
+{
+  ocudu_assert(nof_bits == 4 or nof_bits == 5, "Invalid HARQ process number field size of {} bits", nof_bits);
+  return static_cast<harq_process_num_field_size>(nof_bits);
+}
 
 /// UL HARQ mode of a HARQ process, as per \c uplinkHARQ-mode, TS 38.331, Section 6.3.2.
 enum class ul_harq_mode : uint8_t { mode_a, mode_b };

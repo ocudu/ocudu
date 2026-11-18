@@ -61,19 +61,18 @@ cell_cfg:
 )");
 
   const du_high_unit_pdsch_config& pdsch = cfg.cells_cfg.front().cell.pdsch_cfg;
-  ASSERT_EQ(pdsch.res_alloc, pdsch_config::resource_allocation::resource_allocation_type_1);
+  ASSERT_EQ(pdsch.res_alloc, resource_allocation::resource_allocation_type_1);
   ASSERT_EQ(pdsch.rbg_sz, rbg_size::config1);
 }
 
 TEST(du_high_pdsch_res_alloc_config_test, when_values_differ_in_case_then_they_are_accepted)
 {
   du_high_unit_config cfg = parse_config(make_pdsch_config("Type0", "Config2"));
-  ASSERT_EQ(cfg.cells_cfg.front().cell.pdsch_cfg.res_alloc,
-            pdsch_config::resource_allocation::resource_allocation_type_0);
+  ASSERT_EQ(cfg.cells_cfg.front().cell.pdsch_cfg.res_alloc, resource_allocation::resource_allocation_type_0);
   ASSERT_EQ(cfg.cells_cfg.front().cell.pdsch_cfg.rbg_sz, rbg_size::config2);
 
   cfg = parse_config(make_pdsch_config("DYNAMIC_SWITCH", "config1"));
-  ASSERT_EQ(cfg.cells_cfg.front().cell.pdsch_cfg.res_alloc, pdsch_config::resource_allocation::dynamic_switch);
+  ASSERT_EQ(cfg.cells_cfg.front().cell.pdsch_cfg.res_alloc, resource_allocation::dynamic_switch);
   ASSERT_EQ(cfg.cells_cfg.front().cell.pdsch_cfg.rbg_sz, rbg_size::config1);
 }
 
@@ -88,6 +87,6 @@ TEST(du_high_pdsch_res_alloc_config_test, configured_values_reach_the_cell_confi
   const du_high_unit_config              cfg   = parse_config(make_pdsch_config("type0", "config2"));
   const std::vector<odu::du_cell_config> cells = generate_du_cell_config(cfg);
   ASSERT_EQ(cells.size(), 1);
-  ASSERT_EQ(cells.front().ran.init_bwp.pdsch.res_alloc, pdsch_config::resource_allocation::resource_allocation_type_0);
+  ASSERT_EQ(cells.front().ran.init_bwp.pdsch.res_alloc, resource_allocation::resource_allocation_type_0);
   ASSERT_EQ(cells.front().ran.init_bwp.pdsch.rbg_sz, rbg_size::config2);
 }

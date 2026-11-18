@@ -185,107 +185,98 @@ TEST(serving_cell_config_converter_test, test_default_initial_ue_pdsch_cfg_conve
   ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg_present);
   ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded_present);
 
-  auto& rrc_sp_cell_cfg_ded  = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
-  auto& dest_sp_cell_cfg_ded = dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg;
+  auto& rrc_sp_cell_cfg_ded = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
 
   ASSERT_TRUE(rrc_sp_cell_cfg_ded.init_dl_bwp_present);
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg_present, dest_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.has_value());
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg_present);
   // Since its initial setup and no source cell group config was provided pdsch must be of setup type.
   ASSERT_TRUE(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.is_setup());
 
-  if (dest_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.has_value()) {
-    ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup().data_scrambling_id_pdsch_present,
-              dest_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.value().data_scrambling_id_pdsch.has_value());
-    if (dest_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.value().data_scrambling_id_pdsch.has_value()) {
-      ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup().data_scrambling_id_pdsch,
-                dest_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.value().data_scrambling_id_pdsch.value());
-    }
+  // The initial PDSCH-Config has the values of the cell.
+  const cell_pdsch_rrm_config& cell_pdsch = default_cell_rrm().pdsch;
+  const cell_csi_rrm_config&   cell_csi   = default_cell_rrm().csi;
+  const auto&                  rrc_pdsch  = rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup();
 
-    if (dest_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.value().pdsch_mapping_type_a_dmrs.has_value()) {
-      ASSERT_TRUE(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup().dmrs_dl_for_pdsch_map_type_a_present);
-      ASSERT_TRUE(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup().dmrs_dl_for_pdsch_map_type_a.is_setup());
-    }
+  ASSERT_TRUE(rrc_pdsch.dmrs_dl_for_pdsch_map_type_a_present);
+  ASSERT_TRUE(rrc_pdsch.dmrs_dl_for_pdsch_map_type_a.is_setup());
 
-    ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup().tci_states_to_add_mod_list.size(),
-              dest_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.value().tci_states.size());
-    ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup().tci_states_to_release_list.size(), 0);
+  ASSERT_EQ(rrc_pdsch.tci_states_to_add_mod_list.size(), 1);
+  ASSERT_EQ(rrc_pdsch.tci_states_to_release_list.size(), 0);
 
-    ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup().rate_match_pattern_to_add_mod_list.size(),
-              dest_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.value().rate_match_pattrn.size());
-    ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup().rate_match_pattern_to_release_list.size(), 0);
-  }
+  ASSERT_EQ(rrc_pdsch.zp_csi_rs_res_to_add_mod_list.size(), cell_csi.zp_csi_rs_res_list.size());
+  ASSERT_EQ(rrc_pdsch.p_zp_csi_rs_res_set_present, cell_csi.p_zp_csi_rs_res.has_value());
+
+  ASSERT_EQ(rrc_pdsch.rbg_size,
+            cell_pdsch.rbg_sz == rbg_size::config1 ? asn1::rrc_nr::pdsch_cfg_s::rbg_size_opts::cfg1
+                                                   : asn1::rrc_nr::pdsch_cfg_s::rbg_size_opts::cfg2);
+  ASSERT_EQ(rrc_pdsch.prb_bundling_type.type(),
+            asn1::rrc_nr::pdsch_cfg_s::prb_bundling_type_c_::types_opts::static_bundling);
+  ASSERT_EQ(rrc_pdsch.prb_bundling_type.static_bundling().bundle_size_present, cell_pdsch.prb_bundle_size.has_value());
+
+  // The values that the PDSCH does not use are not signalled.
+  ASSERT_FALSE(rrc_pdsch.data_scrambling_id_pdsch_present);
+  ASSERT_FALSE(rrc_pdsch.dmrs_dl_for_pdsch_map_type_b_present);
+  ASSERT_EQ(rrc_pdsch.rate_match_pattern_to_add_mod_list.size(), 0);
 }
 
-TEST(serving_cell_config_converter_test, test_ue_pdsch_cfg_release_conversion)
+TEST(serving_cell_config_converter_test, test_pdsch_cfg_conversion_of_cell_values)
 {
-  odu::du_ue_resource_config dest_cfg = make_initial_du_ue_resource_config();
-  auto                       src_cfg  = dest_cfg;
-  dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.init_dl_bwp.pdsch_cfg.reset();
+  auto dest_cfg = make_initial_du_ue_resource_config();
+
+  cell_rrm_config cell_rrm                        = default_cell_rrm();
+  cell_rrm.pdsch.dmrs_type_a.additional_positions = dmrs_additional_positions::pos1;
+  cell_rrm.pdsch.rbg_sz                           = rbg_size::config2;
+  cell_rrm.pdsch.prb_bundle_size                  = pdsch_prb_bundle_size::n4;
+
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, default_cell_rrm());
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg, cell_rrm);
 
-  ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg_present);
-  ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded_present);
-
-  auto& rrc_sp_cell_cfg_ded  = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
-  auto& dest_sp_cell_cfg_ded = dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg;
-
-  ASSERT_TRUE(rrc_sp_cell_cfg_ded.init_dl_bwp_present);
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg_present,
-            not dest_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.has_value());
-  // PDSCH Config is released due to absence in dest cell group config.
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.type(), asn1::setup_release_opts::release);
+  const auto& rrc_pdsch = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup();
+  ASSERT_TRUE(rrc_pdsch.dmrs_dl_for_pdsch_map_type_a.setup().dmrs_add_position_present);
+  ASSERT_EQ(rrc_pdsch.dmrs_dl_for_pdsch_map_type_a.setup().dmrs_add_position,
+            asn1::rrc_nr::dmrs_dl_cfg_s::dmrs_add_position_opts::pos1);
+  ASSERT_EQ(rrc_pdsch.rbg_size, asn1::rrc_nr::pdsch_cfg_s::rbg_size_opts::cfg2);
+  ASSERT_TRUE(rrc_pdsch.prb_bundling_type.static_bundling().bundle_size_present);
+  ASSERT_EQ(rrc_pdsch.prb_bundling_type.static_bundling().bundle_size,
+            asn1::rrc_nr::pdsch_cfg_s::prb_bundling_type_c_::static_bundling_s_::bundle_size_opts::n4);
 }
 
-TEST(serving_cell_config_converter_test, test_ue_custom_pdsch_cfg_conversion)
+TEST(serving_cell_config_converter_test, test_pdsch_cfg_conversion_of_ue_values)
 {
-  auto                       src_cfg = make_initial_du_ue_resource_config();
-  odu::du_ue_resource_config dest_cfg{src_cfg};
-  // Add new configuration to be setup.
-  auto& dest_pdsch_cfg = dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.init_dl_bwp.pdsch_cfg.value();
-  dest_pdsch_cfg.tci_states.push_back(tci_state{
-      .state_id  = static_cast<tci_state_id_t>(1),
-      .qcl_type1 = {.ref_sig  = {.type   = qcl_info::reference_signal::reference_signal_type::csi_rs,
-                                 .csi_rs = static_cast<nzp_csi_rs_res_id_t>(0)},
-                    .qcl_type = qcl_info::qcl_type::type_a},
-  });
-  dest_pdsch_cfg.tci_states.erase(dest_pdsch_cfg.tci_states.begin());
+  auto dest_cfg = make_initial_du_ue_resource_config();
 
-  dest_pdsch_cfg.pdsch_mapping_type_a_dmrs.value().additional_positions = dmrs_additional_positions::pos0;
-  dest_pdsch_cfg.pdsch_mapping_type_a_dmrs.value().scrambling_id0       = 10;
-  dest_pdsch_cfg.pdsch_mapping_type_a_dmrs.value().scrambling_id1       = 20;
+  ue_pdsch_rrm_config& dest_pdsch = dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).rrm.pdsch;
+  dest_pdsch.mcs_table            = pdsch_mcs_table::qam256;
+  dest_pdsch.interleaving         = vrb_to_prb::mapping_type::interleaved_n4;
+  dest_pdsch.res_alloc            = resource_allocation::dynamic_switch;
+  dest_pdsch.dci_harq_field_size  = harq_process_num_field_size::n5;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, default_cell_rrm());
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg, default_cell_rrm());
 
-  auto& rrc_sp_cell_cfg_ded  = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
-  auto& dest_sp_cell_cfg_ded = dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg;
-
-  ASSERT_TRUE(rrc_sp_cell_cfg_ded.init_dl_bwp_present);
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg_present, dest_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.has_value());
-  ASSERT_TRUE(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.is_setup());
-
-  if (dest_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.has_value()) {
-    ASSERT_TRUE(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup().dmrs_dl_for_pdsch_map_type_a_present);
-    ASSERT_TRUE(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup().dmrs_dl_for_pdsch_map_type_a.is_setup());
-
-    ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup().tci_states_to_add_mod_list.size(), 1);
-    ASSERT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup().tci_states_to_release_list.size(), 1);
-  }
+  const auto& rrc_pdsch = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup();
+  ASSERT_TRUE(rrc_pdsch.mcs_table_present);
+  ASSERT_EQ(rrc_pdsch.mcs_table, asn1::rrc_nr::pdsch_cfg_s::mcs_table_opts::qam256);
+  ASSERT_TRUE(rrc_pdsch.vrb_to_prb_interleaver_present);
+  ASSERT_EQ(rrc_pdsch.vrb_to_prb_interleaver, asn1::rrc_nr::pdsch_cfg_s::vrb_to_prb_interleaver_opts::n4);
+  ASSERT_EQ(rrc_pdsch.res_alloc, asn1::rrc_nr::pdsch_cfg_s::res_alloc_opts::dyn_switch);
+  ASSERT_TRUE(rrc_pdsch.harq_process_num_size_dci_1_1_r17_present);
+  ASSERT_EQ(rrc_pdsch.harq_process_num_size_dci_1_1_r17, 5);
+  ASSERT_TRUE(rrc_pdsch.harq_process_num_size_dci_1_2_v1700_present);
+  ASSERT_EQ(rrc_pdsch.harq_process_num_size_dci_1_2_v1700, 5);
 }
 
 TEST(serving_cell_config_converter_test, test_ue_pdsch_td_alloc_list_r16_conversion)
 {
   auto                       src_cfg = make_initial_du_ue_resource_config();
   odu::du_ue_resource_config dest_cfg{src_cfg};
-  auto& dest_pdsch_cfg = dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.init_dl_bwp.pdsch_cfg.value();
-  dest_pdsch_cfg.pdsch_td_alloc_list.push_back({.k0 = 0, .map_type = sch_mapping_type::typeA, .symbols = {2, 14}});
-  dest_pdsch_cfg.pdsch_td_alloc_list.push_back(
-      {.k0 = 0, .map_type = sch_mapping_type::typeA, .symbols = {2, 14}, .rep_number = 8});
-  dest_pdsch_cfg.slot_based_repetition_enabled = true;
+  cell_rrm_config            cell_rrm = default_cell_rrm();
+  cell_rrm.pdsch.rep_td_alloc_list.push_back({.k0 = 0, .map_type = sch_mapping_type::typeA, .symbols = {2, 14}});
+  cell_rrm.pdsch.rep_td_alloc_list.push_back({.k0 = 0, .map_type = sch_mapping_type::typeA, .symbols = {2, 14}});
+  dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).rrm.pdsch.max_nof_repetitions = 8;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, default_cell_rrm());
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, cell_rrm);
 
   auto& rrc_pdsch_cfg = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup();
   ASSERT_TRUE(rrc_pdsch_cfg.pdsch_time_domain_alloc_list_r16.is_present());
@@ -312,15 +303,16 @@ TEST(serving_cell_config_converter_test, test_ue_pdsch_td_alloc_list_r16_convers
 
 TEST(serving_cell_config_converter_test, test_ue_pdsch_td_alloc_list_r16_release_conversion)
 {
-  auto src_cfg = make_initial_du_ue_resource_config();
-  src_cfg.cell_group.cells.at(SERVING_PCELL_IDX)
-      .serv_cell_cfg.init_dl_bwp.pdsch_cfg->pdsch_td_alloc_list.push_back(
-          {.k0 = 0, .map_type = sch_mapping_type::typeA, .symbols = {2, 14}, .rep_number = 2});
+  cell_rrm_config cell_rrm = default_cell_rrm();
+  cell_rrm.pdsch.rep_td_alloc_list.push_back({.k0 = 0, .map_type = sch_mapping_type::typeA, .symbols = {2, 14}});
+
+  auto src_cfg                                                                 = make_initial_du_ue_resource_config();
+  src_cfg.cell_group.cells.at(SERVING_PCELL_IDX).rrm.pdsch.max_nof_repetitions = 2;
   odu::du_ue_resource_config dest_cfg{src_cfg};
-  dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.init_dl_bwp.pdsch_cfg->pdsch_td_alloc_list.clear();
+  dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).rrm.pdsch.max_nof_repetitions = 1;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, default_cell_rrm());
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, cell_rrm);
 
   auto& rrc_pdsch_cfg = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup();
   ASSERT_TRUE(rrc_pdsch_cfg.pdsch_time_domain_alloc_list_r16.is_present());
@@ -997,8 +989,9 @@ TEST(serving_cell_config_converter_test, max_mimo_layers_is_only_encoded_when_co
   }
 }
 
-/// Each value that the DU signals in the PDSCH-ServingCellConfig and in the PUSCH-ServingCellConfig must trigger the
-/// conversion of its IE on its own, because the values change independently (e.g. after the UE capability update).
+/// Each value that the DU signals in the PDSCH-Config, the PDSCH-ServingCellConfig and the PUSCH-ServingCellConfig must
+/// trigger the conversion of its IE on its own, because the values change independently (e.g. after the UE capability
+/// update).
 TEST(serving_cell_config_converter_test, serving_cell_cfg_is_sent_when_one_of_its_values_changes)
 {
   struct change {
@@ -1006,6 +999,7 @@ TEST(serving_cell_config_converter_test, serving_cell_cfg_is_sent_when_one_of_it
     std::function<void(ue_cell_config&)> apply;
     bool                                 pdsch_expected;
     bool                                 pusch_expected;
+    bool                                 pdsch_cfg_expected = false;
   };
   const std::vector<change> changes = {
       {"none", [](ue_cell_config&) {}, false, false},
@@ -1014,6 +1008,29 @@ TEST(serving_cell_config_converter_test, serving_cell_cfg_is_sent_when_one_of_it
       {"max_mimo_layers", [](ue_cell_config& c) { c.rrm.pdsch.max_nof_layers = 4; }, true, false},
       {"nof_ul_harqs", [](ue_cell_config& c) { c.rrm.pusch.nof_harqs = 32; }, false, true},
       {"ul_mode", [](ue_cell_config& c) { c.rrm.pusch.harq_mode.reset(5); }, false, true},
+      {"mcs_table",
+       [](ue_cell_config& c) {
+         c.rrm.pdsch.mcs_table =
+             c.rrm.pdsch.mcs_table == pdsch_mcs_table::qam64 ? pdsch_mcs_table::qam256 : pdsch_mcs_table::qam64;
+       },
+       false,
+       false,
+       true},
+      {"interleaving",
+       [](ue_cell_config& c) { c.rrm.pdsch.interleaving = vrb_to_prb::mapping_type::interleaved_n2; },
+       false,
+       false,
+       true},
+      {"res_alloc",
+       [](ue_cell_config& c) { c.rrm.pdsch.res_alloc = resource_allocation::dynamic_switch; },
+       false,
+       false,
+       true},
+      {"dci_harq_field_size",
+       [](ue_cell_config& c) { c.rrm.pdsch.dci_harq_field_size = harq_process_num_field_size::n5; },
+       false,
+       false,
+       true},
   };
 
   for (const change& chg : changes) {
@@ -1028,6 +1045,7 @@ TEST(serving_cell_config_converter_test, serving_cell_cfg_is_sent_when_one_of_it
     const auto& rrc_sp_cell_cfg_ded = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
     EXPECT_EQ(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg_present, chg.pdsch_expected);
     EXPECT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.pusch_serving_cell_cfg_present, chg.pusch_expected);
+    EXPECT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg_present, chg.pdsch_cfg_expected);
   }
 }
 

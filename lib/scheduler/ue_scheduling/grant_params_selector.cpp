@@ -245,9 +245,8 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
 
   // The UE configuration validator rejects resource allocation type 0 in cells with interleaved VRB-to-PRB mapping.
   ocudu_sanity_check(not interleaving_enabled or ss.get_dl_dci_format() != dci_dl_format::f1_1 or
-                         ss.bwp->dl.pdsch().ded() == nullptr or
-                         ss.bwp->dl.pdsch().ded()->res_alloc ==
-                             pdsch_config::resource_allocation::resource_allocation_type_1,
+                         ss.bwp->dl.ue_cfg() == nullptr or
+                         ss.bwp->dl.ue_cfg()->pdsch.res_alloc == resource_allocation::resource_allocation_type_1,
                      "PDSCH resource allocation type 0 is not supported with interleaved VRB-to-PRB mapping");
 
   // For a newTx, link adaptation decides how many Rel-16 PDSCH repetitions to request, or nullopt for a single
@@ -384,16 +383,15 @@ std::optional<dl_sched_context> sched_helper::get_retx_dl_sched_context(const sl
 }
 
 /// Gets the PDSCH resource allocation type that can be used in a DL grant.
-static pdsch_config::resource_allocation get_dl_resource_allocation(const search_space_info& ss_info,
-                                                                    bool                     interleaving_enabled)
+static resource_allocation get_dl_resource_allocation(const search_space_info& ss_info, bool interleaving_enabled)
 {
-  const pdsch_config* pdsch_ded = ss_info.bwp->dl.pdsch().ded();
+  const ue_downlink_bwp_config* ue_dl = ss_info.bwp->dl.ue_cfg();
   // Resource allocation type 0 is only available in DCI format 1_1 and with non-interleaved VRB-to-PRB mapping, as per
   // TS 38.212, Section 7.3.1.2.2, and TS 38.214, Section 5.1.2.3.
-  if (pdsch_ded == nullptr or ss_info.get_dl_dci_format() != dci_dl_format::f1_1 or interleaving_enabled) {
-    return pdsch_config::resource_allocation::resource_allocation_type_1;
+  if (ue_dl == nullptr or ss_info.get_dl_dci_format() != dci_dl_format::f1_1 or interleaving_enabled) {
+    return resource_allocation::resource_allocation_type_1;
   }
-  return pdsch_ded->res_alloc;
+  return ue_dl->pdsch.res_alloc;
 }
 
 /// \brief Selects free RBGs of the BWP, from lowest to highest, until \c target_nof_rbs VRBs are reached.
@@ -405,7 +403,7 @@ static vrb_bitmap find_available_rbgs(const search_space_info& ss_info,
                                       unsigned                 max_nof_rbs)
 {
   const crb_interval     bwp_crbs  = ss_info.bwp->dl.cfg().crbs;
-  const nominal_rbg_size P         = get_nominal_rbg_size(bwp_crbs.length(), ss_info.bwp->dl.pdsch().ded()->rbg_sz);
+  const nominal_rbg_size P         = get_nominal_rbg_size(bwp_crbs.length(), ss_info.cell_pdsch->rbg_sz);
   const rbg_bitmap       used_rbgs = convert_vrbs_to_rbgs(used_vrbs, bwp_crbs, P);
 
   rbg_bitmap selected_rbgs(used_rbgs.size());
@@ -432,13 +430,13 @@ static vrb_alloc find_available_vrbs(const search_space_info& ss_info,
                                      unsigned                 target_nof_rbs,
                                      unsigned                 nof_rbs_remaining)
 {
-  const pdsch_config::resource_allocation res_alloc = get_dl_resource_allocation(ss_info, interleaving_enabled);
-  if (res_alloc == pdsch_config::resource_allocation::resource_allocation_type_0) {
+  const resource_allocation res_alloc = get_dl_resource_allocation(ss_info, interleaving_enabled);
+  if (res_alloc == resource_allocation::resource_allocation_type_0) {
     return find_available_rbgs(ss_info, used_vrbs, target_nof_rbs, nof_rbs_remaining);
   }
 
   const vrb_interval vrbs = rb_helper::find_empty_interval_of_length(used_vrbs, target_nof_rbs);
-  if (res_alloc == pdsch_config::resource_allocation::resource_allocation_type_1 or vrbs.length() >= target_nof_rbs) {
+  if (res_alloc == resource_allocation::resource_allocation_type_1 or vrbs.length() >= target_nof_rbs) {
     return vrbs;
   }
 
@@ -452,12 +450,11 @@ static vrb_alloc find_available_vrbs(const search_space_info& ss_info,
 
 unsigned sched_helper::get_min_newtx_dl_nof_vrbs(const search_space_info& ss_info, bool interleaving_enabled)
 {
-  if (get_dl_resource_allocation(ss_info, interleaving_enabled) !=
-      pdsch_config::resource_allocation::resource_allocation_type_0) {
+  if (get_dl_resource_allocation(ss_info, interleaving_enabled) != resource_allocation::resource_allocation_type_0) {
     return 1;
   }
   const crb_interval bwp_crbs = ss_info.bwp->dl.cfg().crbs;
-  return to_underlying(get_nominal_rbg_size(bwp_crbs.length(), ss_info.bwp->dl.pdsch().ded()->rbg_sz));
+  return to_underlying(get_nominal_rbg_size(bwp_crbs.length(), ss_info.cell_pdsch->rbg_sz));
 }
 
 vrb_alloc sched_helper::compute_newtx_dl_vrbs(const dl_sched_context&  decision_ctxt,
@@ -483,19 +480,19 @@ vrb_alloc sched_helper::compute_retx_dl_vrbs(const dl_sched_context&  decision_c
                                              bool                     interleaving_enabled)
 {
   // In case of Retx, the #VRBs need to stay the same.
-  const unsigned                          nof_rbs   = decision_ctxt.expected_nof_rbs;
-  const pdsch_config::resource_allocation res_alloc = get_dl_resource_allocation(ss_info, interleaving_enabled);
-  if (res_alloc != pdsch_config::resource_allocation::resource_allocation_type_0) {
+  const unsigned            nof_rbs   = decision_ctxt.expected_nof_rbs;
+  const resource_allocation res_alloc = get_dl_resource_allocation(ss_info, interleaving_enabled);
+  if (res_alloc != resource_allocation::resource_allocation_type_0) {
     const vrb_interval vrbs = rb_helper::find_empty_interval_of_length(used_vrbs, nof_rbs);
     if (vrbs.length() == nof_rbs) {
       return vrbs;
     }
-    if (res_alloc == pdsch_config::resource_allocation::resource_allocation_type_1) {
+    if (res_alloc == resource_allocation::resource_allocation_type_1) {
       return vrb_interval{};
     }
   }
   const crb_interval     bwp_crbs = ss_info.bwp->dl.cfg().crbs;
-  const nominal_rbg_size P        = get_nominal_rbg_size(bwp_crbs.length(), ss_info.bwp->dl.pdsch().ded()->rbg_sz);
+  const nominal_rbg_size P        = get_nominal_rbg_size(bwp_crbs.length(), ss_info.cell_pdsch->rbg_sz);
   const rbg_bitmap       rbgs =
       find_free_rbgs_with_nof_vrbs(convert_vrbs_to_rbgs(used_vrbs, bwp_crbs, P), bwp_crbs, P, nof_rbs);
   if (rbgs.none()) {

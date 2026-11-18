@@ -178,7 +178,9 @@ validate_cg_cfg(const serving_cell_config& serv_cell_cfg, const ue_rrm_config& r
   return {};
 }
 
-validator_result validate_bwp_ded_cfg(const serving_cell_config& ue_cell_cfg, const cell_configuration& cell_cfg)
+validator_result validate_bwp_ded_cfg(const serving_cell_config& ue_cell_cfg,
+                                      const ue_rrm_config&       rrm,
+                                      const cell_configuration&  cell_cfg)
 {
   const auto& ue_bwp_ded              = ue_cell_cfg.init_dl_bwp;
   const auto& expected_bwp_ded_pdcchs = cell_cfg.bwp_res[to_bwp_id(0)].dl().ded_pdcchs;
@@ -192,8 +194,7 @@ validator_result validate_bwp_ded_cfg(const serving_cell_config& ue_cell_cfg, co
   }
   // [Implementation-defined] Resource allocation type 0 and interleaved VRB-to-PRB mapping are not used in the same
   // cell.
-  VERIFY(not ue_bwp_ded.pdsch_cfg.has_value() or
-             ue_bwp_ded.pdsch_cfg->res_alloc == pdsch_config::resource_allocation::resource_allocation_type_1 or
+  VERIFY(rrm.pdsch.res_alloc == resource_allocation::resource_allocation_type_1 or
              cell_cfg.expert_cfg.ue.pdsch_interleaving_bundle_size == vrb_to_prb::mapping_type::non_interleaved,
          "PDSCH resource allocation type 0 is not supported with interleaved VRB-to-PRB mapping");
   return {};
@@ -213,9 +214,7 @@ static validator_result validate_ue_cells(span<const sched_ue_cell_config> cells
            cell.cell_index,
            serv_cell_cfg.cell_index);
     HANDLE_ERROR(validate_pdcch_cfg(serv_cell_cfg, cell_cfg.params.dl_cfg_common));
-    HANDLE_ERROR(validate_bwp_ded_cfg(serv_cell_cfg, cell_cfg));
-
-    HANDLE_ERROR(validate_pdsch_cfg(serv_cell_cfg));
+    HANDLE_ERROR(validate_bwp_ded_cfg(serv_cell_cfg, cell.ded->rrm, cell_cfg));
 
     if (serv_cell_cfg.ul_config.has_value()) {
       if (serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value()) {

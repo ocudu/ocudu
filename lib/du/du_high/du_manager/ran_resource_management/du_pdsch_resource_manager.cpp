@@ -14,78 +14,15 @@
 using namespace ocudu;
 using namespace odu;
 
-static void set_pdsch_mcs_table(serving_cell_config& cell_cfg, pdsch_mcs_table mcs_table)
+/// Sets the CQI table of the CSI reports to the one that matches the PDSCH MCS table. See TS 38.214,
+/// Table 5.2.2.1-[1-4].
+static void set_cqi_table(ue_cell_config& cell_cfg, pdsch_mcs_table mcs_table)
 {
-  const cqi_table_t cqi_table = get_cqi_table(mcs_table);
-
-  // Set MCS index table for PDSCH. See TS 38.214, Table 5.1.3.1-[1-3].
-  if (cell_cfg.init_dl_bwp.pdsch_cfg.has_value()) {
-    cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = mcs_table;
-  }
-
-  if (cell_cfg.csi_meas_cfg.has_value()) {
-    for (auto& csi_report_cfg : cell_cfg.csi_meas_cfg.value().csi_report_cfg_list) {
-      // Set CQI table. See TS 38.214, Table 5.2.2.1-[1-4].
+  if (cell_cfg.serv_cell_cfg.csi_meas_cfg.has_value()) {
+    const cqi_table_t cqi_table = get_cqi_table(mcs_table);
+    for (auto& csi_report_cfg : cell_cfg.serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list) {
       csi_report_cfg.cqi_table = cqi_table;
     }
-  }
-}
-
-static void set_pdsch_interleaving(serving_cell_config& cell_cfg, vrb_to_prb::mapping_type interleaving)
-{
-  // Set \c vrb-ToPRB-Interleaver for PDSCH, as per TS 38.331, \c PDSCH-Config.
-  if (cell_cfg.init_dl_bwp.pdsch_cfg.has_value()) {
-    cell_cfg.init_dl_bwp.pdsch_cfg->vrb_to_prb_interleaving = interleaving;
-  }
-}
-
-static void
-set_pdsch_res_alloc(serving_cell_config& cell_cfg, pdsch_config::resource_allocation res_alloc, rbg_size rbg_sz)
-{
-  // Set \c resourceAllocation and \c rbg-Size for PDSCH, as per TS 38.331, \c PDSCH-Config.
-  if (cell_cfg.init_dl_bwp.pdsch_cfg.has_value()) {
-    cell_cfg.init_dl_bwp.pdsch_cfg->res_alloc = res_alloc;
-    cell_cfg.init_dl_bwp.pdsch_cfg->rbg_sz    = rbg_sz;
-  }
-}
-
-static void set_max_dl_nof_harqs(ue_cell_config& cell_cfg, unsigned nof_harqs)
-{
-  cell_cfg.rrm.pdsch.nof_harqs = static_cast<uint8_t>(nof_harqs);
-}
-
-static void set_max_mimo_layers(ue_cell_config& cell_cfg, unsigned max_mimo_layers)
-{
-  // RRC signals the limit in \c maxMIMO-Layers of \c PDSCH-ServingCellConfig (TS 38.331).
-  cell_cfg.rrm.pdsch.max_nof_layers = static_cast<uint8_t>(max_mimo_layers);
-}
-
-static void set_dl_dci_harq_field_size(serving_cell_config& cell_cfg, unsigned field_size)
-{
-  if (cell_cfg.init_dl_bwp.pdsch_cfg.has_value()) {
-    cell_cfg.init_dl_bwp.pdsch_cfg->harq_process_num_size_dci_1_1 =
-        static_cast<pdsch_config::harq_process_num_dci_1_1_size>(field_size);
-    cell_cfg.init_dl_bwp.pdsch_cfg->harq_process_num_size_dci_1_2 =
-        static_cast<pdsch_config::harq_process_num_dci_1_2_size>(field_size);
-  }
-}
-
-static void set_dl_harq_feedback_disabled(ue_cell_config& cell_cfg, const harq_dl_feedback_disabled_mask& mask)
-{
-  cell_cfg.rrm.pdsch.harq_feedback_disabled = mask;
-}
-
-static void set_pdsch_td_alloc_list(serving_cell_config&                               cell_cfg,
-                                    std::vector<pdsch_time_domain_resource_allocation> td_alloc_list)
-{
-  if (cell_cfg.init_dl_bwp.pdsch_cfg.has_value()) {
-    cell_cfg.init_dl_bwp.pdsch_cfg->pdsch_td_alloc_list = std::move(td_alloc_list);
-    // The UE applies repetitionNumber-r16 of the Rel-16 TDRA list only when the slot-based repetition scheme is
-    // configured.
-    cell_cfg.init_dl_bwp.pdsch_cfg->slot_based_repetition_enabled =
-        std::any_of(cell_cfg.init_dl_bwp.pdsch_cfg->pdsch_td_alloc_list.begin(),
-                    cell_cfg.init_dl_bwp.pdsch_cfg->pdsch_td_alloc_list.end(),
-                    [](const auto& alloc) { return alloc.rep_number.has_value(); });
   }
 }
 
@@ -113,19 +50,21 @@ void du_pdsch_resource_manager::dealloc_resources(cell_group_config& /*cell_grp_
 void du_pdsch_resource_manager::apply_config(cell_group_config&                          cell_grp_cfg,
                                              const std::optional<ue_capability_summary>& ue_caps)
 {
-  const du_cell_index_t cell_idx  = cell_grp_cfg.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.cell_index;
-  serving_cell_config&  serv_cell = cell_grp_cfg.cells.at(SERVING_PCELL_IDX).serv_cell_cfg;
+  ue_cell_config&       pcell    = cell_grp_cfg.cells.at(SERVING_PCELL_IDX);
+  const du_cell_index_t cell_idx = pcell.serv_cell_cfg.cell_index;
 
-  set_pdsch_mcs_table(serv_cell, select_mcs_table(cell_idx, ue_caps));
-  set_pdsch_interleaving(serv_cell, select_interleaving(cell_idx, ue_caps));
-  set_pdsch_res_alloc(
-      serv_cell, select_res_alloc(cell_idx, ue_caps), cell_cfg_list[cell_idx].ran.init_bwp.pdsch.rbg_sz);
-  set_max_dl_nof_harqs(cell_grp_cfg.cells.at(SERVING_PCELL_IDX), select_max_nof_harqs(cell_idx, ue_caps));
-  set_max_mimo_layers(cell_grp_cfg.cells.at(SERVING_PCELL_IDX), select_max_mimo_layers(cell_idx, ue_caps));
-  set_dl_dci_harq_field_size(serv_cell, select_dci_harq_field_size(cell_idx, ue_caps));
-  set_dl_harq_feedback_disabled(cell_grp_cfg.cells.at(SERVING_PCELL_IDX),
-                                select_disabled_harq_feedback(cell_idx, ue_caps));
-  set_pdsch_td_alloc_list(serv_cell, select_td_alloc_list(cell_idx, ue_caps));
+  ue_pdsch_rrm_config& pdsch = pcell.rrm.pdsch;
+
+  pdsch.mcs_table              = select_mcs_table(cell_idx, ue_caps);
+  pdsch.interleaving           = select_interleaving(cell_idx, ue_caps);
+  pdsch.res_alloc              = select_res_alloc(cell_idx, ue_caps);
+  pdsch.nof_harqs              = static_cast<uint8_t>(select_max_nof_harqs(cell_idx, ue_caps));
+  pdsch.max_nof_layers         = static_cast<uint8_t>(select_max_mimo_layers(cell_idx, ue_caps));
+  pdsch.dci_harq_field_size    = select_dci_harq_field_size(cell_idx, ue_caps);
+  pdsch.harq_feedback_disabled = select_disabled_harq_feedback(cell_idx, ue_caps);
+  pdsch.max_nof_repetitions    = static_cast<uint8_t>(select_max_nof_repetitions(cell_idx, ue_caps));
+
+  set_cqi_table(pcell, pdsch.mcs_table);
 }
 
 pdsch_mcs_table du_pdsch_resource_manager::select_mcs_table(du_cell_index_t                             cell_idx,
@@ -166,15 +105,14 @@ du_pdsch_resource_manager::select_interleaving(du_cell_index_t                  
   return vrb_to_prb::mapping_type::non_interleaved;
 }
 
-pdsch_config::resource_allocation
+resource_allocation
 du_pdsch_resource_manager::select_res_alloc(du_cell_index_t                             cell_idx,
                                             const std::optional<ue_capability_summary>& ue_caps) const
 {
-  const pdsch_config::resource_allocation app_res_alloc = cell_cfg_list[cell_idx].ran.init_bwp.pdsch.res_alloc;
+  const resource_allocation app_res_alloc = cell_cfg_list[cell_idx].ran.init_bwp.pdsch.res_alloc;
   if (ue_caps.has_value()) {
     // Resource allocation type 0 is mandatory, while the dynamic switch between types 0 and 1 is a UE capability.
-    if (app_res_alloc != pdsch_config::resource_allocation::dynamic_switch or
-        ue_caps->pdsch_dyn_switch_ra_type0_1_supported) {
+    if (app_res_alloc != resource_allocation::dynamic_switch or ue_caps->pdsch_dyn_switch_ra_type0_1_supported) {
       return app_res_alloc;
     }
   } else if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
@@ -183,7 +121,7 @@ du_pdsch_resource_manager::select_res_alloc(du_cell_index_t                     
   }
 
   // Default to resource allocation type 1 if the UE capabilities are not available.
-  return pdsch_config::resource_allocation::resource_allocation_type_1;
+  return resource_allocation::resource_allocation_type_1;
 }
 
 unsigned du_pdsch_resource_manager::select_max_mimo_layers(du_cell_index_t                             cell_idx,
@@ -229,14 +167,14 @@ unsigned du_pdsch_resource_manager::select_max_nof_harqs(du_cell_index_t        
   return std::min(cell_max, (unsigned)ue_caps->bands.at(band).max_dl_harq_process_num);
 }
 
-unsigned
+harq_process_num_field_size
 du_pdsch_resource_manager::select_dci_harq_field_size(du_cell_index_t                             cell_idx,
                                                       const std::optional<ue_capability_summary>& ue_caps) const
 {
   auto default_size = log2_ceil(ue_capability_summary::default_max_harq_process_num);
 
   if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
-    return default_size;
+    return to_harq_process_num_field_size(default_size);
   }
 
   unsigned cell_max  = cell_cfg_list[cell_idx].ran.init_bwp.pdsch.max_harq_procs;
@@ -246,11 +184,11 @@ du_pdsch_resource_manager::select_dci_harq_field_size(du_cell_index_t           
   // UE capabilities have not been decoded yet, band info not available, or UE does not support NTN.
   if (not band_helper::is_ntn_band(band) || not ue_caps.has_value() || ue_caps->bands.count(band) == 0 ||
       not ue_caps->ntn_supported) {
-    return default_size;
+    return to_harq_process_num_field_size(default_size);
   }
 
   auto band_size = log2_ceil((unsigned)ue_caps->bands.at(band).max_dl_harq_process_num);
-  return std::max(std::min(cell_size, band_size), default_size);
+  return to_harq_process_num_field_size(std::max(std::min(cell_size, band_size), default_size));
 }
 
 harq_dl_feedback_disabled_mask
@@ -278,63 +216,25 @@ du_pdsch_resource_manager::select_disabled_harq_feedback(du_cell_index_t        
   return ue_caps->disabled_dl_harq_feedback_supported ? cell_mask : default_mask;
 }
 
-std::vector<pdsch_time_domain_resource_allocation>
-du_pdsch_resource_manager::select_td_alloc_list(du_cell_index_t                             cell_idx,
-                                                const std::optional<ue_capability_summary>& ue_caps) const
+unsigned
+du_pdsch_resource_manager::select_max_nof_repetitions(du_cell_index_t                             cell_idx,
+                                                      const std::optional<ue_capability_summary>& ue_caps) const
 {
-  // See TS 38.331, \c maxNrofDL-Allocations.
-  static constexpr unsigned max_nof_dl_allocs = 16;
-
   const du_cell_config& cell_cfg = cell_cfg_list[cell_idx];
 
-  // Verify if dedicated TDRA list with repetiotions (Rel-16) shall be generated.
   // 1. PDSCH repetitions disabled for the cell.
   const unsigned max_rep_cfg = cell_cfg.ran.init_bwp.pdsch.max_nof_repetitions;
   if (max_rep_cfg <= 1) {
-    return {};
+    return 1;
   }
 
   // 2 .The UE must support \e supportRepNumPDSCH-TDRA-r16 in the cell DL band.
   const nr_band band = cell_cfg.ran.dl_carrier.band;
   if (not ue_caps.has_value() or ue_caps->bands.count(band) == 0 or
       ue_caps->bands.at(band).max_pdsch_tdra_rep_number <= 1) {
-    return {};
+    return 1;
   }
 
-  // 3. If Dl repetitons feature is enabled and UE supports repetitions, create Rel-16 TDRA list.
-  const unsigned max_rep = std::min(max_rep_cfg, unsigned{ue_caps->bands.at(band).max_pdsch_tdra_rep_number});
-
-  // From the UE perspective the dedicated Rel-16 TDRA list replaces the common list for DCI format 1_1. Mirror the
-  // common list entries first and append the repetition entry after them.
-  const auto& common_list = cell_cfg.ran.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
-  if (common_list.empty()) {
-    return {};
-  }
-  std::vector<pdsch_time_domain_resource_allocation> result;
-  result.reserve(common_list.size() + 1);
-  result.insert(result.end(), common_list.begin(), common_list.end());
-
-  // Repetition entries use the worst-case (shortest) SLIV among the common list entries that span up to the last
-  // symbol of the slot, i.e. the entries meant for fully-DL slots. Special slot entries are excluded, as repetitions
-  // falling on slots that do not contain the allocated symbols are dropped.
-  const unsigned symbols_per_slot = get_nsymb_per_slot(cell_cfg.ran.dl_cfg_common.init_dl_bwp.generic_params.cp);
-  const pdsch_time_domain_resource_allocation* base_alloc = nullptr;
-  for (const auto& alloc : common_list) {
-    if (alloc.symbols.stop() == symbols_per_slot and
-        (base_alloc == nullptr or alloc.symbols.length() < base_alloc->symbols.length())) {
-      base_alloc = &alloc;
-    }
-  }
-  if (base_alloc == nullptr) {
-    return {};
-  }
-
-  // Append a single entry with \e repetitionNumber-r16 set to max_rep.
-  if (result.size() < max_nof_dl_allocs) {
-    pdsch_time_domain_resource_allocation rep_alloc = *base_alloc;
-    rep_alloc.rep_number                            = static_cast<uint8_t>(max_rep);
-    result.push_back(rep_alloc);
-  }
-
-  return result;
+  // 3. The UE uses the highest number of repetitions that it supports, up to the limit of the cell.
+  return std::min(max_rep_cfg, unsigned{ue_caps->bands.at(band).max_pdsch_tdra_rep_number});
 }

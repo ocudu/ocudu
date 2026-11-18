@@ -6,8 +6,11 @@
 #pragma once
 
 #include "ocudu/ran/harq_id.h"
+#include "ocudu/ran/pdcch/dci_packing.h"
+#include "ocudu/ran/pdsch/pdsch_mcs.h"
 #include "ocudu/ran/pusch/tx_scheme_configuration.h"
 #include "ocudu/ran/resource_allocation/rb_interval.h"
+#include "ocudu/ran/resource_allocation/vrb_to_prb.h"
 #include "ocudu/ran/rnti.h"
 #include "ocudu/ran/srs/srs_configuration.h"
 #include "ocudu/scheduler/config/pucch_resource_builder_params.h"
@@ -116,11 +119,21 @@ struct ue_pdsch_config {
   uint8_t nof_harqs = MAX_NOF_HARQS_NON_NTN;
   /// A bit set to 1 identifies a DL HARQ process with disabled HARQ feedback.
   harq_dl_feedback_disabled_mask harq_feedback_disabled = harq_dl_feedback_disabled_mask(MAX_NOF_HARQS);
+  /// MCS table of the UE PDSCH.
+  pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
+  /// VRB-to-PRB mapping of the UE PDSCH, when scheduled by the DCI format 1_1.
+  vrb_to_prb::mapping_type interleaving = vrb_to_prb::mapping_type::non_interleaved;
+  /// Resource allocation type of the DCI format 1_1.
+  resource_allocation res_alloc = resource_allocation::resource_allocation_type_1;
+  /// Number of bits of the HARQ process number field of the DCI format 1_1.
+  harq_process_num_field_size dci_harq_field_size = harq_process_num_field_size::n4;
 
   bool operator==(const ue_pdsch_config& other) const
   {
     return max_nof_layers == other.max_nof_layers and nof_harqs == other.nof_harqs and
-           harq_feedback_disabled == other.harq_feedback_disabled;
+           harq_feedback_disabled == other.harq_feedback_disabled and mcs_table == other.mcs_table and
+           interleaving == other.interleaving and res_alloc == other.res_alloc and
+           dci_harq_field_size == other.dci_harq_field_size;
   }
 };
 

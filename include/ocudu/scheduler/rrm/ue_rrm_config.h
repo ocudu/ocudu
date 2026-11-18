@@ -6,6 +6,9 @@
 #pragma once
 
 #include "ocudu/ran/harq_id.h"
+#include "ocudu/ran/pdcch/dci_packing.h"
+#include "ocudu/ran/pdsch/pdsch_mcs.h"
+#include "ocudu/ran/resource_allocation/vrb_to_prb.h"
 #include "ocudu/scheduler/rrm/cell_pucch_resources.h"
 #include <optional>
 
@@ -62,11 +65,24 @@ struct ue_pdsch_rrm_config {
   /// Maximum number of PDSCH layers of the UE in the cell. See TS 38.331, \c maxMIMO-Layers. Absent if only the cell
   /// limits the number of layers.
   std::optional<uint8_t> max_nof_layers;
+  /// MCS table of the PDSCH. See TS 38.331, \c mcs-Table.
+  pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
+  /// VRB-to-PRB mapping of the PDSCH. See TS 38.331, \c vrb-ToPRB-Interleaver.
+  vrb_to_prb::mapping_type interleaving = vrb_to_prb::mapping_type::non_interleaved;
+  /// Resource allocation type of the PDSCH for DCI format 1_1. See TS 38.331, \c resourceAllocation.
+  resource_allocation res_alloc = resource_allocation::resource_allocation_type_1;
+  /// Number of bits of the HARQ process number field of the DCI formats 1_1 and 1_2.
+  harq_process_num_field_size dci_harq_field_size = harq_process_num_field_size::n4;
+  /// Maximum number of PDSCH repetitions of the UE. A value of 1 means no repetitions. See TS 38.331, \c
+  /// repetitionNumber-r16.
+  uint8_t max_nof_repetitions = 1;
 
   bool operator==(const ue_pdsch_rrm_config& other) const
   {
     return nof_harqs == other.nof_harqs and harq_feedback_disabled == other.harq_feedback_disabled and
-           max_nof_layers == other.max_nof_layers;
+           max_nof_layers == other.max_nof_layers and mcs_table == other.mcs_table and
+           interleaving == other.interleaving and res_alloc == other.res_alloc and
+           dci_harq_field_size == other.dci_harq_field_size and max_nof_repetitions == other.max_nof_repetitions;
   }
 };
 

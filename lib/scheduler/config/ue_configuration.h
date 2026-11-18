@@ -33,9 +33,11 @@ using crb_index_list = static_vector<uint16_t, pdcch_constants::MAX_NOF_RB_PDCCH
 
 /// \brief Grouping of common and UE-dedicated information associated with a given search space.
 struct search_space_info {
-  const search_space_configuration*              cfg     = nullptr;
-  const sched_coreset_config*                    coreset = nullptr;
-  const sched_bwp_config*                        bwp     = nullptr;
+  const search_space_configuration* cfg     = nullptr;
+  const sched_coreset_config*       coreset = nullptr;
+  const sched_bwp_config*           bwp     = nullptr;
+  /// PDSCH parameters of the cell.
+  const cell_pdsch_res_config*                   cell_pdsch = nullptr;
   crb_interval                                   dl_crb_lims;
   crb_interval                                   ul_crb_lims;
   std::optional<vrb_to_prb::interleaved_mapping> interleaved_mapping;

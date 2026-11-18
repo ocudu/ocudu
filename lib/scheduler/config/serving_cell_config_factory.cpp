@@ -24,67 +24,6 @@
 using namespace ocudu;
 using namespace ocudu::config_helpers;
 
-static pdsch_config make_default_pdsch_config(const ran_cell_config& cell_cfg)
-{
-  pdsch_config pdsch_cfg;
-
-  dmrs_downlink_config& dmrs_type_a = pdsch_cfg.pdsch_mapping_type_a_dmrs.emplace();
-  dmrs_type_a.additional_positions  = cell_cfg.init_bwp.pdsch.additional_positions;
-
-  pdsch_cfg.tci_states.push_back(tci_state{
-      .state_id  = static_cast<tci_state_id_t>(0),
-      .qcl_type1 = {.ref_sig  = {.type = qcl_info::reference_signal::reference_signal_type::ssb, .ssb = 0},
-                    .qcl_type = qcl_info::qcl_type::type_d},
-  });
-
-  pdsch_cfg.res_alloc = pdsch_config::resource_allocation::resource_allocation_type_1;
-  pdsch_cfg.rbg_sz    = rbg_size::config1;
-  pdsch_cfg.prb_bndlg.bundling.emplace<prb_bundling::static_bundling>(
-      prb_bundling::static_bundling({.sz = prb_bundling::static_bundling::bundling_size::wideband}));
-
-  pdsch_cfg.vrb_to_prb_interleaving = cell_cfg.init_bwp.pdsch.interleaving_bundle_size;
-
-  // According to TS 38.214 Section 5.1.2.3, prb-BundlingType size must match the VRB-to-PRB mapping type.
-  switch (pdsch_cfg.vrb_to_prb_interleaving) {
-    case vrb_to_prb::mapping_type::non_interleaved:
-      // > If $P'_{BWP,i}$ is determined as "wideband", the UE is not expected to be scheduled with non-contiguous
-      // > PRBs and the UE may assume that the same precoding is applied to the allocated resource.
-      pdsch_cfg.prb_bndlg.bundling.emplace<prb_bundling::static_bundling>(
-          prb_bundling::static_bundling({.sz = prb_bundling::static_bundling::bundling_size::wideband}));
-      break;
-    case vrb_to_prb::mapping_type::interleaved_n2:
-      // > When a UE is configured with nominal RBG size = 2 for bandwidth part i according to clause 5.1.2.2.1, or
-      // > when a UE is configured with interleaving unit of 2 for VRB to PRB mapping provided by the higher layer
-      // > parameter vrb-ToPRB-Interleaver given by PDSCH-Config for bandwidth part i, the UE is not expected to be
-      // > configured with $P'_{BWP,i} = 4$.
-      pdsch_cfg.prb_bndlg.bundling.emplace<prb_bundling::static_bundling>(
-          prb_bundling::static_bundling({.sz = std::nullopt}));
-      break;
-    case vrb_to_prb::mapping_type::interleaved_n4:
-      pdsch_cfg.prb_bndlg.bundling.emplace<prb_bundling::static_bundling>(
-          prb_bundling::static_bundling({.sz = prb_bundling::static_bundling::bundling_size::n4}));
-      break;
-  }
-
-  if (cell_cfg.init_bwp.csi.has_value()) {
-    csi_helper::csi_meas_config_builder_params csi_params =
-        config_helpers::make_csi_meas_config_builder_params(cell_cfg);
-
-    // zp-CSI-RS resources.
-    pdsch_cfg.zp_csi_rs_res_list = csi_helper::make_periodic_zp_csi_rs_resource_list(csi_params);
-
-    // periodic set of zp-CSI-RS resources.
-    pdsch_cfg.p_zp_csi_rs_res = csi_helper::make_periodic_zp_csi_rs_resource_set(csi_params);
-  }
-
-  pdsch_cfg.mcs_table = cell_cfg.init_bwp.pdsch.mcs_table;
-
-  pdsch_cfg.harq_process_num_size_dci_1_1 = pdsch_config::harq_process_num_dci_1_1_size::n4;
-  pdsch_cfg.harq_process_num_size_dci_1_2 = pdsch_config::harq_process_num_dci_1_2_size::n4;
-
-  return pdsch_cfg;
-}
-
 static std::optional<radio_link_monitoring_config> make_default_rlm_config(const ran_cell_config& cell_cfg)
 {
   const rlm_resource_type rlm_type = cell_cfg.init_bwp.rlm.type;
@@ -329,7 +268,6 @@ static serving_cell_config make_default_serving_cell_config(const ran_cell_confi
   serv_cell.init_dl_bwp.pdcch_cfg = cell_cfg.init_bwp.pdcch_cfg;
 
   // > PDSCH-Config.
-  serv_cell.init_dl_bwp.pdsch_cfg = make_default_pdsch_config(cell_cfg);
 
   // > RadioLinkMonitoringConfig.
   serv_cell.init_dl_bwp.rlm_cfg = make_default_rlm_config(cell_cfg);
@@ -357,6 +295,8 @@ static ue_rrm_config make_default_ue_rrm_cfg(const ran_cell_config& cell_cfg)
               .nof_harqs              = cell_cfg.init_bwp.pdsch.max_harq_procs,
               .harq_feedback_disabled = cell_cfg.init_bwp.pdsch.dl_harq_feedback_disabled,
               .max_nof_layers         = static_cast<uint8_t>(cell_cfg.init_bwp.pdsch.max_nof_layers),
+              .mcs_table              = cell_cfg.init_bwp.pdsch.mcs_table,
+              .interleaving           = cell_cfg.init_bwp.pdsch.interleaving_bundle_size,
           },
       .pusch =
           {

@@ -448,8 +448,8 @@ aggregation_level ue_cell::get_aggregation_level(float cqi, const search_space_i
   }
 
   // The UE reports the CQI with the table that matches the MCS table of its PDSCH.
-  if (not ss_info.cfg->is_common_search_space() and cfg().has_csi_cfg() and ss_info.bwp->dl.pdsch().ded() != nullptr) {
-    cqi_table = get_cqi_table(ss_info.bwp->dl.pdsch().ded()->mcs_table);
+  if (not ss_info.cfg->is_common_search_space() and cfg().has_csi_cfg() and ss_info.bwp->dl.ue_cfg() != nullptr) {
+    cqi_table = get_cqi_table(ss_info.bwp->dl.ue_cfg()->pdsch.mcs_table);
   }
 
   // Apply the configured offset to the CQI and make sure it is in the allowed range.

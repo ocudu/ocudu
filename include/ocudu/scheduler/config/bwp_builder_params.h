@@ -7,6 +7,7 @@
 
 #include "ocudu/ran/dmrs/dmrs.h"
 #include "ocudu/ran/harq_id.h"
+#include "ocudu/ran/pdcch/dci_packing.h"
 #include "ocudu/ran/pdsch/pdsch_mcs.h"
 #include "ocudu/ran/radio_link_monitoring.h"
 #include "ocudu/ran/resource_allocation/vrb_to_prb.h"
@@ -17,6 +18,7 @@
 #include "ocudu/scheduler/config/pucch_resource_builder_params.h"
 #include "ocudu/scheduler/config/serving_cell_config.h"
 #include "ocudu/scheduler/config/srs_builder_params.h"
+#include "ocudu/scheduler/result/resource_block_group.h"
 #include <optional>
 
 namespace ocudu {
@@ -37,7 +39,7 @@ struct pdsch_builder_params {
   /// VRB-to-PRB mapping type for PDSCH. The field vrb-ToPRB-Interleaver applies to DCI format 1_1.
   vrb_to_prb::mapping_type interleaving_bundle_size{vrb_to_prb::mapping_type::non_interleaved};
   /// Preferred PDSCH frequency domain resource allocation type. The field resourceAllocation applies to DCI format 1_1.
-  pdsch_config::resource_allocation res_alloc = pdsch_config::resource_allocation::resource_allocation_type_1;
+  resource_allocation res_alloc = resource_allocation::resource_allocation_type_1;
   /// RBG size configuration for PDSCH resource allocation type 0.
   rbg_size rbg_sz = rbg_size::config1;
   /// \c xOverhead of the \c PDSCH-ServingCellConfig. Assumed by the PDSCH scheduling, as per TS 38.214,

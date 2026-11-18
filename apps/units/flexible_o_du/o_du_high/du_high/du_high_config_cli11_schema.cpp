@@ -453,10 +453,9 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
              "PDSCH frequency domain resource allocation type for UE-dedicated search spaces")
       ->default_str("type1")
       ->transform(CLI::CheckedTransformer(
-          std::map<std::string, pdsch_config::resource_allocation>{
-              {"type0", pdsch_config::resource_allocation::resource_allocation_type_0},
-              {"type1", pdsch_config::resource_allocation::resource_allocation_type_1},
-              {"dynamic_switch", pdsch_config::resource_allocation::dynamic_switch}},
+          std::map<std::string, resource_allocation>{{"type0", resource_allocation::resource_allocation_type_0},
+                                                     {"type1", resource_allocation::resource_allocation_type_1},
+                                                     {"dynamic_switch", resource_allocation::dynamic_switch}},
           CLI::ignore_case));
   add_option(app, "--rbg_size", pdsch_params.rbg_sz, "PDSCH RBG size configuration for resource allocation type 0")
       ->default_str("config1")

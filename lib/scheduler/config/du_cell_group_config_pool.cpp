@@ -21,16 +21,16 @@ bwp_config_pool::bwp_config_pool(const ran_cell_config&     cell_ran_cfg,
   tdd_cfg(cell_ran_cfg.tdd_cfg),
   pucch_min_k1(cell_ran_cfg.init_bwp.pucch.min_k1),
   pdcch_pool(cell_ran_cfg.pci, bwp_dl_cmn.generic_params, bwp_dl_cmn.pdcch_common, bwp_ded_res.dl),
-  common_bwp_cfg{
-      bwp_id,
-      sched_bwp_dl_config{bwp_dl_cmn, nullptr, std::nullopt, pdcch_pool.init_cfg(), get_dl_td_mapper(nullptr)},
-      sched_bwp_ul_config{bwp_ul_cmn, std::nullopt, std::nullopt, get_ul_td_mapper(nullptr)}}
+  common_bwp_cfg{bwp_id,
+                 sched_bwp_dl_config{bwp_dl_cmn, nullptr, std::nullopt, pdcch_pool.init_cfg(), get_dl_td_mapper({})},
+                 sched_bwp_ul_config{bwp_ul_cmn, std::nullopt, std::nullopt, get_ul_td_mapper(nullptr)}}
 {
 }
 
-sched_bwp_config bwp_config_pool::add_ded_cfg(const bwp_downlink_dedicated* dl_ded,
-                                              const bwp_uplink_dedicated*   ul_ded,
-                                              const ue_bwp_config&          ue_bwp_cfg)
+sched_bwp_config bwp_config_pool::add_ded_cfg(const bwp_downlink_dedicated*                     dl_ded,
+                                              const bwp_uplink_dedicated*                       ul_ded,
+                                              const ue_bwp_config&                              ue_bwp_cfg,
+                                              span<const pdsch_time_domain_resource_allocation> ded_pdsch_td_list)
 {
   config_ptr<bwp_downlink_dedicated> dl_ptr;
   if (dl_ded != nullptr) {
@@ -50,17 +50,18 @@ sched_bwp_config bwp_config_pool::add_ded_cfg(const bwp_downlink_dedicated* dl_d
                                               dl_ptr.has_value() and dl_ptr->pdcch_cfg.has_value()
                                                   ? pdcch_pool.ded_cfgs()[0]
                                                   : pdcch_pool.init_cfg(),
-                                              get_dl_td_mapper(dl_ptr.get())},
+                                              get_dl_td_mapper(ded_pdsch_td_list)},
                           sched_bwp_ul_config{bwp_ul_cmn, ul_owned, ue_bwp_cfg.ul, get_ul_td_mapper(ul_ded)}};
 }
 
-const dl_time_domain_mapper& bwp_config_pool::get_dl_td_mapper(const bwp_downlink_dedicated* dl_ded)
+const dl_time_domain_mapper&
+bwp_config_pool::get_dl_td_mapper(span<const pdsch_time_domain_resource_allocation> ded_pdsch_td_list)
 {
   // Get TDRA dedicated list, resolved to the common list if absent, matching dl_time_domain_mapper's own fallback
   // behavior for DCI format 1_1. May carry repetition rows (TS 38.214, Table 5.1.2.1.1-1).
   span<const pdsch_time_domain_resource_allocation> ded_res = bwp_dl_cmn.pdsch_common.pdsch_td_alloc_list;
-  if (dl_ded != nullptr and dl_ded->pdsch_cfg.has_value() and not dl_ded->pdsch_cfg->pdsch_td_alloc_list.empty()) {
-    ded_res = dl_ded->pdsch_cfg->pdsch_td_alloc_list;
+  if (not ded_pdsch_td_list.empty()) {
+    ded_res = ded_pdsch_td_list;
   }
 
   // Check if mapper already exists in the pool in an efficient manner, without creating a full dl_time_domain_mapper.
@@ -76,10 +77,8 @@ const dl_time_domain_mapper& bwp_config_pool::get_dl_td_mapper(const bwp_downlin
   params.tdd_cfg = tdd_cfg;
   dl_time_domain_builder_params::explicit_resources explicit_res;
   explicit_res.common_pdsch_td_res_list = bwp_dl_cmn.pdsch_common.pdsch_td_alloc_list;
-  if (dl_ded != nullptr and dl_ded->pdsch_cfg.has_value()) {
-    // If empty, DCI format 1_1 falls back to the common list.
-    explicit_res.dedicated_pdsch_td_res_list = dl_ded->pdsch_cfg->pdsch_td_alloc_list;
-  }
+  // If empty, DCI format 1_1 falls back to the common list.
+  explicit_res.dedicated_pdsch_td_res_list.assign(ded_pdsch_td_list.begin(), ded_pdsch_td_list.end());
   params.params = std::move(explicit_res);
 
   return *dl_td_mapper_pool.create(dl_time_domain_mapper{params});
@@ -157,6 +156,10 @@ static ue_bwp_config make_ue_bwp_config(const ue_bwp_config& bwp_cfg, const ue_r
   cfg.dl.pdsch.max_nof_layers         = rrm_cfg.pdsch.max_nof_layers;
   cfg.dl.pdsch.nof_harqs              = rrm_cfg.pdsch.nof_harqs;
   cfg.dl.pdsch.harq_feedback_disabled = rrm_cfg.pdsch.harq_feedback_disabled;
+  cfg.dl.pdsch.mcs_table              = rrm_cfg.pdsch.mcs_table;
+  cfg.dl.pdsch.interleaving           = rrm_cfg.pdsch.interleaving;
+  cfg.dl.pdsch.res_alloc              = rrm_cfg.pdsch.res_alloc;
+  cfg.dl.pdsch.dci_harq_field_size    = rrm_cfg.pdsch.dci_harq_field_size;
   cfg.ul.pusch.nof_harqs              = rrm_cfg.pusch.nof_harqs;
   cfg.ul.pusch.harq_mode              = rrm_cfg.pusch.harq_mode;
   cfg.ul.pucch.res_set_cfg_id         = rrm_cfg.pucch.res_set_cfg_id;
@@ -185,11 +188,15 @@ ue_cell_config_ptr du_cell_config_pool::update_ue(const sched_ue_cell_config& ue
   } else {
     // Common and dedicated config.
     const serving_cell_config& serv_cell_cfg = ue_cell.ded->serv_cell_cfg;
+    // The dedicated PDSCH TDRA list is empty for a UE without repetitions, which then uses the common list.
+    const std::vector<pdsch_time_domain_resource_allocation> ded_pdsch_td_list = make_ue_pdsch_td_alloc_list(
+        cell_cfg_inst.bwp_res[to_bwp_id(0)].dl().pdsch.rep_td_alloc_list, ue_cell.ded->rrm.pdsch.max_nof_repetitions);
     add_bwp(
         ret,
         cell_bwps[0]->add_ded_cfg(&serv_cell_cfg.init_dl_bwp,
                                   serv_cell_cfg.ul_config.has_value() ? &serv_cell_cfg.ul_config->init_ul_bwp : nullptr,
-                                  make_ue_bwp_config(ue_cell.ded->bwps[0], ue_cell.ded->rrm)));
+                                  make_ue_bwp_config(ue_cell.ded->bwps[0], ue_cell.ded->rrm),
+                                  ded_pdsch_td_list));
   }
 
   // Hand out an intrusive_ptr to the pool-owned slot. Dropping the last reference (possibly on the RT thread) only

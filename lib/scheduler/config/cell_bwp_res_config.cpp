@@ -65,6 +65,9 @@ cell_bwp_res_config ocudu::make_cell_bwp_res_config(const ran_cell_config& cell_
                      .dedicated = rrm_cfg.pucch.res,
                  },
              .pusch = {.x_ov_head = rrm_cfg.pusch.x_ov_head}}};
-  res.dl.pdsch.x_ov_head = rrm_cfg.pdsch.x_ov_head;
+  res.dl.pdsch.x_ov_head         = rrm_cfg.pdsch.x_ov_head;
+  res.dl.pdsch.dmrs_type_a       = rrm_cfg.pdsch.dmrs_type_a;
+  res.dl.pdsch.rbg_sz            = rrm_cfg.pdsch.rbg_sz;
+  res.dl.pdsch.rep_td_alloc_list = rrm_cfg.pdsch.rep_td_alloc_list;
   return res;
 }

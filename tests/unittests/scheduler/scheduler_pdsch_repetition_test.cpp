@@ -54,21 +54,19 @@ protected:
     std::get<pucch_f2_params>(cell_req.ran.init_bwp.pucch.resources.f2_or_f3_or_f4_params).max_code_rate =
         max_pucch_code_rate::dot_35;
     cell_req.rrm = make_cell_rrm_config(cell_req.ran);
+
+    // The cell has a Rel-16 PDSCH TDRA list that mirrors the common list and appends a repetition entry.
+    const auto& common_list = cell_req.ran.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
+    cell_req.rrm.pdsch.rep_td_alloc_list.assign(common_list.begin(), common_list.end());
+    rep_time_resource = cell_req.rrm.pdsch.rep_td_alloc_list.size();
+    cell_req.rrm.pdsch.rep_td_alloc_list.push_back(common_list.front());
     this->add_cell(cell_req);
 
-    // Add UE with a Rel-16 PDSCH TDRA list that mirrors the common list and appends a repetition entry.
-    auto ue_cfg           = sched_config_helper::create_default_sched_ue_creation_request(cell_req.ran, {ue_drb_lcid});
-    ue_cfg.ue_index       = ue_idx;
-    ue_cfg.crnti          = ue_rnti;
-    auto&       pdsch_cfg = (*ue_cfg.cfg.cells)[0].ded->serv_cell_cfg.init_dl_bwp.pdsch_cfg.value();
-    const auto& common_list = cell_req.ran.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
-    for (const auto& alloc : common_list) {
-      pdsch_cfg.pdsch_td_alloc_list.push_back(alloc);
-    }
-    rep_time_resource                               = pdsch_cfg.pdsch_td_alloc_list.size();
-    pdsch_time_domain_resource_allocation rep_alloc = common_list.front();
-    rep_alloc.rep_number                            = nof_reps;
-    pdsch_cfg.pdsch_td_alloc_list.push_back(rep_alloc);
+    // Add UE with PDSCH repetitions.
+    auto ue_cfg     = sched_config_helper::create_default_sched_ue_creation_request(cell_req.ran, {ue_drb_lcid});
+    ue_cfg.ue_index = ue_idx;
+    ue_cfg.crnti    = ue_rnti;
+    (*ue_cfg.cfg.cells)[0].ded->rrm.pdsch.max_nof_repetitions = nof_reps;
     this->add_ue(ue_cfg);
   }
 

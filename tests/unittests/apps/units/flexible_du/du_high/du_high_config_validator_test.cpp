@@ -103,23 +103,23 @@ protected:
 
 TEST_F(du_high_pdsch_res_alloc_config_test, resource_allocation_type0_without_interleaving_is_valid)
 {
-  pdsch_cfg().res_alloc = pdsch_config::resource_allocation::resource_allocation_type_0;
+  pdsch_cfg().res_alloc = resource_allocation::resource_allocation_type_0;
   ASSERT_TRUE(validate());
 
-  pdsch_cfg().res_alloc = pdsch_config::resource_allocation::dynamic_switch;
+  pdsch_cfg().res_alloc = resource_allocation::dynamic_switch;
   ASSERT_TRUE(validate());
 }
 
 TEST_F(du_high_pdsch_res_alloc_config_test, resource_allocation_type0_with_interleaving_is_rejected)
 {
   pdsch_cfg().interleaving_bundle_size = vrb_to_prb::mapping_type::interleaved_n2;
-  pdsch_cfg().res_alloc                = pdsch_config::resource_allocation::resource_allocation_type_1;
+  pdsch_cfg().res_alloc                = resource_allocation::resource_allocation_type_1;
   ASSERT_TRUE(validate());
 
-  pdsch_cfg().res_alloc = pdsch_config::resource_allocation::resource_allocation_type_0;
+  pdsch_cfg().res_alloc = resource_allocation::resource_allocation_type_0;
   ASSERT_FALSE(validate());
 
-  pdsch_cfg().res_alloc = pdsch_config::resource_allocation::dynamic_switch;
+  pdsch_cfg().res_alloc = resource_allocation::dynamic_switch;
   ASSERT_FALSE(validate());
 }
 

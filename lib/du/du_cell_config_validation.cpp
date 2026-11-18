@@ -27,6 +27,7 @@
 #include "ocudu/scheduler/config/serving_cell_config.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
 #include "ocudu/scheduler/config/serving_cell_config_validator.h"
+#include "ocudu/scheduler/rrm/cell_rrm_config.h"
 #include "ocudu/scheduler/sched_consts.h"
 #include "ocudu/support/config/validator_helpers.h"
 
@@ -288,7 +289,7 @@ static check_outcome check_dl_config_dedicated(const du_cell_config& cell_cfg)
 {
   const subcarrier_spacing scs_common = cell_cfg.ran.dl_cfg_common.init_dl_bwp.generic_params.scs;
   const auto&              pdcch_cfg  = cell_cfg.ran.init_bwp.pdcch_cfg;
-  const auto pdsch_cfg = config_helpers::make_default_ue_cell_config(cell_cfg.ran).serv_cell_cfg.init_dl_bwp.pdsch_cfg;
+  const pdsch_mcs_table    mcs_table  = cell_cfg.ran.init_bwp.pdsch.mcs_table;
 
   // PDCCH
   if (pdcch_cfg.has_value()) {
@@ -303,20 +304,17 @@ static check_outcome check_dl_config_dedicated(const du_cell_config& cell_cfg)
                    "Nof. DL antennas {} cannot be greater than 1 when using fallback DCI format\n",
                    cell_cfg.ran.dl_carrier.nof_ant);
 
-        if (pdsch_cfg.has_value()) {
-          CHECK_TRUE(pdsch_cfg->mcs_table != pdsch_mcs_table::qam256,
-                     "256QAM MCS table cannot be used for PDSCH with fallback DCI format in SearchSpace#2");
-        }
+        CHECK_TRUE(mcs_table != pdsch_mcs_table::qam256,
+                   "256QAM MCS table cannot be used for PDSCH with fallback DCI format in SearchSpace#2");
       }
 
-      if (pdsch_cfg.has_value() and pdsch_cfg->mcs_table == pdsch_mcs_table::qam64LowSe) {
+      if (mcs_table == pdsch_mcs_table::qam64LowSe) {
         // As per Section 5.1.3.1, TS 38.213 and assuming MCS-C-RNTI is not supported.
         CHECK_TRUE(not ss.is_common_search_space(),
                    "64QAM Low Se MCS table cannot be used for PDSCH with DCI in Common SearchSpace");
       }
 
-      if (pdsch_cfg.has_value() and pdsch_cfg->pdsch_mapping_type_a_dmrs.has_value() and
-          pdsch_cfg->pdsch_mapping_type_a_dmrs->additional_positions == dmrs_additional_positions::pos3) {
+      if (cell_cfg.ran.init_bwp.pdsch.additional_positions == dmrs_additional_positions::pos3) {
         CHECK_TRUE(
             cell_cfg.ran.dmrs_typeA_pos == dmrs_typeA_position::pos2,
             "PDSCH dmrs-Additional-Position of pos3 is only supported when dmrs-TypeA-Position is equal to pos2");
@@ -1218,8 +1216,8 @@ check_outcome odu::is_du_cell_config_valid(const du_cell_config& cell_cfg)
   HANDLE_ERROR(check_prach_config(cell_cfg));
   HANDLE_ERROR(check_srs_config(cell_cfg));
   const serving_cell_config ue_serv_cell_cfg = config_helpers::make_default_ue_cell_config(cell_cfg.ran).serv_cell_cfg;
-  HANDLE_ERROR(
-      config_validators::validate_csi_meas_cfg(ue_serv_cell_cfg, cell_cfg.ran.tdd_cfg, cell_cfg.ran.ul_cfg_common));
+  HANDLE_ERROR(config_validators::validate_csi_meas_cfg(
+      ue_serv_cell_cfg, make_cell_rrm_config(cell_cfg.ran).csi, cell_cfg.ran.tdd_cfg, cell_cfg.ran.ul_cfg_common));
   HANDLE_ERROR(check_dl_config_dedicated(cell_cfg));
   HANDLE_ERROR(check_ul_config_dedicated(cell_cfg));
   HANDLE_ERROR(check_si_sched_config(cell_cfg));

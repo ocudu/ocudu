@@ -13,16 +13,6 @@
 
 using namespace ocudu;
 
-// See TS 38.211, 7.3.1.1. - Scrambling.
-static unsigned get_pdsch_n_id(pci_t pci, const sched_bwp_config& bwp, dci_dl_format dci_fmt, bool is_common_ss)
-{
-  if (bwp.dl.pdsch().ded() != nullptr and bwp.dl.pdsch().ded()->data_scrambling_id_pdsch.has_value() and
-      (dci_fmt != dci_dl_format::f1_0 or not is_common_ss)) {
-    return *bwp.dl.pdsch().ded()->data_scrambling_id_pdsch;
-  }
-  return pci;
-}
-
 /// Fills the power offsets of a PDSCH that is scheduled without UE-dedicated configuration.
 static void populate_pdsch_pwr_offsets(pdsch_information& pdsch, const cell_configuration& cell_cfg)
 {
@@ -385,8 +375,7 @@ void ocudu::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   pdsch.dci_fmt = dci_dl_format::f1_0;
   pdsch.harq_id = to_harq_id(dci_cfg.harq_process_number);
   // See TS 38.211, 7.3.1.1. - Scrambling.
-  pdsch.n_id =
-      get_pdsch_n_id(cell_cfg.params.pci, active_bwp, dci_dl_format::f1_0, ss_info.cfg->is_common_search_space());
+  pdsch.n_id       = cell_cfg.params.pci;
   pdsch.nof_layers = 1;
 
   // [Implementation-defined] A PDSCH scheduled with DCI format 1_0 is neither precoded nor beamformed.
@@ -436,15 +425,14 @@ void ocudu::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
   pdsch.symbols         = pdsch_cfg.symbols;
   pdsch.dmrs            = pdsch_cfg.dmrs;
   pdsch.vrb_prb_mapping = dci_cfg.vrb_prb_mapping.has_value() and dci_cfg.vrb_prb_mapping.value()
-                              ? ue_cell_cfg.init_bwp().dl.pdsch().ded()->vrb_to_prb_interleaving
+                              ? ue_cell_cfg.init_bwp().dl.ue_cfg()->pdsch.interleaving
                               : vrb_to_prb::mapping_type::non_interleaved;
   // See TS 38.213, 10.1.
   pdsch.ss_set_type = search_space_set_type::ue_specific;
   pdsch.dci_fmt     = dci_dl_format::f1_1;
   pdsch.harq_id     = to_harq_id(dci_cfg.harq_process_number);
   // See TS 38.211, 7.3.1.1. - Scrambling.
-  pdsch.n_id =
-      get_pdsch_n_id(cell_cfg.params.pci, active_bwp, dci_dl_format::f1_1, ss_info.cfg->is_common_search_space());
+  pdsch.n_id       = cell_cfg.params.pci;
   pdsch.nof_layers = pdsch_cfg.nof_layers();
 
   pdsch.mcs_table = pdsch_cfg.mcs_table;

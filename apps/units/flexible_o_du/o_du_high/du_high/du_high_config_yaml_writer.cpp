@@ -418,14 +418,14 @@ static YAML::Node build_du_high_pdcch_section(const du_high_unit_pdcch_config& c
   return node;
 }
 
-static std::string to_string(pdsch_config::resource_allocation res_alloc)
+static std::string to_string(resource_allocation res_alloc)
 {
   switch (res_alloc) {
-    case pdsch_config::resource_allocation::resource_allocation_type_0:
+    case resource_allocation::resource_allocation_type_0:
       return "type0";
-    case pdsch_config::resource_allocation::resource_allocation_type_1:
+    case resource_allocation::resource_allocation_type_1:
       return "type1";
-    case pdsch_config::resource_allocation::dynamic_switch:
+    case resource_allocation::dynamic_switch:
       return "dynamic_switch";
   }
   return "";

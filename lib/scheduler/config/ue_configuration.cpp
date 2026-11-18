@@ -57,8 +57,12 @@ void search_space_info::update_pdsch_time_domain_list(const ue_cell_configuratio
       case dci_dl_format::f1_1: {
         pdsch_cfg_list[i].resize(ue_cell_cfg.cell_cfg_common.params.init_bwp.pdsch.max_nof_layers);
         for (unsigned j = 0, je = pdsch_cfg_list[i].size(); j != je; ++j) {
-          pdsch_cfg_list[i][j] = sched_helper::get_pdsch_config_f1_1_c_rnti(
-              ue_cell_cfg.cell_cfg_common, *bwp->dl.pdsch().ded(), ue_cell_cfg.pdsch_nof_oh_prb(), pdsch_td_res, j + 1);
+          pdsch_cfg_list[i][j] = sched_helper::get_pdsch_config_f1_1_c_rnti(ue_cell_cfg.cell_cfg_common,
+                                                                            cell_pdsch->dmrs_type_a,
+                                                                            bwp->dl.ue_cfg()->pdsch.mcs_table,
+                                                                            ue_cell_cfg.pdsch_nof_oh_prb(),
+                                                                            pdsch_td_res,
+                                                                            j + 1);
         }
       } break;
       default:
@@ -75,10 +79,7 @@ pdsch_config_params search_space_info::get_pdsch_config(unsigned              pd
   if (pdsch_cfg.dmrs.dmrs_ports != dmrs_ports or
       pdsch_cfg.dmrs.num_dmrs_cdm_grps_no_data != nof_cdm_groups_without_data) {
     ocudu_assert(get_dl_dci_format() == dci_dl_format::f1_1, "Only DCI f1_1 signals the PDSCH DM-RS ports");
-    set_pdsch_dmrs_ports(pdsch_cfg.dmrs,
-                         bwp->dl.pdsch().ded()->pdsch_mapping_type_a_dmrs.value(),
-                         dmrs_ports,
-                         nof_cdm_groups_without_data);
+    set_pdsch_dmrs_ports(pdsch_cfg.dmrs, cell_pdsch->dmrs_type_a, dmrs_ports, nof_cdm_groups_without_data);
   }
   return pdsch_cfg;
 }
@@ -139,7 +140,8 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
   const bwp_uplink_common&                 init_ul_bwp   = init_bwp.ul.common();
   const bwp_configuration&                 active_ul_bwp = active_bwp.ul.cfg();
   const std::optional<rach_config_common>& opt_rach_cfg  = active_bwp.ul.common().rach_cfg_common;
-  const auto*                              opt_pdsch_cfg = active_bwp.dl.pdsch().ded();
+  const cell_pdsch_res_config&             cell_pdsch = ue_cell_cfg.cell_cfg_common.bwp_res[active_bwp.id].dl().pdsch;
+  const ue_pdsch_config* ue_pdsch = active_bwp.dl.ue_cfg() != nullptr ? &active_bwp.dl.ue_cfg()->pdsch : nullptr;
 
   auto dci_sz_cfg =
       dci_size_config{is_dci_format_monitored_in_ue_ss(ue_cell_cfg, active_bwp.id, true),
@@ -273,47 +275,32 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
   dci_sz_cfg.rm_pattern_group2      = false;
   dci_sz_cfg.pdsch_two_codewords    = false;
   dci_sz_cfg.pdsch_res_allocation_type = resource_allocation::resource_allocation_type_1;
-  if (opt_pdsch_cfg != nullptr) {
-    dci_sz_cfg.dynamic_prb_bundling =
-        std::holds_alternative<prb_bundling::dynamic_bundling>(opt_pdsch_cfg->prb_bndlg.bundling);
-    dci_sz_cfg.pdsch_two_codewords = opt_pdsch_cfg->is_max_cw_sched_by_dci_is_two;
-    switch (opt_pdsch_cfg->res_alloc) {
-      case pdsch_config::resource_allocation::resource_allocation_type_0: {
+  if (ue_pdsch != nullptr) {
+    switch (ue_pdsch->res_alloc) {
+      case resource_allocation::resource_allocation_type_0: {
         dci_sz_cfg.pdsch_res_allocation_type = resource_allocation::resource_allocation_type_0;
-        dci_sz_cfg.nof_dl_rb_groups          = get_nof_rbgs(active_dl_bwp.crbs, opt_pdsch_cfg->rbg_sz);
+        dci_sz_cfg.nof_dl_rb_groups          = get_nof_rbgs(active_dl_bwp.crbs, cell_pdsch.rbg_sz);
         break;
       }
-      case pdsch_config::resource_allocation::resource_allocation_type_1: {
+      case resource_allocation::resource_allocation_type_1: {
         dci_sz_cfg.pdsch_res_allocation_type = resource_allocation::resource_allocation_type_1;
         // NOTE: dci_sz_cfg.interleaved_vrb_prb_mapping is expected to be set (true or false depends on
-        // opt_pdsch_cfg) in case of \ref  resource_allocation_type_1.
-        dci_sz_cfg.interleaved_vrb_prb_mapping =
-            opt_pdsch_cfg->vrb_to_prb_interleaving != vrb_to_prb::mapping_type::non_interleaved;
+        // ue_pdsch) in case of \ref  resource_allocation_type_1.
+        dci_sz_cfg.interleaved_vrb_prb_mapping = ue_pdsch->interleaving != vrb_to_prb::mapping_type::non_interleaved;
         break;
       }
-      case pdsch_config::resource_allocation::dynamic_switch: {
+      case resource_allocation::dynamic_switch: {
         dci_sz_cfg.pdsch_res_allocation_type = resource_allocation::dynamic_switch;
-        dci_sz_cfg.nof_dl_rb_groups          = get_nof_rbgs(active_dl_bwp.crbs, opt_pdsch_cfg->rbg_sz);
+        dci_sz_cfg.nof_dl_rb_groups          = get_nof_rbgs(active_dl_bwp.crbs, cell_pdsch.rbg_sz);
         // NOTE: dci_sz_cfg.interleaved_vrb_prb_mapping is expected to be set (true or false depends on
-        // opt_pdsch_cfg) in case of \ref dynamic_switch.
-        dci_sz_cfg.interleaved_vrb_prb_mapping =
-            opt_pdsch_cfg->vrb_to_prb_interleaving != vrb_to_prb::mapping_type::non_interleaved;
+        // ue_pdsch) in case of \ref dynamic_switch.
+        dci_sz_cfg.interleaved_vrb_prb_mapping = ue_pdsch->interleaving != vrb_to_prb::mapping_type::non_interleaved;
         break;
       }
     }
-    if (opt_pdsch_cfg->pdsch_mapping_type_a_dmrs.has_value()) {
-      dci_sz_cfg.pdsch_dmrs_A_type    = opt_pdsch_cfg->pdsch_mapping_type_a_dmrs.value().type;
-      dci_sz_cfg.pdsch_dmrs_A_max_len = opt_pdsch_cfg->pdsch_mapping_type_a_dmrs.value().max_length;
-    }
-    if (opt_pdsch_cfg->pdsch_mapping_type_b_dmrs.has_value()) {
-      dci_sz_cfg.pdsch_dmrs_B_type    = opt_pdsch_cfg->pdsch_mapping_type_b_dmrs.value().type;
-      dci_sz_cfg.pdsch_dmrs_B_max_len = opt_pdsch_cfg->pdsch_mapping_type_b_dmrs.value().max_length;
-    }
-    if (opt_pdsch_cfg->harq_process_num_size_dci_1_1.has_value()) {
-      if (opt_pdsch_cfg->harq_process_num_size_dci_1_1.value() == pdsch_config::harq_process_num_dci_1_1_size::n5) {
-        dci_sz_cfg.dl_harq_process_number_field_size = 5;
-      }
-    }
+    dci_sz_cfg.pdsch_dmrs_A_type                 = cell_pdsch.dmrs_type_a.type;
+    dci_sz_cfg.pdsch_dmrs_A_max_len              = cell_pdsch.dmrs_type_a.max_length;
+    dci_sz_cfg.dl_harq_process_number_field_size = static_cast<unsigned>(ue_pdsch->dci_harq_field_size);
   }
   dci_sz_cfg.multiple_scells     = is_ue_configured_multiple_serving_cells;
   dci_sz_cfg.pdsch_tci           = false;
@@ -589,15 +576,15 @@ static units::bytes compute_pdsch_tbs_lbrm(const ue_cell_configuration& ue_cell_
   for (const sched_bwp_config& bwp : ue_cell_cfg.bwps()) {
     max_nof_prbs = std::max(max_nof_prbs, bwp.dl.cfg().crbs.length());
 
-    const pdsch_config* pdsch_cfg = bwp.dl.pdsch().ded();
-    if (pdsch_cfg == nullptr) {
+    const ue_downlink_bwp_config* bwp_ue_dl = bwp.dl.ue_cfg();
+    if (bwp_ue_dl == nullptr) {
       continue;
     }
-    if (pdsch_cfg->mcs_table == pdsch_mcs_table::qam1024) {
+    if (bwp_ue_dl->pdsch.mcs_table == pdsch_mcs_table::qam1024) {
       // Note: TS 38.212, Section 5.4.2.1 assumes 256-QAM instead for a UE that reports pdsch-1024QAM-2MIMO-FR1-r17 and
       // is configured with more than two layers. The DU does not configure the qam1024 MCS table.
       max_modulation = modulation_scheme::QAM1024;
-    } else if (pdsch_cfg->mcs_table == pdsch_mcs_table::qam256) {
+    } else if (bwp_ue_dl->pdsch.mcs_table == pdsch_mcs_table::qam256) {
       max_modulation = std::max(max_modulation, modulation_scheme::QAM256);
     }
   }
@@ -678,9 +665,10 @@ void ue_cell_configuration::configure_bwp_cfg(bwp_id_t bwpid, const sched_bwp_co
     search_spaces.emplace(ss_cfg->id());
     search_space_info& ss = search_spaces[ss_cfg->id()];
 
-    ss.cfg     = &ss_cfg->cfg();
-    ss.coreset = &ss_cfg->cs();
-    ss.bwp     = &cell_ded->bwps[bwpid];
+    ss.cfg        = &ss_cfg->cfg();
+    ss.coreset    = &ss_cfg->cs();
+    ss.bwp        = &cell_ded->bwps[bwpid];
+    ss.cell_pdsch = &cell_cfg_common.bwp_res[bwpid].dl().pdsch;
     // DL
     ss.update_pdsch_time_domain_list(*this);
     ss.dl_crb_lims = pdsch_helper::get_ra_crb_limits(

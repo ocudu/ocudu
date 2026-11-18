@@ -1157,51 +1157,52 @@ asn1::rrc_nr::tci_state_s ocudu::odu::make_asn1_rrc_tci_state(const tci_state& c
   return tci_st;
 }
 
-static void
-calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_config& src, const pdsch_config& dest)
+/// Checks if the PDSCH-Config of a UE changes. The cell values are the same for all the UEs of the cell, thus only the
+/// UE values can change it.
+static bool pdsch_cfg_changed(const ue_rrm_config* src_rrm, const ue_rrm_config& dest_rrm)
 {
-  out.data_scrambling_id_pdsch_present = dest.data_scrambling_id_pdsch.has_value();
-  if (out.data_scrambling_id_pdsch_present) {
-    out.data_scrambling_id_pdsch = dest.data_scrambling_id_pdsch.value();
-  }
+  return src_rrm == nullptr or src_rrm->pdsch.mcs_table != dest_rrm.pdsch.mcs_table or
+         src_rrm->pdsch.interleaving != dest_rrm.pdsch.interleaving or
+         src_rrm->pdsch.res_alloc != dest_rrm.pdsch.res_alloc or
+         src_rrm->pdsch.dci_harq_field_size != dest_rrm.pdsch.dci_harq_field_size or
+         src_rrm->pdsch.max_nof_repetitions != dest_rrm.pdsch.max_nof_repetitions;
+}
 
-  // DMRS Type A.
-  if ((dest.pdsch_mapping_type_a_dmrs.has_value() && not src.pdsch_mapping_type_a_dmrs.has_value()) ||
-      (dest.pdsch_mapping_type_a_dmrs.has_value() && src.pdsch_mapping_type_a_dmrs.has_value() &&
-       dest.pdsch_mapping_type_a_dmrs != src.pdsch_mapping_type_a_dmrs)) {
+/// TCI state that the DU configures to the UEs. The UE assumes that the PDSCH is quasi co-located with the SSB 0.
+static tci_state make_default_tci_state()
+{
+  return tci_state{.state_id  = static_cast<tci_state_id_t>(0),
+                   .qcl_type1 = {.ref_sig  = {.type = qcl_info::reference_signal::reference_signal_type::ssb, .ssb = 0},
+                                 .qcl_type = qcl_info::qcl_type::type_d}};
+}
+
+/// \param[in] src_ue PDSCH parameters of the UE before the change. Null if the UE has no PDSCH configuration.
+static void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s&   out,
+                                        const ue_pdsch_rrm_config*   src_ue,
+                                        const ue_pdsch_rrm_config&   dest_ue,
+                                        const cell_pdsch_rrm_config& cell,
+                                        const cell_csi_rrm_config&   cell_csi)
+{
+  // The cell parameters are the same for all the UEs. The UE gets them with its first PDSCH configuration.
+  if (src_ue == nullptr) {
     out.dmrs_dl_for_pdsch_map_type_a_present = true;
-    make_asn1_rrc_dmrs_dl_for_pdsch(out.dmrs_dl_for_pdsch_map_type_a.set_setup(),
-                                    dest.pdsch_mapping_type_a_dmrs.value());
-  } else if (src.pdsch_mapping_type_a_dmrs.has_value() && not dest.pdsch_mapping_type_a_dmrs.has_value()) {
-    out.dmrs_dl_for_pdsch_map_type_a_present = true;
-    out.dmrs_dl_for_pdsch_map_type_a.set_release();
-  }
+    make_asn1_rrc_dmrs_dl_for_pdsch(out.dmrs_dl_for_pdsch_map_type_a.set_setup(), cell.dmrs_type_a);
 
-  // DMRS Type B.
-  if ((dest.pdsch_mapping_type_b_dmrs.has_value() && not src.pdsch_mapping_type_b_dmrs.has_value()) ||
-      (dest.pdsch_mapping_type_b_dmrs.has_value() && src.pdsch_mapping_type_b_dmrs.has_value() &&
-       dest.pdsch_mapping_type_b_dmrs != src.pdsch_mapping_type_b_dmrs)) {
-    out.dmrs_dl_for_pdsch_map_type_b_present = true;
-    make_asn1_rrc_dmrs_dl_for_pdsch(out.dmrs_dl_for_pdsch_map_type_b.set_setup(),
-                                    dest.pdsch_mapping_type_b_dmrs.value());
-  } else if (src.pdsch_mapping_type_b_dmrs.has_value() && not dest.pdsch_mapping_type_b_dmrs.has_value()) {
-    out.dmrs_dl_for_pdsch_map_type_b_present = true;
-    out.dmrs_dl_for_pdsch_map_type_b.set_release();
-  }
+    out.tci_states_to_add_mod_list.push_back(make_asn1_rrc_tci_state(make_default_tci_state()));
 
-  // TCI states.
-  calculate_addmodremlist_diff(
-      out.tci_states_to_add_mod_list,
-      out.tci_states_to_release_list,
-      src.tci_states,
-      dest.tci_states,
-      [](const tci_state& st) { return make_asn1_rrc_tci_state(st); },
-      [](const tci_state& st) { return st.state_id; });
+    for (const zp_csi_rs_resource& res : cell_csi.zp_csi_rs_res_list) {
+      out.zp_csi_rs_res_to_add_mod_list.push_back(make_asn1_zp_csi_rs_resource(res));
+    }
+    if (cell_csi.p_zp_csi_rs_res.has_value()) {
+      out.p_zp_csi_rs_res_set_present     = true;
+      out.p_zp_csi_rs_res_set.set_setup() = make_asn1_zp_csi_rs_resource_set(*cell_csi.p_zp_csi_rs_res);
+    }
+  }
 
   // VRB-to-PRB Interleaver.
-  if (dest.vrb_to_prb_interleaving != ocudu::vrb_to_prb::mapping_type::non_interleaved) {
+  if (dest_ue.interleaving != ocudu::vrb_to_prb::mapping_type::non_interleaved) {
     out.vrb_to_prb_interleaver_present = true;
-    switch (dest.vrb_to_prb_interleaving) {
+    switch (dest_ue.interleaving) {
       case ocudu::vrb_to_prb::mapping_type::interleaved_n2:
         out.vrb_to_prb_interleaver = pdsch_cfg_s::vrb_to_prb_interleaver_opts::n2;
         break;
@@ -1209,23 +1210,23 @@ calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_config& 
         out.vrb_to_prb_interleaver = pdsch_cfg_s::vrb_to_prb_interleaver_opts::n4;
         break;
       default:
-        ocudu_assertion_failure("Invalid VRB-to-PRB Interleaver={}", fmt::underlying(dest.vrb_to_prb_interleaving));
+        ocudu_assertion_failure("Invalid VRB-to-PRB Interleaver={}", fmt::underlying(dest_ue.interleaving));
     }
   }
 
   // Resource Allocation type.
-  switch (dest.res_alloc) {
-    case pdsch_config::resource_allocation::resource_allocation_type_0:
+  switch (dest_ue.res_alloc) {
+    case resource_allocation::resource_allocation_type_0:
       out.res_alloc = pdsch_cfg_s::res_alloc_opts::res_alloc_type0;
       break;
-    case pdsch_config::resource_allocation::resource_allocation_type_1:
+    case resource_allocation::resource_allocation_type_1:
       out.res_alloc = pdsch_cfg_s::res_alloc_opts::res_alloc_type1;
       break;
-    case pdsch_config::resource_allocation::dynamic_switch:
+    case resource_allocation::dynamic_switch:
       out.res_alloc = pdsch_cfg_s::res_alloc_opts::dyn_switch;
       break;
     default:
-      ocudu_assertion_failure("Invalid resource allocation type={}", fmt::underlying(dest.res_alloc));
+      ocudu_assertion_failure("Invalid resource allocation type={}", fmt::underlying(dest_ue.res_alloc));
   }
 
   // PDSCH Time Domain Allocation: encoded via the legacy IE (pdsch-TimeDomainAllocationList), or, when an entry
@@ -1235,38 +1236,43 @@ calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_config& 
   auto has_repetitions = [](const std::vector<pdsch_time_domain_resource_allocation>& list) {
     return std::any_of(list.begin(), list.end(), [](const auto& alloc) { return alloc.rep_number.has_value(); });
   };
-  const bool dest_is_r16 = has_repetitions(dest.pdsch_td_alloc_list);
-  const bool src_is_r16  = has_repetitions(src.pdsch_td_alloc_list);
+  const std::vector<pdsch_time_domain_resource_allocation> src_td_list =
+      src_ue != nullptr ? make_ue_pdsch_td_alloc_list(cell.rep_td_alloc_list, src_ue->max_nof_repetitions)
+                        : std::vector<pdsch_time_domain_resource_allocation>{};
+  const std::vector<pdsch_time_domain_resource_allocation> dest_td_list =
+      make_ue_pdsch_td_alloc_list(cell.rep_td_alloc_list, dest_ue.max_nof_repetitions);
+  const bool dest_is_r16 = has_repetitions(dest_td_list);
+  const bool src_is_r16  = has_repetitions(src_td_list);
 
-  if (not dest.pdsch_td_alloc_list.empty() && dest_is_r16) {
-    if (not src_is_r16 && not src.pdsch_td_alloc_list.empty()) {
+  if (not dest_td_list.empty() && dest_is_r16) {
+    if (not src_is_r16 && not src_td_list.empty()) {
       out.pdsch_time_domain_alloc_list_present = true;
       out.pdsch_time_domain_alloc_list.set_release();
     }
-    if (not src_is_r16 || dest.pdsch_td_alloc_list != src.pdsch_td_alloc_list) {
+    if (not src_is_r16 || dest_td_list != src_td_list) {
       out.pdsch_time_domain_alloc_list_r16.set_present();
       auto& alloc_list = out.pdsch_time_domain_alloc_list_r16->set_setup();
-      for (const auto& td_alloc : dest.pdsch_td_alloc_list) {
+      for (const auto& td_alloc : dest_td_list) {
         alloc_list.push_back(make_asn1_rrc_pdsch_time_domain_alloc_r16(td_alloc));
       }
     }
-  } else if (not dest.pdsch_td_alloc_list.empty()) {
+  } else if (not dest_td_list.empty()) {
     // dest is a legacy (non-repetition) list.
     if (src_is_r16) {
       out.pdsch_time_domain_alloc_list_r16.set_present();
       out.pdsch_time_domain_alloc_list_r16->set_release();
     }
-    if (src_is_r16 || src.pdsch_td_alloc_list.empty() || dest.pdsch_td_alloc_list != src.pdsch_td_alloc_list) {
+    if (src_is_r16 || src_td_list.empty() || dest_td_list != src_td_list) {
       out.pdsch_time_domain_alloc_list_present = true;
       auto& alloc_list                         = out.pdsch_time_domain_alloc_list.set_setup();
-      for (const auto& td_alloc : dest.pdsch_td_alloc_list) {
+      for (const auto& td_alloc : dest_td_list) {
         alloc_list.push_back(make_asn1_rrc_pdsch_time_domain_alloc_list(td_alloc));
       }
     }
   } else if (src_is_r16) {
     out.pdsch_time_domain_alloc_list_r16.set_present();
     out.pdsch_time_domain_alloc_list_r16->set_release();
-  } else if (not src.pdsch_td_alloc_list.empty()) {
+  } else if (not src_td_list.empty()) {
     out.pdsch_time_domain_alloc_list_present = true;
     out.pdsch_time_domain_alloc_list.set_release();
   }
@@ -1274,18 +1280,18 @@ calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_config& 
   // Slot-based repetition scheme (repetitionSchemeConfig-r16 with slotBased-r16), required by the UE to apply
   // repetitionNumber-r16 of the Rel-16 TDRA list. With a single TCI state indicated in the DCI, the TCI mapping and
   // the RV sequence offset are not used; nominal values are signalled.
-  if (dest.slot_based_repetition_enabled and not src.slot_based_repetition_enabled) {
+  if (dest_is_r16 and not src_is_r16) {
     out.repeat_scheme_cfg_r16.set_present();
     auto& slot_based                 = out.repeat_scheme_cfg_r16->set_setup().set_slot_based_r16().set_setup();
     slot_based.tci_map_r16.value     = slot_based_r16_s::tci_map_r16_opts::cyclic_map;
     slot_based.seq_offset_for_rv_r16 = 1;
-  } else if (src.slot_based_repetition_enabled and not dest.slot_based_repetition_enabled) {
+  } else if (src_is_r16 and not dest_is_r16) {
     out.repeat_scheme_cfg_r16.set_present();
     out.repeat_scheme_cfg_r16->set_release();
   }
 
   // RBG Size.
-  switch (dest.rbg_sz) {
+  switch (cell.rbg_sz) {
     case rbg_size::config1:
       out.rbg_size = pdsch_cfg_s::rbg_size_opts::cfg1;
       break;
@@ -1293,66 +1299,28 @@ calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_config& 
       out.rbg_size = pdsch_cfg_s::rbg_size_opts::cfg2;
       break;
     default:
-      ocudu_assertion_failure("Invalid RBG size={}", fmt::underlying(dest.rbg_sz));
+      ocudu_assertion_failure("Invalid RBG size={}", fmt::underlying(cell.rbg_sz));
   }
 
   // PRB Bundling.
-  if (const auto* result = std::get_if<prb_bundling::static_bundling>(&dest.prb_bndlg.bundling)) {
-    auto& st_bundling = out.prb_bundling_type.set_static_bundling();
-    if (result->sz.has_value()) {
-      st_bundling.bundle_size_present = true;
-      switch (result->sz.value()) {
-        case prb_bundling::static_bundling::bundling_size::n4:
-          st_bundling.bundle_size = pdsch_cfg_s::prb_bundling_type_c_::static_bundling_s_::bundle_size_opts::n4;
-          break;
-        case prb_bundling::static_bundling::bundling_size::wideband:
-          st_bundling.bundle_size = pdsch_cfg_s::prb_bundling_type_c_::static_bundling_s_::bundle_size_opts::wideband;
-          break;
-        default:
-          ocudu_assertion_failure("Invalid static PRB bundling size={}", fmt::underlying(result->sz.value()));
-      }
-    }
-  } else {
-    // Dynamic bundling.
-    auto& dy_bundling                    = out.prb_bundling_type.set_dyn_bundling();
-    dy_bundling.bundle_size_set1_present = true;
-    const auto& bdlng                    = std::get<prb_bundling::dynamic_bundling>(dest.prb_bndlg.bundling);
-    switch (bdlng.sz_set1.value()) {
-      case prb_bundling::dynamic_bundling::bundling_size_set1::n4:
-        dy_bundling.bundle_size_set1 = pdsch_cfg_s::prb_bundling_type_c_::dyn_bundling_s_::bundle_size_set1_opts::n4;
+  auto& st_bundling = out.prb_bundling_type.set_static_bundling();
+  if (cell.prb_bundle_size.has_value()) {
+    st_bundling.bundle_size_present = true;
+    switch (*cell.prb_bundle_size) {
+      case pdsch_prb_bundle_size::n4:
+        st_bundling.bundle_size = pdsch_cfg_s::prb_bundling_type_c_::static_bundling_s_::bundle_size_opts::n4;
         break;
-      case prb_bundling::dynamic_bundling::bundling_size_set1::wideband:
-        dy_bundling.bundle_size_set1 =
-            pdsch_cfg_s::prb_bundling_type_c_::dyn_bundling_s_::bundle_size_set1_opts::wideband;
-        break;
-      case prb_bundling::dynamic_bundling::bundling_size_set1::n2_wideband:
-        dy_bundling.bundle_size_set1 =
-            pdsch_cfg_s::prb_bundling_type_c_::dyn_bundling_s_::bundle_size_set1_opts::n2_wideband;
-        break;
-      case prb_bundling::dynamic_bundling::bundling_size_set1::n4_wideband:
-        dy_bundling.bundle_size_set1 =
-            pdsch_cfg_s::prb_bundling_type_c_::dyn_bundling_s_::bundle_size_set1_opts::n4_wideband;
+      case pdsch_prb_bundle_size::wideband:
+        st_bundling.bundle_size = pdsch_cfg_s::prb_bundling_type_c_::static_bundling_s_::bundle_size_opts::wideband;
         break;
       default:
-        ocudu_assertion_failure("Invalid dynamic PRB bundling set 1 size={}", fmt::underlying(bdlng.sz_set1.value()));
-    }
-    dy_bundling.bundle_size_set2_present = true;
-    switch (bdlng.sz_set2.value()) {
-      case prb_bundling::dynamic_bundling::bundling_size_set2::n4:
-        dy_bundling.bundle_size_set2 = pdsch_cfg_s::prb_bundling_type_c_::dyn_bundling_s_::bundle_size_set2_opts::n4;
-        break;
-      case prb_bundling::dynamic_bundling::bundling_size_set2::wideband:
-        dy_bundling.bundle_size_set2 =
-            pdsch_cfg_s::prb_bundling_type_c_::dyn_bundling_s_::bundle_size_set2_opts::wideband;
-        break;
-      default:
-        ocudu_assertion_failure("Invalid dynamic PRB bundling set 2 size={}", fmt::underlying(bdlng.sz_set2.value()));
+        ocudu_assertion_failure("Invalid static PRB bundling size={}", fmt::underlying(*cell.prb_bundle_size));
     }
   }
 
-  if (dest.mcs_table != pdsch_mcs_table::qam64) {
+  if (dest_ue.mcs_table != pdsch_mcs_table::qam64) {
     out.mcs_table_present = true;
-    switch (dest.mcs_table) {
+    switch (dest_ue.mcs_table) {
       case pdsch_mcs_table::qam64LowSe:
         out.mcs_table.value = pdsch_cfg_s::mcs_table_opts::qam64_low_se;
         break;
@@ -1360,33 +1328,18 @@ calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_config& 
         out.mcs_table.value = pdsch_cfg_s::mcs_table_opts::qam256;
         break;
       default:
-        report_fatal_error("Invalid PDSCH MCS Table={}", fmt::underlying(dest.mcs_table));
+        report_fatal_error("Invalid PDSCH MCS Table={}", fmt::underlying(dest_ue.mcs_table));
     }
   }
 
-  // Compute zp CSI-RS resources and resource sets.
-  calculate_addmodremlist_diff(
-      out.zp_csi_rs_res_to_add_mod_list,
-      out.zp_csi_rs_res_to_release_list,
-      src.zp_csi_rs_res_list,
-      dest.zp_csi_rs_res_list,
-      [](const zp_csi_rs_resource& r) { return make_asn1_zp_csi_rs_resource(r); },
-      [](const zp_csi_rs_resource& r) { return r.id; });
-  out.p_zp_csi_rs_res_set_present = calculate_setup_release(
-      out.p_zp_csi_rs_res_set, src.p_zp_csi_rs_res, dest.p_zp_csi_rs_res, [](const zp_csi_rs_resource_set& s) {
-        return make_asn1_zp_csi_rs_resource_set(s);
-      });
-
   // DCI Format 1_1 size.
-  if (dest.harq_process_num_size_dci_1_1.has_value() and
-      dest.harq_process_num_size_dci_1_1 == pdsch_config::harq_process_num_dci_1_1_size::n5) {
+  if (dest_ue.dci_harq_field_size == harq_process_num_field_size::n5) {
     out.harq_process_num_size_dci_1_1_r17_present = true;
     out.harq_process_num_size_dci_1_1_r17         = 5;
   }
 
   // DCI Format 1_2 size.
-  if (dest.harq_process_num_size_dci_1_2.has_value() and
-      dest.harq_process_num_size_dci_1_2 == pdsch_config::harq_process_num_dci_1_2_size::n5) {
+  if (dest_ue.dci_harq_field_size == harq_process_num_field_size::n5) {
     out.harq_process_num_size_dci_1_2_v1700_present = true;
     out.harq_process_num_size_dci_1_2_v1700         = 5;
   }
@@ -1437,9 +1390,13 @@ static void calculate_rlmonitoring_config_diff(asn1::rrc_nr::radio_link_monitori
       });
 }
 
+/// \param[in] src_rrm RRM configuration of the UE before the change. Null if the UE has no configuration in the cell.
 static bool calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
                                             const bwp_downlink_dedicated& src,
-                                            const bwp_downlink_dedicated& dest)
+                                            const bwp_downlink_dedicated& dest,
+                                            const ue_rrm_config*          src_rrm,
+                                            const ue_rrm_config&          dest_rrm,
+                                            const cell_rrm_config&        cell_rrm)
 {
   if ((dest.pdcch_cfg.has_value() && not src.pdcch_cfg.has_value()) ||
       (dest.pdcch_cfg.has_value() && src.pdcch_cfg.has_value() && dest.pdcch_cfg != src.pdcch_cfg)) {
@@ -1452,15 +1409,13 @@ static bool calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
     out.pdcch_cfg.set_release();
   }
 
-  if ((dest.pdsch_cfg.has_value() && not src.pdsch_cfg.has_value()) ||
-      (dest.pdsch_cfg.has_value() && src.pdsch_cfg.has_value() && dest.pdsch_cfg != src.pdsch_cfg)) {
+  if (pdsch_cfg_changed(src_rrm, dest_rrm)) {
     out.pdsch_cfg_present = true;
     calculate_pdsch_config_diff(out.pdsch_cfg.set_setup(),
-                                src.pdsch_cfg.has_value() ? src.pdsch_cfg.value() : pdsch_config{},
-                                dest.pdsch_cfg.value());
-  } else if (src.pdsch_cfg.has_value() && not dest.pdsch_cfg.has_value()) {
-    out.pdsch_cfg_present = true;
-    out.pdsch_cfg.set_release();
+                                src_rrm != nullptr ? &src_rrm->pdsch : nullptr,
+                                dest_rrm.pdsch,
+                                cell_rrm.pdsch,
+                                cell_rrm.csi);
   }
 
   if ((dest.rlm_cfg.has_value() && not src.rlm_cfg.has_value()) ||
@@ -3129,7 +3084,9 @@ static bool calculate_uplink_config_diff(asn1::rrc_nr::ul_cfg_s& out,
 /// Checks whether the PDSCH-ServingCellConfig of the UE changes.
 static bool pdsch_serving_cell_cfg_changed(const ue_rrm_config* src_rrm, const ue_rrm_config& dest_rrm)
 {
-  return src_rrm == nullptr or not(src_rrm->pdsch == dest_rrm.pdsch);
+  return src_rrm == nullptr or src_rrm->pdsch.nof_harqs != dest_rrm.pdsch.nof_harqs or
+         src_rrm->pdsch.harq_feedback_disabled != dest_rrm.pdsch.harq_feedback_disabled or
+         src_rrm->pdsch.max_nof_layers != dest_rrm.pdsch.max_nof_layers;
 }
 
 static void calculate_pdsch_serving_cell_cfg_diff(asn1::rrc_nr::pdsch_serving_cell_cfg_s& out,
@@ -3212,7 +3169,12 @@ static bool calculate_serving_cell_config_diff(asn1::rrc_nr::serving_cell_cfg_s&
   const serving_cell_config  src  = src_ue != nullptr ? src_ue->serv_cell_cfg : serving_cell_config{};
   const serving_cell_config& dest = dest_ue.serv_cell_cfg;
 
-  out.init_dl_bwp_present = calculate_bwp_dl_dedicated_diff(out.init_dl_bwp, src.init_dl_bwp, dest.init_dl_bwp);
+  out.init_dl_bwp_present = calculate_bwp_dl_dedicated_diff(out.init_dl_bwp,
+                                                            src.init_dl_bwp,
+                                                            dest.init_dl_bwp,
+                                                            src_ue != nullptr ? &src_ue->rrm : nullptr,
+                                                            dest_ue.rrm,
+                                                            cell_rrm);
 
   // UplinkConfig.
   if (dest.ul_config.has_value()) {

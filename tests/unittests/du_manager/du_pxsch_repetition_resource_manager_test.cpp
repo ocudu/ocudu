@@ -10,6 +10,7 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/du/du_cell_config_helpers.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
+#include "ocudu/scheduler/rrm/cell_rrm_config.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -45,9 +46,16 @@ protected:
     return caps;
   }
 
-  static const pdsch_config& get_pdsch_cfg(const cell_group_config& ue)
+  static const ue_pdsch_rrm_config& get_pdsch_rrm(const cell_group_config& ue)
   {
-    return ue.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.init_dl_bwp.pdsch_cfg.value();
+    return ue.cells.at(SERVING_PCELL_IDX).rrm.pdsch;
+  }
+
+  /// Makes the dedicated PDSCH TDRA list that the DU signals to the UE.
+  std::vector<pdsch_time_domain_resource_allocation> make_pdsch_td_alloc_list(const cell_group_config& ue) const
+  {
+    const cell_rrm_config cell_rrm = make_cell_rrm_config(cell_cfg_list.front().ran);
+    return make_ue_pdsch_td_alloc_list(cell_rrm.pdsch.rep_td_alloc_list, get_pdsch_rrm(ue).max_nof_repetitions);
   }
 
   static const pusch_config& get_pusch_cfg(const cell_group_config& ue)
@@ -68,7 +76,7 @@ TEST_F(du_pxsch_repetition_resource_manager_test, when_ue_supports_pdsch_repetit
   pdsch_mng.update_resources(ue, make_caps(16, false));
 
   const auto& common_list = cell_cfg_list.front().ran.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
-  const auto& list        = get_pdsch_cfg(ue).pdsch_td_alloc_list;
+  const auto  list        = make_pdsch_td_alloc_list(ue);
 
   // The list mirrors the common list entries and appends a single entry with repetitionNumber=min(cell=8, UE=16)=8.
   ASSERT_EQ(list.size(), common_list.size() + 1);
@@ -82,9 +90,6 @@ TEST_F(du_pxsch_repetition_resource_manager_test, when_ue_supports_pdsch_repetit
   ASSERT_EQ(rep_entry.k0, common_list[0].k0);
   ASSERT_EQ(rep_entry.map_type, common_list[0].map_type);
   ASSERT_EQ(rep_entry.symbols, common_list[0].symbols);
-
-  // The slot-based repetition scheme must be enabled along with the Rel-16 TDRA list.
-  ASSERT_TRUE(get_pdsch_cfg(ue).slot_based_repetition_enabled);
 }
 
 TEST_F(du_pxsch_repetition_resource_manager_test, when_ue_caps_limit_pdsch_repetitions_then_range_is_reduced)
@@ -93,9 +98,10 @@ TEST_F(du_pxsch_repetition_resource_manager_test, when_ue_caps_limit_pdsch_repet
   pdsch_mng.update_resources(ue, make_caps(2, false));
 
   const auto& common_list = cell_cfg_list.front().ran.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
-  const auto& list        = get_pdsch_cfg(ue).pdsch_td_alloc_list;
+  const auto  list        = make_pdsch_td_alloc_list(ue);
 
   // min(cell=8, UE=2) = 2 -> single repetition entry with repetitionNumber=2.
+  ASSERT_EQ(get_pdsch_rrm(ue).max_nof_repetitions, 2);
   ASSERT_EQ(list.size(), common_list.size() + 1);
   ASSERT_EQ(list.back().rep_number, 2);
 }
@@ -106,13 +112,13 @@ TEST_F(du_pxsch_repetition_resource_manager_test, when_ue_does_not_support_pdsch
 
   // No UE capabilities available.
   pdsch_mng.alloc_resources(ue);
-  ASSERT_TRUE(get_pdsch_cfg(ue).pdsch_td_alloc_list.empty());
-  ASSERT_FALSE(get_pdsch_cfg(ue).slot_based_repetition_enabled);
+  ASSERT_EQ(get_pdsch_rrm(ue).max_nof_repetitions, 1);
+  ASSERT_TRUE(make_pdsch_td_alloc_list(ue).empty());
 
   // UE capabilities without supportRepNumPDSCH-TDRA-r16.
   pdsch_mng.update_resources(ue, make_caps(1, false));
-  ASSERT_TRUE(get_pdsch_cfg(ue).pdsch_td_alloc_list.empty());
-  ASSERT_FALSE(get_pdsch_cfg(ue).slot_based_repetition_enabled);
+  ASSERT_EQ(get_pdsch_rrm(ue).max_nof_repetitions, 1);
+  ASSERT_TRUE(make_pdsch_td_alloc_list(ue).empty());
 }
 
 TEST_F(du_pxsch_repetition_resource_manager_test, when_cell_disables_pdsch_repetitions_then_list_r16_is_empty)
@@ -122,7 +128,7 @@ TEST_F(du_pxsch_repetition_resource_manager_test, when_cell_disables_pdsch_repet
 
   cell_group_config ue = make_ue();
   mng.update_resources(ue, make_caps(16, true));
-  ASSERT_TRUE(get_pdsch_cfg(ue).pdsch_td_alloc_list.empty());
+  ASSERT_EQ(get_pdsch_rrm(ue).max_nof_repetitions, 1);
 }
 
 TEST_F(du_pxsch_repetition_resource_manager_test, when_ue_supports_pusch_repetitions_then_dci_0_1_list_r16_is_built)

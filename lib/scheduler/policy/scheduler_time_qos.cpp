@@ -161,8 +161,8 @@ void rate_estimator::build_ul_max_tbs(const cell_configuration& cell_cfg)
 
 unsigned rate_estimator::estimate_max_dl_tbs(const ue_cell& ue_cc) const
 {
-  const pdsch_config*   pdsch_ded = ue_cc.cfg().init_bwp().dl.pdsch().ded();
-  const pdsch_mcs_table mcs_table = pdsch_ded != nullptr ? pdsch_ded->mcs_table : pdsch_mcs_table::qam64;
+  const ue_downlink_bwp_config* bwp_ue_dl = ue_cc.cfg().init_bwp().dl.ue_cfg();
+  const pdsch_mcs_table         mcs_table = bwp_ue_dl != nullptr ? bwp_ue_dl->pdsch.mcs_table : pdsch_mcs_table::qam64;
 
   auto mcs = ue_cc.link_adaptation_controller().calculate_dl_mcs(mcs_table);
   if (not mcs.has_value()) {

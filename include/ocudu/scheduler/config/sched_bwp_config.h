@@ -6,6 +6,7 @@
 #pragma once
 
 #include "bwp_configuration.h"
+#include "cell_bwp_res_config.h"
 #include "sched_pdcch_config.h"
 #include "serving_cell_config.h"
 #include "ue_bwp_config.h"
@@ -20,17 +21,12 @@ class sched_pdsch_config
 {
 public:
   sched_pdsch_config() = default;
-  sched_pdsch_config(const pdsch_config_common& cfg_common, const pdsch_config* cfg_ded) :
-    cmn(&cfg_common), ded_ptr(cfg_ded)
-  {
-  }
+  explicit sched_pdsch_config(const pdsch_config_common& cfg_common) : cmn(&cfg_common) {}
 
   const pdsch_config_common& common() const { return *cmn; }
-  const pdsch_config*        ded() const { return ded_ptr; }
 
 private:
-  const pdsch_config_common* cmn     = nullptr;
-  const pdsch_config*        ded_ptr = nullptr;
+  const pdsch_config_common* cmn = nullptr;
 };
 
 /// Configuration of a Downlink Bandwidth Part (BWP) including the common config and optionally the dedicated config.
@@ -47,7 +43,7 @@ public:
     bwp_dl_ded(ded),
     pdcch_cfg(&pdcch_cfg_),
     dl_td_mapper_ptr(&dl_td_mapper_),
-    pdsch_cfg(common.pdsch_common, ded != nullptr and ded->pdsch_cfg.has_value() ? &*ded->pdsch_cfg : nullptr),
+    pdsch_cfg(common.pdsch_common),
     ue_dl_bwp_cfg(ue_cfg)
   {
   }

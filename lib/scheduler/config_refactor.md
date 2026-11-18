@@ -25,11 +25,17 @@ The refactor puts each parameter at one level. Each level has a structure that h
 
 ### Do not add to `serving_cell_config`
 
-`serving_cell_config` is a copy of the RRC structure. The refactor moves one area at a time out of it. The PUCCH and the
-serving cell parameters of the PDSCH and the PUSCH are moved. The DU builds the PUCCH-Config from the RRM structures
-(see below). The HARQ processes of a UE are in `ue_pdsch_rrm_config` and `ue_pusch_rrm_config` (`ue_rrm_config`), and
-the scheduler copies them to `ue_pdsch_config` and `ue_pusch_config`. The DU builds the PDSCH-ServingCellConfig and the
-PUSCH-ServingCellConfig from them. The TAG ID is the constant `DEFAULT_TAG_ID`.
+`serving_cell_config` is a copy of the RRC structure. The refactor moves one area at a time out of it. These areas are
+moved:
+
+- The PUCCH-Config.
+- The PDSCH-Config.
+- The serving cell parameters of the PDSCH and the PUSCH.
+
+The DU builds the PUCCH-Config from the RRM structures (see below). The HARQ processes of a UE are in
+`ue_pdsch_rrm_config` and `ue_pusch_rrm_config` (`ue_rrm_config`), and the scheduler copies them to `ue_pdsch_config`
+and `ue_pusch_config`. The DU builds the PDSCH-ServingCellConfig and the PUSCH-ServingCellConfig from them. The TAG ID
+is the constant `DEFAULT_TAG_ID`.
 
 - Do not read `serving_cell_config` in scheduler code.
 - Do not add a field to `serving_cell_config` for a parameter that only the scheduler reads. Add the parameter to the

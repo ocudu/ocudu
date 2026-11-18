@@ -8,10 +8,12 @@
 #include "ocudu/ran/csi_report/csi_report_configuration.h"
 #include "ocudu/ran/csi_rs/csi_meas_config.h"
 #include "ocudu/ran/csi_rs/csi_report_config.h"
+#include "ocudu/ran/dmrs/dmrs_downlink_config.h"
 #include "ocudu/ran/pucch/pucch_configuration.h"
 #include "ocudu/ran/pucch/pucch_constants.h"
 #include "ocudu/scheduler/config/ran_cell_config.h"
 #include "ocudu/scheduler/config/ue_bwp_config.h"
+#include "ocudu/scheduler/result/resource_block_group.h"
 #include "ocudu/scheduler/rrm/cell_rrm_config.h"
 #include <vector>
 
@@ -53,8 +55,18 @@ struct cell_pdsch_res_config {
   /// Overhead that the PDSCH scheduling assumes for the UEs with a dedicated configuration, as per TS 38.214,
   /// Section 5.1.3.2 (\c xOverhead).
   x_overhead x_ov_head = x_overhead::not_set;
+  /// DMRS configuration of the PDSCH of mapping type A.
+  dmrs_downlink_config dmrs_type_a;
+  /// RBG size of the PDSCH resource allocation type 0.
+  rbg_size rbg_sz = rbg_size::config1;
+  /// DCI format 1_1 time domain allocation list of the UEs with PDSCH repetitions. Empty if the cell has none.
+  std::vector<pdsch_time_domain_resource_allocation> rep_td_alloc_list;
 
-  bool operator==(const cell_pdsch_res_config& other) const { return x_ov_head == other.x_ov_head; }
+  bool operator==(const cell_pdsch_res_config& other) const
+  {
+    return x_ov_head == other.x_ov_head and dmrs_type_a == other.dmrs_type_a and rbg_sz == other.rbg_sz and
+           rep_td_alloc_list == other.rep_td_alloc_list;
+  }
 };
 
 /// PUSCH parameters that are the same for all the UEs of a BWP.
