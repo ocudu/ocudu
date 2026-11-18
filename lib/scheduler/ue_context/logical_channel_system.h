@@ -477,8 +477,11 @@ private:
   /// Bitset of UEs with pending SRB UL data or SR, as served in fallback.
   bounded_bitset<MAX_NOF_DU_UES> fallback_pending_ul_ues;
 
-  /// Next arrival order to assign to UE pending data served in fallback.
-  uint16_t fallback_arrival_seq = 0;
+  /// Next arrival order to assign to UE pending DL data served in fallback.
+  uint16_t next_fallback_dl_arrival_seq = 0;
+
+  /// Next arrival order to assign to UE pending UL data served in fallback.
+  uint16_t next_fallback_ul_arrival_seq = 0;
 
   /// Table of Logical Channel fields.
   logical_channel_system_utils::logical_channel_mapper lc_mapper;
@@ -512,15 +515,15 @@ public:
   /// UCI slot since which the SR is pending.
   [[nodiscard]] slot_point pending_sr_slot_rx() const;
 
-  /// \brief Arrival order of the pending DL data served in fallback, i.e. ConRes CE, SRB0 or SRB1.
+  /// \brief Number of DL arrivals since the pending DL data served in fallback arrived, i.e. ConRes CE, SRB0 or SRB1.
   ///
-  /// Wraps around. Two arrival orders are compared through their difference.
-  [[nodiscard]] uint16_t fallback_dl_arrival_seq() const;
+  /// Wraps around after 2^16 arrivals.
+  [[nodiscard]] uint16_t fallback_dl_arrival_age() const;
 
-  /// \brief Arrival order of the pending UL data served in fallback, i.e. SRB LCG data or SR.
+  /// \brief Number of UL arrivals since the pending UL data served in fallback arrived, i.e. SRB LCG data or SR.
   ///
-  /// Wraps around. Two arrival orders are compared through their difference.
-  [[nodiscard]] uint16_t fallback_ul_arrival_seq() const;
+  /// Wraps around after 2^16 arrivals.
+  [[nodiscard]] uint16_t fallback_ul_arrival_age() const;
 
   /// \brief Enqueue new MAC CE to be scheduled.
   void handle_mac_ce_indication(const mac_ce_info& ce);
@@ -561,8 +564,8 @@ class ue_logical_channel_repository : private ue_logical_channel_repository_view
 
 public:
   // inherited methods
-  using ue_logical_channel_repository_view::fallback_dl_arrival_seq;
-  using ue_logical_channel_repository_view::fallback_ul_arrival_seq;
+  using ue_logical_channel_repository_view::fallback_dl_arrival_age;
+  using ue_logical_channel_repository_view::fallback_ul_arrival_age;
   using ue_logical_channel_repository_view::handle_mac_ce_indication;
   using ue_logical_channel_repository_view::has_pending_sr;
   using ue_logical_channel_repository_view::pending_sr_slot_rx;

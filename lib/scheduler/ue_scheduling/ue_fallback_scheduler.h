@@ -71,12 +71,12 @@ private:
     uint8_t event_rank;
     /// Slot of the pending event. Invalid if unknown.
     slot_point event_slot;
-    /// Arrival order of the pending data.
-    uint16_t arrival_seq;
+    /// Number of arrivals since the pending data arrived.
+    uint16_t arrival_age;
   };
 
-  /// \brief Sorts candidates by event rank, then by slot of the event, with unknown slots last, then by arrival
-  /// order.
+  /// \brief Sorts candidates by event rank, then by slot of the event, with unknown slots last, then by decreasing
+  /// arrival age.
   static void sort_candidates(std::vector<ue_candidate>& candidates);
 
   /// Fills the DL new tx candidates, sorted by ConRes CE, SRB0 and SRB1 events and by age of the event.

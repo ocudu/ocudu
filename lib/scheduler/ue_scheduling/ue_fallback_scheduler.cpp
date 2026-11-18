@@ -183,7 +183,7 @@ void ue_fallback_scheduler::schedule_ul_new_tx_and_retx(cell_resource_allocator&
   ul_candidates.clear();
   ul_ues.for_each(0, ul_ues.size(), [this](size_t ue_idx) {
     const auto& lchs = ues[to_du_ue_index(ue_idx)].logical_channels();
-    ul_candidates.push_back(ue_candidate{to_du_ue_index(ue_idx), 0, slot_point{}, lchs.fallback_ul_arrival_seq()});
+    ul_candidates.push_back(ue_candidate{to_du_ue_index(ue_idx), 0, slot_point{}, lchs.fallback_ul_arrival_age()});
   });
   sort_candidates(ul_candidates);
 
@@ -236,9 +236,8 @@ void ue_fallback_scheduler::sort_candidates(std::vector<ue_candidate>& candidate
     if (lhs.event_slot.valid() and lhs.event_slot != rhs.event_slot) {
       return lhs.event_slot < rhs.event_slot;
     }
-    // The difference handles the wrap-around of the arrival order, as far fewer than 2^15 arrivals take place while a
-    // UE has pending data.
-    return static_cast<int16_t>(lhs.arrival_seq - rhs.arrival_seq) < 0;
+    // The arrival age, unlike the arrival order, is not affected by the wrap-around of the arrival counter.
+    return lhs.arrival_age > rhs.arrival_age;
   });
 }
 
@@ -255,11 +254,11 @@ void ue_fallback_scheduler::fill_dl_new_tx_candidates()
           ue_candidate{u.ue_index,
                        0,
                        u.get_pcell().get_pcell_state().conres_win_start(cell_cfg.ntn_ul_alloc_delay_slots()),
-                       lchs.fallback_dl_arrival_seq()});
+                       lchs.fallback_dl_arrival_age()});
     } else if (lchs.has_pending_bytes(LCID_SRB0)) {
-      dl_candidates.push_back(ue_candidate{u.ue_index, 1, slot_point{}, lchs.fallback_dl_arrival_seq()});
+      dl_candidates.push_back(ue_candidate{u.ue_index, 1, slot_point{}, lchs.fallback_dl_arrival_age()});
     } else if (lchs.has_pending_bytes(LCID_SRB1)) {
-      dl_candidates.push_back(ue_candidate{u.ue_index, 2, slot_point{}, lchs.fallback_dl_arrival_seq()});
+      dl_candidates.push_back(ue_candidate{u.ue_index, 2, slot_point{}, lchs.fallback_dl_arrival_age()});
     }
   });
   sort_candidates(dl_candidates);

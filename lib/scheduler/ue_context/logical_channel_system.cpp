@@ -437,7 +437,7 @@ void logical_channel_system::refresh_fallback_pending_data(soa::row_id ue_rid)
   const bool dl_pending = ue_ctx.pending_con_res_id or has_srb_dl_data(LCID_SRB0) or has_srb_dl_data(LCID_SRB1);
   // The arrival order is kept until all the pending data is served.
   if (dl_pending and not fallback_pending_dl_ues.test(ue_idx)) {
-    ue_ctx.fallback_dl_arrival_seq = fallback_arrival_seq++;
+    ue_ctx.fallback_dl_arrival_seq = next_fallback_dl_arrival_seq++;
   }
   fallback_pending_dl_ues.set(ue_idx, dl_pending);
 
@@ -447,7 +447,7 @@ void logical_channel_system::refresh_fallback_pending_data(soa::row_id ue_rid)
   const bool  ul_pending = ues_with_pending_sr.test(ue_idx) or
                           (lcg_it != ue_ul_ch.lcgs.end() and lc_mapper.ul_buf_st(lcg_it->second).value() > 0);
   if (ul_pending and not fallback_pending_ul_ues.test(ue_idx)) {
-    ue_ctx.fallback_ul_arrival_seq = fallback_arrival_seq++;
+    ue_ctx.fallback_ul_arrival_seq = next_fallback_ul_arrival_seq++;
   }
   fallback_pending_ul_ues.set(ue_idx, ul_pending);
 }
@@ -1244,14 +1244,16 @@ slot_point ue_logical_channel_repository_view::pending_sr_slot_rx() const
   return parent->pending_sr_slot_rx(ue_row_id);
 }
 
-uint16_t ue_logical_channel_repository_view::fallback_dl_arrival_seq() const
+uint16_t ue_logical_channel_repository_view::fallback_dl_arrival_age() const
 {
-  return get_ue_row().at<logical_channel_system::ue_context>().fallback_dl_arrival_seq;
+  return parent->next_fallback_dl_arrival_seq -
+         get_ue_row().at<logical_channel_system::ue_context>().fallback_dl_arrival_seq;
 }
 
-uint16_t ue_logical_channel_repository_view::fallback_ul_arrival_seq() const
+uint16_t ue_logical_channel_repository_view::fallback_ul_arrival_age() const
 {
-  return get_ue_row().at<logical_channel_system::ue_context>().fallback_ul_arrival_seq;
+  return parent->next_fallback_ul_arrival_seq -
+         get_ue_row().at<logical_channel_system::ue_context>().fallback_ul_arrival_seq;
 }
 
 void ue_logical_channel_repository_view::handle_mac_ce_indication(const mac_ce_info& ce)
