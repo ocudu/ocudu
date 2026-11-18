@@ -29,6 +29,30 @@ protected:
   }
 };
 
+TEST_F(f1ap_du_ue_management_tester, f1ap_ue_creation_returns_allocated_gnb_du_ue_f1ap_id)
+{
+  du_ue_index_t ue_index = to_du_ue_index(0);
+  // Run Test Preamble.
+  run_f1_setup_procedure();
+
+  f1ap_ue_creation_request req;
+  req.ue_index                   = ue_index;
+  req.pcell_index                = to_du_cell_index(0);
+  req.c_rnti                     = to_rnti(0x4601);
+  f1ap_ue_creation_response resp = f1ap->handle_ue_creation_request(req);
+  ASSERT_TRUE(resp.result);
+  ASSERT_NE(resp.f1ap_ue_id, gnb_du_ue_f1ap_id_t::invalid);
+  ASSERT_EQ(resp.f1ap_ue_id, f1ap->get_gnb_du_ue_f1ap_id(ue_index));
+
+  // A new UE with the same UE index gets a new gNB-DU UE F1AP ID.
+  f1ap->handle_ue_deletion_request(ue_index);
+  f1ap_ue_creation_response resp2 = f1ap->handle_ue_creation_request(req);
+  ASSERT_TRUE(resp2.result);
+  ASSERT_NE(resp2.f1ap_ue_id, gnb_du_ue_f1ap_id_t::invalid);
+  ASSERT_EQ(resp2.f1ap_ue_id, f1ap->get_gnb_du_ue_f1ap_id(ue_index));
+  ASSERT_NE(resp2.f1ap_ue_id, resp.f1ap_ue_id);
+}
+
 TEST_F(f1ap_du_ue_management_tester, f1ap_ue_config_update_returns_valid_response)
 {
   du_ue_index_t ue_index = to_du_ue_index(0);

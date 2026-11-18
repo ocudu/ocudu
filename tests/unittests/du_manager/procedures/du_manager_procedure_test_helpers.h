@@ -116,6 +116,8 @@ public:
 
   ue_manager_dummy               ue_mng;
   du_procedure_metrics_collector proc_metrics{false};
+  /// gNB-DU UE F1AP ID of the next UE that create_ue() creates.
+  uint64_t next_gnb_du_ue_f1ap_id = 0;
 };
 
 } // namespace odu

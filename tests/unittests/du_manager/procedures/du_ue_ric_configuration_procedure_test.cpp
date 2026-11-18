@@ -19,7 +19,8 @@ protected:
   du_ue_ric_config_tester() :
     du_manager_proc_tester(std::vector<du_cell_config>{config_helpers::make_default_du_cell_config()})
   {
-    test_ue = &create_ue(to_du_ue_index(test_rng::uniform_int<unsigned>(0, MAX_DU_UE_INDEX)));
+    // The UE index differs from the F1AP ID that the first UE gets, so that a test can create a UE with that index.
+    test_ue = &create_ue(to_du_ue_index(test_rng::uniform_int<unsigned>(1, MAX_DU_UE_INDEX)));
   }
 
   void start_procedure(const du_mac_sched_control_config& request)
@@ -77,6 +78,22 @@ TEST_F(du_ue_ric_config_tester,
   ASSERT_FALSE(mac.last_ue_reconf_msg->sched_cfg.lc_config_list.has_value())
       << "Logical channels should not have been configured";
   ASSERT_FALSE(proc_result().has_value()) << "The procedure should wait for MAC response";
+}
+
+TEST_F(du_ue_ric_config_tester, when_another_ue_has_the_f1ap_id_as_ue_index_then_ric_config_targets_ue_with_f1ap_id)
+{
+  // The UE index of the other UE is the F1AP ID of the test UE, as after a reattachment, where the DU reuses the UE
+  // index but the F1AP allocates a new F1AP ID.
+  du_ue& other_ue = create_ue(to_du_ue_index(to_underlying(test_ue->f1ap_ue_id)));
+  ASSERT_NE(other_ue.f1ap_ue_id, test_ue->f1ap_ue_id);
+
+  du_mac_sched_control_config config_req;
+  config_req.ue_id = test_ue->f1ap_ue_id;
+  config_req.rrm_policy_ratio_list.emplace_back();
+  start_procedure(config_req);
+
+  ASSERT_TRUE(mac.last_ue_reconf_msg.has_value()) << "MAC should have received new configuration";
+  ASSERT_EQ(mac.last_ue_reconf_msg->ue_index, test_ue->ue_index);
 }
 
 TEST_F(du_ue_ric_config_tester, when_mac_finished_configuration_then_procedure_finishes)

@@ -33,6 +33,8 @@ du_ue& du_manager_proc_tester::create_ue(du_ue_index_t ue_index)
   f1ap.f1ap_ues[ue_index].f1c_bearers.emplace(srb_id_t::srb1);
 
   f1ap.next_ue_create_response.result = true;
+  // Like the F1AP, allocate F1AP IDs independently of the UE index.
+  f1ap.next_ue_create_response.f1ap_ue_id = int_to_gnb_du_ue_f1ap_id(next_gnb_du_ue_f1ap_id++);
   f1ap.next_ue_create_response.f1c_bearers_added.resize(2);
   f1ap.next_ue_create_response.f1c_bearers_added[0] = &f1ap.f1ap_ues[ue_index].f1c_bearers[srb_id_t::srb0];
   f1ap.next_ue_create_response.f1c_bearers_added[1] = &f1ap.f1ap_ues[ue_index].f1c_bearers[srb_id_t::srb1];
