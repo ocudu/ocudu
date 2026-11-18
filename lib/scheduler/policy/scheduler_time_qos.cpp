@@ -245,10 +245,13 @@ static double compute_pf_metric(double estim_rate, double avg_rate, double fairn
         pf_weight = 1 / avg_rate;
       } else {
         // The usual coefficients avoid the cost of std::pow, with the same result.
-        const double denominator = fairness_coeff == 2.0   ? avg_rate * avg_rate
-                                   : fairness_coeff == 1.0 ? avg_rate
-                                                           : std::pow(avg_rate, fairness_coeff);
-        pf_weight                = estim_rate / denominator;
+        double denominator = avg_rate;
+        if (fairness_coeff == 2.0) {
+          denominator = avg_rate * avg_rate;
+        } else if (fairness_coeff != 1.0) {
+          denominator = std::pow(avg_rate, fairness_coeff);
+        }
+        pf_weight = estim_rate / denominator;
       }
     } else {
       // In case the avg rate is zero, the division would be inf. Instead, we give the highest priority to the UE.
