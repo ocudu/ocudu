@@ -106,9 +106,12 @@ float ue_link_adaptation_controller::get_effective_snr() const
 
 std::optional<sch_mcs_index> ue_link_adaptation_controller::calculate_dl_mcs(pdsch_mcs_table mcs_table) const
 {
+  // The configured range is not bound to the given table, which may reserve its highest indexes for retransmissions.
+  const sch_mcs_index max_mcs = get_max_mcs_dl(mcs_table);
+  const sch_mcs_index min_mcs = std::min(cell_cfg.expert_cfg.ue.dl_mcs.start(), max_mcs);
   if (cell_cfg.expert_cfg.ue.dl_mcs.length() == 0) {
     // Fixed MCS.
-    return cell_cfg.expert_cfg.ue.dl_mcs.start();
+    return min_mcs;
   }
 
   // Derive MCS using the combination of CQI + outer loop link adaptation.
@@ -126,21 +129,24 @@ std::optional<sch_mcs_index> ue_link_adaptation_controller::calculate_dl_mcs(pds
   sch_mcs_index mcs{static_cast<uint8_t>(std::floor(mcs_lb * (1 - coeff) + mcs_ub * coeff))};
 
   // Ensures that the MCS is within the configured range.
-  mcs = std::min(std::max(mcs, cell_cfg.expert_cfg.ue.dl_mcs.start()), cell_cfg.expert_cfg.ue.dl_mcs.stop());
+  mcs = std::min(std::max(mcs, min_mcs), std::min(cell_cfg.expert_cfg.ue.dl_mcs.stop(), max_mcs));
   return mcs;
 }
 
 sch_mcs_index ue_link_adaptation_controller::calculate_ul_mcs(pusch_mcs_table mcs_table,
                                                               bool            use_transform_precoder) const
 {
+  // The limits are derived from the given table, as it may differ from the one of the last UL transmission.
+  const sch_mcs_index max_mcs = get_max_mcs_ul(mcs_table, use_transform_precoder);
+  const sch_mcs_index min_mcs = std::min(cell_cfg.expert_cfg.ue.ul_mcs.start(), max_mcs);
   if (cell_cfg.expert_cfg.ue.ul_mcs.length() == 0) {
     // Fixed MCS.
-    return cell_cfg.expert_cfg.ue.ul_mcs.start();
+    return min_mcs;
   }
 
   // Derive MCS using the combination of estimated UL SNR + outer loop link adaptation.
   sch_mcs_index mcs = map_snr_to_mcs_ul(get_effective_snr(), mcs_table, use_transform_precoder);
-  mcs               = std::min(std::max(mcs, ul_mcs_lims.start()), ul_mcs_lims.stop());
+  mcs               = std::min(std::max(mcs, min_mcs), std::min(cell_cfg.expert_cfg.ue.ul_mcs.stop(), max_mcs));
 
   return mcs;
 }

@@ -27,6 +27,21 @@ std::optional<sch_mcs_index> map_cqi_to_mcs(unsigned cqi, pdsch_mcs_table mcs_ta
 /// TODO: revise this function once the SNR to BLER curves will have been prepared.
 sch_mcs_index map_snr_to_mcs_ul(double snr, pusch_mcs_table mcs_table, bool use_transform_precoder);
 
+/// \brief Retrieves the maximum MCS value of a new transmission for a given PDSCH MCS table.
+///
+/// The MCS value ranges are given in TS 38.214 Section 5.1.3.1.
+inline sch_mcs_index get_max_mcs_dl(pdsch_mcs_table mcs_table)
+{
+  switch (mcs_table) {
+    case pdsch_mcs_table::qam256:
+      return 27;
+    case pdsch_mcs_table::qam1024:
+      return 26;
+    default:
+      return 28;
+  }
+}
+
 /// \brief Retrieves the maximum MCS value for a given MCS table.
 ///
 /// The MCS value ranges are given in TS 38.214 Section 6.1.4.2.

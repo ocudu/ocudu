@@ -17,9 +17,10 @@ using namespace ocudu;
 class base_ue_link_adaptation_controller_test
 {
 public:
-  base_ue_link_adaptation_controller_test(std::optional<float> olla_cqi_inc   = std::nullopt,
-                                          std::optional<float> max_cqi_offset = std::nullopt,
-                                          std::optional<float> target_bler    = std::nullopt) :
+  base_ue_link_adaptation_controller_test(std::optional<float>         olla_cqi_inc   = std::nullopt,
+                                          std::optional<float>         max_cqi_offset = std::nullopt,
+                                          std::optional<float>         target_bler    = std::nullopt,
+                                          std::optional<sch_mcs_index> fixed_mcs      = std::nullopt) :
     sched_cfg([&]() {
       scheduler_expert_config cfg = config_helpers::make_default_scheduler_expert_config();
       if (olla_cqi_inc.has_value()) {
@@ -30,6 +31,10 @@ public:
       }
       if (target_bler.has_value()) {
         cfg.ue.olla_dl_target_bler = *target_bler;
+      }
+      if (fixed_mcs.has_value()) {
+        cfg.ue.dl_mcs = {*fixed_mcs, *fixed_mcs};
+        cfg.ue.ul_mcs = {*fixed_mcs, *fixed_mcs};
       }
       return cfg;
     }())
@@ -152,6 +157,26 @@ TEST_F(ue_link_adaptation_controller_mcs_derivation_test,
   }
 
   ASSERT_GT(controller.dl_cqi_offset(), 1.0F) << "MCS(CQI+offset) == MCS(CQI+1) if offset >= 1";
+}
+
+class ue_link_adaptation_controller_fixed_mcs_test : public base_ue_link_adaptation_controller_test,
+                                                     public ::testing::Test
+{
+public:
+  ue_link_adaptation_controller_fixed_mcs_test() :
+    base_ue_link_adaptation_controller_test(std::nullopt, std::nullopt, std::nullopt, sch_mcs_index{28})
+  {
+  }
+};
+
+TEST_F(ue_link_adaptation_controller_fixed_mcs_test, fixed_mcs_is_capped_to_the_maximum_of_the_mcs_table)
+{
+  ASSERT_EQ(controller.calculate_dl_mcs(pdsch_mcs_table::qam64), sch_mcs_index{28});
+  ASSERT_EQ(controller.calculate_dl_mcs(pdsch_mcs_table::qam256), sch_mcs_index{27});
+
+  ASSERT_EQ(controller.calculate_ul_mcs(pusch_mcs_table::qam64, false), sch_mcs_index{28});
+  ASSERT_EQ(controller.calculate_ul_mcs(pusch_mcs_table::qam64, true), sch_mcs_index{27});
+  ASSERT_EQ(controller.calculate_ul_mcs(pusch_mcs_table::qam256, false), sch_mcs_index{27});
 }
 
 TEST(ue_link_adaptation_controller_pucch_rep_test, no_rep_config_always_returns_n1)

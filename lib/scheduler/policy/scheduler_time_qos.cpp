@@ -110,9 +110,7 @@ rate_estimator::rate_estimator(const cell_configuration& cell_cfg)
     tbs_cfg.nof_dmrs_prb                 = calculate_nof_dmrs_per_rb(dmrs);
     tbs_cfg.nof_layers                   = nof_layers;
     for (unsigned mcs = 0; mcs != NOF_MCS_INDEXES; ++mcs) {
-      tbs_cfg.mcs_descr = pdsch_mcs_get_config(ref_dl_mcs_table, mcs);
-      // Note: An MCS index reserved in the reference table can still be reached through the configured MCS range of the
-      // UE, and keeps the minimum TBS the calculator gives for it.
+      tbs_cfg.mcs_descr               = pdsch_mcs_get_config(ref_dl_mcs_table, mcs);
       dl_max_tbs[nof_layers - 1][mcs] = tbs_calculator_calculate(tbs_cfg).value();
     }
   }
