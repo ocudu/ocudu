@@ -205,7 +205,17 @@ static std::vector<test_parameters> generate_cases()
                                           crc_polynomial_from_uint(0xf)}) {
       // Message length in bytes. Selected arbitrary values that execute all execution branches in the different
       // implementations that have SIMD.
-      for (units::bytes nbytes : {1_bytes, 8_bytes, 16_bytes, 32_bytes, 257_bytes, 997_bytes, 6012_bytes}) {
+      for (units::bytes nbytes : {1_bytes,
+                                  8_bytes,
+                                  12_bytes,
+                                  13_bytes,
+                                  15_bytes,
+                                  16_bytes,
+                                  17_bytes,
+                                  32_bytes,
+                                  257_bytes,
+                                  997_bytes,
+                                  6012_bytes}) {
         out.emplace_back(test_parameters{.factory_type = factory_type, .polynomial = polynomial, .nbytes = nbytes});
       }
     }

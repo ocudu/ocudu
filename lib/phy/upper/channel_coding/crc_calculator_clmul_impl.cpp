@@ -113,8 +113,11 @@ static inline uint32_t crc32_calc_pclmulqdq(span<const uint8_t> data, const crc_
     // Apply CRC initial value and get fold to BE format.
     fold = _mm_shuffle_epi8(fold, swap);
 
+    // Messages of 13 to 15 bytes take this branch with no data past the first 16 bytes.
+    span<const uint8_t> rest = data.last(data.size() - std::min(data.size(), 16UL));
+
     // Load next 16 bytes of data and adjust fold & next_data as follows: CONCAT(fold,next_data) >> (n*8)
-    __m128i next_data = mm_safe_load_si128(data.subspan(16, std::min(data.size() - 16UL, 16UL)));
+    __m128i next_data = mm_safe_load_si128(rest.first(std::min(rest.size(), 16UL)));
     next_data         = _mm_shuffle_epi8(next_data, swap);
     next_data         = _mm_or_si128(xmm_shift_right(next_data, n), xmm_shift_left(fold, 16 - n));
     fold              = xmm_shift_right(fold, n);
