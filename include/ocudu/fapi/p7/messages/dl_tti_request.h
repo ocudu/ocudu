@@ -14,15 +14,20 @@
 namespace ocudu {
 namespace fapi {
 
-/// Common downlink PDU information.
-struct dl_tti_request_pdu {
-  std::variant<dl_pdcch_pdu, dl_pdsch_pdu, dl_csi_rs_pdu, dl_ssb_pdu, dl_prs_pdu> pdu;
-};
-
 /// Downlink TTI request message.
 struct dl_tti_request {
   slot_point                                              slot;
-  static_vector<dl_tti_request_pdu, MAX_DL_PDUS_PER_SLOT> pdus;
+  static_vector<dl_pdcch_pdu, MAX_DL_PDCCH_PDUS_PER_SLOT> pdcch_pdus;
+  static_vector<dl_pdsch_pdu, MAX_PDSCH_PDUS_PER_SLOT>    pdsch_pdus;
+  static_vector<dl_ssb_pdu, MAX_SSB_PER_SLOT>             ssb_pdus;
+  static_vector<dl_csi_rs_pdu, MAX_CSI_RS_PDUS_PER_SLOT>  csi_rs_pdus;
+  static_vector<dl_prs_pdu, MAX_PRS_PDUS_PER_SLOT>        prs_pdus;
+
+  /// Returns true if the message has no PDUs.
+  bool empty() const
+  {
+    return pdcch_pdus.empty() && pdsch_pdus.empty() && ssb_pdus.empty() && csi_rs_pdus.empty() && prs_pdus.empty();
+  }
 };
 
 } // namespace fapi
@@ -42,31 +47,20 @@ struct formatter<ocudu::fapi::dl_tti_request> {
   {
     format_to(ctx.out(), "DL_TTI.request slot={}", msg.slot);
 
-    for (const auto& pdu : msg.pdus) {
-      if (const auto* csi_rs_pdu = std::get_if<ocudu::fapi::dl_csi_rs_pdu>(&pdu.pdu)) {
-        format_to(ctx.out(), "{}", *csi_rs_pdu);
-        continue;
-      }
-
-      if (const auto* pdcch_pdu = std::get_if<ocudu::fapi::dl_pdcch_pdu>(&pdu.pdu)) {
-        format_to(ctx.out(), "{}", *pdcch_pdu);
-        continue;
-      }
-
-      if (const auto* pdsch_pdu = std::get_if<ocudu::fapi::dl_pdsch_pdu>(&pdu.pdu)) {
-        format_to(ctx.out(), "{}", *pdsch_pdu);
-        continue;
-      }
-
-      if (const auto* ssb_pdu = std::get_if<ocudu::fapi::dl_ssb_pdu>(&pdu.pdu)) {
-        format_to(ctx.out(), "{}", *ssb_pdu);
-        continue;
-      }
-
-      if (const auto* prs_pdu = std::get_if<ocudu::fapi::dl_prs_pdu>(&pdu.pdu)) {
-        format_to(ctx.out(), "{}", *prs_pdu);
-        continue;
-      }
+    for (const auto& pdu : msg.pdcch_pdus) {
+      format_to(ctx.out(), "{}", pdu);
+    }
+    for (const auto& pdu : msg.ssb_pdus) {
+      format_to(ctx.out(), "{}", pdu);
+    }
+    for (const auto& pdu : msg.csi_rs_pdus) {
+      format_to(ctx.out(), "{}", pdu);
+    }
+    for (const auto& pdu : msg.prs_pdus) {
+      format_to(ctx.out(), "{}", pdu);
+    }
+    for (const auto& pdu : msg.pdsch_pdus) {
+      format_to(ctx.out(), "{}", pdu);
     }
 
     return ctx.out();

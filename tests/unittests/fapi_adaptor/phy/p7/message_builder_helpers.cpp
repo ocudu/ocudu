@@ -299,25 +299,10 @@ dl_tti_request unittest::build_valid_dl_tti_request()
   auto     slot_index = 0U;
   msg.slot            = slot_point(scs, sfn, slot_index);
 
-  // Manually add the SSB PDU to reuse the functions above.
-  auto& last_ssb_pdu = msg.pdus.emplace_back();
-  auto& ssb_pdu      = last_ssb_pdu.pdu.emplace<dl_ssb_pdu>();
-  ssb_pdu            = build_valid_dl_ssb_pdu();
-
-  // Manually add the PDCCH PDU to reuse the functions above.
-  auto& last_pdcch_pdu = msg.pdus.emplace_back();
-  auto& pdcch_pdu      = last_pdcch_pdu.pdu.emplace<dl_pdcch_pdu>();
-  pdcch_pdu            = build_valid_dl_pdcch_pdu();
-
-  // Manually add the PDSCH PDU to reuse the functions above.
-  auto& last_pdsch_pdu = msg.pdus.emplace_back();
-  auto& pdsch_pdu      = last_pdsch_pdu.pdu.emplace<dl_pdsch_pdu>();
-  pdsch_pdu            = build_valid_dl_pdsch_pdu();
-
-  // Manually add the CSI PDU to reuse the functions above.
-  auto& last_csi_rs_pdu = msg.pdus.emplace_back();
-  auto& csi_rs_pdu      = last_csi_rs_pdu.pdu.emplace<dl_csi_rs_pdu>();
-  csi_rs_pdu            = build_valid_dl_csi_pdu();
+  msg.ssb_pdus.push_back(build_valid_dl_ssb_pdu());
+  msg.pdcch_pdus.push_back(build_valid_dl_pdcch_pdu());
+  msg.pdsch_pdus.push_back(build_valid_dl_pdsch_pdu());
+  msg.csi_rs_pdus.push_back(build_valid_dl_csi_pdu());
 
   return msg;
 }

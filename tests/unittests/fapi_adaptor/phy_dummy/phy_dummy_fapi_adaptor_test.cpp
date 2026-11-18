@@ -171,12 +171,28 @@ protected:
   /// Returns the slot of the last notified slot boundary.
   slot_point last_notified_slot() const { return (current - 1 + test_proc_delay).without_hyper_sfn(); }
 
-  void send_ul_tti(slot_point slot, std::initializer_list<fapi::ul_tti_request_pdu> pdus)
+  /// Any of the PDUs an UL_TTI.request carries.
+  using ul_tti_pdu = std::variant<fapi::ul_prach_pdu, fapi::ul_pusch_pdu, fapi::ul_pucch_pdu, fapi::ul_srs_pdu>;
+
+  void send_ul_tti(slot_point slot, std::initializer_list<ul_tti_pdu> pdus)
   {
     fapi::ul_tti_request msg;
     msg.slot = slot;
     for (const auto& pdu : pdus) {
-      msg.pdus.push_back(pdu);
+      std::visit(
+          [&msg](const auto& typed_pdu) {
+            using pdu_type = std::decay_t<decltype(typed_pdu)>;
+            if constexpr (std::is_same_v<pdu_type, fapi::ul_prach_pdu>) {
+              msg.prach_pdus.push_back(typed_pdu);
+            } else if constexpr (std::is_same_v<pdu_type, fapi::ul_pusch_pdu>) {
+              msg.pusch_pdus.push_back(typed_pdu);
+            } else if constexpr (std::is_same_v<pdu_type, fapi::ul_pucch_pdu>) {
+              msg.pucch_pdus.push_back(typed_pdu);
+            } else {
+              msg.srs_pdus.push_back(typed_pdu);
+            }
+          },
+          pdu);
     }
     p7_adaptor().get_p7_requests_gateway().send_ul_tti_request(msg);
   }

@@ -306,14 +306,14 @@ void phy_dummy_fapi_p7_sector_adaptor::send_ul_tti_request(const fapi::ul_tti_re
   }
 
   context->clear();
-  for (const auto& pdu : msg.pdus) {
-    if (const auto* pusch = std::get_if<fapi::ul_pusch_pdu>(&pdu.pdu)) {
-      save_pusch_context(*context, *pusch);
-    } else if (const auto* pucch = std::get_if<fapi::ul_pucch_pdu>(&pdu.pdu)) {
-      save_pucch_context(*context, *pucch);
-    } else if (const auto* srs = std::get_if<fapi::ul_srs_pdu>(&pdu.pdu)) {
-      save_srs_context(*context, *srs);
-    }
+  for (const auto& pusch : msg.pusch_pdus) {
+    save_pusch_context(*context, pusch);
+  }
+  for (const auto& pucch : msg.pucch_pdus) {
+    save_pucch_context(*context, pucch);
+  }
+  for (const auto& srs : msg.srs_pdus) {
+    save_srs_context(*context, srs);
   }
 }
 

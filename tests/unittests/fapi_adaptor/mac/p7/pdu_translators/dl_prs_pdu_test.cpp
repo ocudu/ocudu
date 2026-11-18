@@ -26,9 +26,8 @@ TEST(mac_fapi_prs_pdu_conversor_test, valid_pdu_should_pass)
   fapi::dl_tti_request_builder builder(msg);
   convert_prs_mac_to_fapi(builder, pdu, *pm_tools.first, cell_nof_prbs);
 
-  ASSERT_EQ(1U, msg.pdus.size());
-  const auto* fapi_pdu = std::get_if<fapi::dl_prs_pdu>(&msg.pdus.front().pdu);
-  ASSERT_NE(fapi_pdu, nullptr);
+  ASSERT_EQ(1U, msg.prs_pdus.size());
+  const fapi::dl_prs_pdu* fapi_pdu = &msg.prs_pdus.front();
 
   EXPECT_EQ(pdu.scs, fapi_pdu->scs);
   EXPECT_EQ(pdu.cp, fapi_pdu->cp);

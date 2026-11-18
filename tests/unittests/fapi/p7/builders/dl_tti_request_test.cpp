@@ -22,7 +22,7 @@ TEST(dl_ssb_pdu_builder, valid_slot_point_passes)
   builder.set_slot(slot);
 
   ASSERT_EQ(slot, msg.slot);
-  ASSERT_TRUE(msg.pdus.empty());
+  ASSERT_TRUE(msg.empty());
 }
 
 TEST(dl_ssb_pdu_builder, add_pdcch_pdu_passes)
@@ -30,12 +30,11 @@ TEST(dl_ssb_pdu_builder, add_pdcch_pdu_passes)
   dl_tti_request         msg;
   dl_tti_request_builder builder(msg);
 
-  ASSERT_TRUE(msg.pdus.empty());
+  ASSERT_TRUE(msg.empty());
 
   builder.add_pdcch_pdu();
 
-  ASSERT_EQ(1U, msg.pdus.size());
-  ASSERT_TRUE(std::holds_alternative<dl_pdcch_pdu>(msg.pdus.back().pdu));
+  ASSERT_EQ(1U, msg.pdcch_pdus.size());
 }
 
 TEST(dl_ssb_pdu_builder, add_pdsch_pdu_passes)
@@ -43,12 +42,11 @@ TEST(dl_ssb_pdu_builder, add_pdsch_pdu_passes)
   dl_tti_request         msg;
   dl_tti_request_builder builder(msg);
 
-  ASSERT_TRUE(msg.pdus.empty());
+  ASSERT_TRUE(msg.empty());
 
   builder.add_pdsch_pdu();
 
-  ASSERT_EQ(1U, msg.pdus.size());
-  ASSERT_TRUE(std::holds_alternative<dl_pdsch_pdu>(msg.pdus.back().pdu));
+  ASSERT_EQ(1U, msg.pdsch_pdus.size());
 }
 
 TEST(dl_ssb_pdu_builder, add_ssb_pdu_passes)
@@ -56,12 +54,11 @@ TEST(dl_ssb_pdu_builder, add_ssb_pdu_passes)
   dl_tti_request         msg;
   dl_tti_request_builder builder(msg);
 
-  ASSERT_TRUE(msg.pdus.empty());
+  ASSERT_TRUE(msg.empty());
 
   builder.add_ssb_pdu();
 
-  ASSERT_EQ(1U, msg.pdus.size());
-  ASSERT_TRUE(std::holds_alternative<dl_ssb_pdu>(msg.pdus.back().pdu));
+  ASSERT_EQ(1U, msg.ssb_pdus.size());
 }
 
 TEST(dl_ssb_pdu_builder, add_csi_pdu_passes)
@@ -69,7 +66,7 @@ TEST(dl_ssb_pdu_builder, add_csi_pdu_passes)
   dl_tti_request         msg;
   dl_tti_request_builder builder(msg);
 
-  ASSERT_TRUE(msg.pdus.empty());
+  ASSERT_TRUE(msg.empty());
 
   uint16_t                  start_rb      = 3;
   uint16_t                  nof_rbs       = 4;
@@ -89,6 +86,5 @@ TEST(dl_ssb_pdu_builder, add_csi_pdu_passes)
       .set_time_domain_parameters(symb_l0, symb_l1)
       .set_resource_block_parameters({start_rb, nof_rbs});
 
-  ASSERT_EQ(1U, msg.pdus.size());
-  ASSERT_TRUE(std::holds_alternative<dl_csi_rs_pdu>(msg.pdus.back().pdu));
+  ASSERT_EQ(1U, msg.csi_rs_pdus.size());
 }

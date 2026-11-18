@@ -289,7 +289,7 @@ TEST_F(fapi_to_phy_translator_fixture, downlink_processor_is_configured_on_new_d
   fapi::dl_tti_request msg;
   msg.slot = slot;
   // Add a PDU to the message.
-  msg.pdus.emplace_back().pdu = unittest::build_valid_dl_pdcch_pdu();
+  msg.pdcch_pdus.push_back(unittest::build_valid_dl_pdcch_pdu());
 
   translator.send_dl_tti_request(msg);
 
@@ -360,7 +360,7 @@ TEST_F(fapi_to_phy_translator_fixture, receiving_a_dl_tti_request_sends_previous
   fapi::dl_tti_request msg;
   msg.slot = slot;
   // Add a pdu to the message.
-  msg.pdus.emplace_back().pdu = unittest::build_valid_dl_pdcch_pdu();
+  msg.pdcch_pdus.push_back(unittest::build_valid_dl_pdcch_pdu());
 
   // Increase the slots.
   for (unsigned i = 1; i != headroom_in_slots; ++i) {
@@ -419,7 +419,7 @@ TEST_F(fapi_to_phy_translator_fixture, message_received_is_sended_when_a_message
   fapi::dl_tti_request msg;
   msg.slot = slot;
   // Add a PDU to the message.
-  msg.pdus.emplace_back().pdu = unittest::build_valid_dl_pdcch_pdu();
+  msg.pdcch_pdus.push_back(unittest::build_valid_dl_pdcch_pdu());
 
   // Send a DL_TTI.request.
   translator.send_dl_tti_request(msg);
@@ -514,11 +514,7 @@ TEST_F(fapi_to_phy_translator_fixture, ntn_k_mac_pusch_pdu_carries_the_uplink_sl
   // Build a minimal UL_TTI.request carrying one PUSCH PDU at the DL slot.
   fapi::ul_tti_request msg;
   msg.slot = dl_slot;
-  {
-    auto& entry = msg.pdus.emplace_back();
-    auto& pusch = entry.pdu.emplace<fapi::ul_pusch_pdu>();
-    pusch       = unittest::build_valid_ul_pusch_pdu();
-  }
+  msg.pusch_pdus.push_back(unittest::build_valid_ul_pusch_pdu());
   ntn_translator.send_ul_tti_request(msg);
 
   // The translator must have stored exactly one PUSCH PDU.
@@ -558,11 +554,7 @@ TEST_F(fapi_to_phy_translator_fixture, terrestrial_pusch_pdu_slot_offset_is_zero
 
   fapi::ul_tti_request msg;
   msg.slot = msg_slot;
-  {
-    auto& entry = msg.pdus.emplace_back();
-    auto& pusch = entry.pdu.emplace<fapi::ul_pusch_pdu>();
-    pusch       = unittest::build_valid_ul_pusch_pdu();
-  }
+  msg.pusch_pdus.push_back(unittest::build_valid_ul_pusch_pdu());
   terr_translator.send_ul_tti_request(msg);
 
   const auto& pdus = pdu_repo.get_pusch_pdus();
@@ -584,9 +576,7 @@ TEST_F(fapi_to_phy_translator_fixture, pusch_pdu_with_nof_layers_not_matching_dm
   fapi::ul_tti_request msg;
   msg.slot = slot;
   {
-    auto& entry      = msg.pdus.emplace_back();
-    auto& pusch      = entry.pdu.emplace<fapi::ul_pusch_pdu>();
-    pusch            = unittest::build_valid_ul_pusch_pdu();
+    auto& pusch      = msg.pusch_pdus.emplace_back(unittest::build_valid_ul_pusch_pdu());
     pusch.num_layers = 2;
     pusch.dmrs_ports = fapi::dmrs_ports_mask(fapi::dmrs_ports_mask::max_size());
     pusch.dmrs_ports.set(0);
@@ -636,11 +626,7 @@ TEST_F(fapi_to_phy_translator_fixture, ntn_k_mac_pucch_config_slot_is_shifted_to
 
   fapi::ul_tti_request msg;
   msg.slot = dl_slot;
-  {
-    auto& entry = msg.pdus.emplace_back();
-    auto& pucch = entry.pdu.emplace<fapi::ul_pucch_pdu>();
-    pucch       = unittest::build_valid_ul_pucch_f1_pdu();
-  }
+  msg.pucch_pdus.push_back(unittest::build_valid_ul_pucch_f1_pdu());
   ntn_translator.send_ul_tti_request(msg);
 
   const auto& pdus = pdu_repo.get_pucch_pdus();
@@ -684,11 +670,7 @@ TEST_F(fapi_to_phy_translator_fixture, terrestrial_pucch_config_slot_offset_is_z
 
   fapi::ul_tti_request msg;
   msg.slot = msg_slot;
-  {
-    auto& entry = msg.pdus.emplace_back();
-    auto& pucch = entry.pdu.emplace<fapi::ul_pucch_pdu>();
-    pucch       = unittest::build_valid_ul_pucch_f1_pdu();
-  }
+  msg.pucch_pdus.push_back(unittest::build_valid_ul_pucch_f1_pdu());
   terr_translator.send_ul_tti_request(msg);
 
   const auto& pdus = pdu_repo.get_pucch_pdus();
@@ -779,8 +761,8 @@ TEST_F(phy_to_fapi_time_event_translator_fixture, requests_at_the_new_slot_are_a
   time_translator.on_tti_boundary(make_context(jumped_slot));
 
   fapi::dl_tti_request msg;
-  msg.slot                    = jumped_slot;
-  msg.pdus.emplace_back().pdu = unittest::build_valid_dl_pdcch_pdu();
+  msg.slot = jumped_slot;
+  msg.pdcch_pdus.push_back(unittest::build_valid_dl_pdcch_pdu());
 
   translator.send_dl_tti_request(msg);
 

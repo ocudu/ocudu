@@ -15,89 +15,11 @@
 #include "ocudu/fapi_adaptor/uci_part2_correspondence_generator.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include <gtest/gtest.h>
-#include <ostream>
 #include <vector>
 
 using namespace ocudu;
 using namespace fapi_adaptor;
 using namespace unittests;
-
-namespace {
-
-/// Kind of a DL_TTI.request PDU.
-enum class dl_pdu_kind { pdcch, pdsch, csi_rs, ssb, prs };
-
-/// Kind of an UL_TTI.request PDU.
-enum class ul_pdu_kind { prach, pusch, pucch, srs };
-
-/// Prints the given DL PDU kind, so that gtest shows a readable value on failure.
-std::ostream& operator<<(std::ostream& os, dl_pdu_kind kind)
-{
-  switch (kind) {
-    case dl_pdu_kind::pdcch:
-      return os << "PDCCH";
-    case dl_pdu_kind::pdsch:
-      return os << "PDSCH";
-    case dl_pdu_kind::csi_rs:
-      return os << "CSI-RS";
-    case dl_pdu_kind::ssb:
-      return os << "SSB";
-    case dl_pdu_kind::prs:
-      return os << "PRS";
-  }
-  return os << "invalid";
-}
-
-/// Prints the given UL PDU kind, so that gtest shows a readable value on failure.
-std::ostream& operator<<(std::ostream& os, ul_pdu_kind kind)
-{
-  switch (kind) {
-    case ul_pdu_kind::prach:
-      return os << "PRACH";
-    case ul_pdu_kind::pusch:
-      return os << "PUSCH";
-    case ul_pdu_kind::pucch:
-      return os << "PUCCH";
-    case ul_pdu_kind::srs:
-      return os << "SRS";
-  }
-  return os << "invalid";
-}
-
-/// Visitor that returns the kind of a PDU, with one overload per PDU type so that an unhandled type does not compile.
-struct pdu_kind_visitor {
-  dl_pdu_kind operator()(const fapi::dl_pdcch_pdu& /**/) const { return dl_pdu_kind::pdcch; }
-  dl_pdu_kind operator()(const fapi::dl_pdsch_pdu& /**/) const { return dl_pdu_kind::pdsch; }
-  dl_pdu_kind operator()(const fapi::dl_csi_rs_pdu& /**/) const { return dl_pdu_kind::csi_rs; }
-  dl_pdu_kind operator()(const fapi::dl_ssb_pdu& /**/) const { return dl_pdu_kind::ssb; }
-  dl_pdu_kind operator()(const fapi::dl_prs_pdu& /**/) const { return dl_pdu_kind::prs; }
-  ul_pdu_kind operator()(const fapi::ul_prach_pdu& /**/) const { return ul_pdu_kind::prach; }
-  ul_pdu_kind operator()(const fapi::ul_pusch_pdu& /**/) const { return ul_pdu_kind::pusch; }
-  ul_pdu_kind operator()(const fapi::ul_pucch_pdu& /**/) const { return ul_pdu_kind::pucch; }
-  ul_pdu_kind operator()(const fapi::ul_srs_pdu& /**/) const { return ul_pdu_kind::srs; }
-};
-
-} // namespace
-
-/// Returns the kinds of the PDUs of the given DL_TTI.request, in order.
-static std::vector<dl_pdu_kind> get_pdu_kinds(const fapi::dl_tti_request& msg)
-{
-  std::vector<dl_pdu_kind> kinds;
-  for (const auto& pdu : msg.pdus) {
-    kinds.push_back(std::visit(pdu_kind_visitor{}, pdu.pdu));
-  }
-  return kinds;
-}
-
-/// Returns the kinds of the PDUs of the given UL_TTI.request, in order.
-static std::vector<ul_pdu_kind> get_pdu_kinds(const fapi::ul_tti_request& msg)
-{
-  std::vector<ul_pdu_kind> kinds;
-  for (const auto& pdu : msg.pdus) {
-    kinds.push_back(std::visit(pdu_kind_visitor{}, pdu.pdu));
-  }
-  return kinds;
-}
 
 namespace {
 
@@ -184,14 +106,12 @@ TEST_F(mac_to_fapi_translator_fixture, valid_dl_sched_results_generate_correct_d
 
   // Four PDCCH, two SSB and one PDSCH PDUs.
   ASSERT_TRUE(gateway_spy.dl_tti_msg.has_value());
-  std::vector<dl_pdu_kind> expected = {dl_pdu_kind::pdcch,
-                                       dl_pdu_kind::pdcch,
-                                       dl_pdu_kind::pdcch,
-                                       dl_pdu_kind::pdcch,
-                                       dl_pdu_kind::ssb,
-                                       dl_pdu_kind::ssb,
-                                       dl_pdu_kind::pdsch};
-  EXPECT_EQ(expected, get_pdu_kinds(*gateway_spy.dl_tti_msg));
+  const fapi::dl_tti_request& msg = *gateway_spy.dl_tti_msg;
+  EXPECT_EQ(4U, msg.pdcch_pdus.size());
+  EXPECT_EQ(2U, msg.ssb_pdus.size());
+  EXPECT_EQ(1U, msg.pdsch_pdus.size());
+  EXPECT_TRUE(msg.csi_rs_pdus.empty());
+  EXPECT_TRUE(msg.prs_pdus.empty());
 }
 
 TEST_F(mac_to_fapi_translator_fixture, valid_ul_sched_results_generate_correct_ul_tti_request)
@@ -201,8 +121,11 @@ TEST_F(mac_to_fapi_translator_fixture, valid_ul_sched_results_generate_correct_u
 
   // One PRACH, one PUSCH and two PUCCH PDUs.
   ASSERT_TRUE(gateway_spy.ul_tti_msg.has_value());
-  std::vector<ul_pdu_kind> expected = {ul_pdu_kind::prach, ul_pdu_kind::pusch, ul_pdu_kind::pucch, ul_pdu_kind::pucch};
-  EXPECT_EQ(expected, get_pdu_kinds(*gateway_spy.ul_tti_msg));
+  const fapi::ul_tti_request& msg = *gateway_spy.ul_tti_msg;
+  EXPECT_EQ(1U, msg.prach_pdus.size());
+  EXPECT_EQ(1U, msg.pusch_pdus.size());
+  EXPECT_EQ(2U, msg.pucch_pdus.size());
+  EXPECT_TRUE(msg.srs_pdus.empty());
 }
 
 TEST_F(mac_to_fapi_translator_fixture, valid_dl_data_results_generate_correct_tx_data_request)
@@ -242,7 +165,13 @@ TEST_F(mac_to_fapi_translator_fixture, dl_tti_message_with_all_pdus_passes)
   ASSERT_TRUE(gateway_spy.ul_dci_msg.has_value());
   EXPECT_EQ(MAX_UL_PDCCH_PDUS_PER_SLOT, gateway_spy.ul_dci_msg->pdus.size());
   ASSERT_TRUE(gateway_spy.dl_tti_msg.has_value());
-  EXPECT_EQ(MAX_DL_PDUS_PER_SLOT, gateway_spy.dl_tti_msg->pdus.size());
+  const fapi::dl_tti_request& msg = *gateway_spy.dl_tti_msg;
+  EXPECT_EQ(MAX_DL_PDCCH_PDUS_PER_SLOT, msg.pdcch_pdus.size());
+  EXPECT_EQ(MAX_SSB_PER_SLOT, msg.ssb_pdus.size());
+  EXPECT_EQ(MAX_CSI_RS_PDUS_PER_SLOT, msg.csi_rs_pdus.size());
+  EXPECT_EQ(MAX_PRS_PDUS_PER_SLOT, msg.prs_pdus.size());
+  EXPECT_EQ(MAX_SI_PDUS_PER_SLOT + MAX_RAR_PDUS_PER_SLOT + MAX_UE_PDUS_PER_SLOT + MAX_PAGING_PDUS_PER_SLOT,
+            msg.pdsch_pdus.size());
 }
 
 TEST_F(mac_to_fapi_translator_fixture, tx_data_message_with_all_pdus_passes)
@@ -263,39 +192,11 @@ TEST_F(mac_to_fapi_translator_fixture, ul_tti_message_with_all_pdus_passes)
   translator.on_new_uplink_scheduler_results(result_test.result);
 
   ASSERT_TRUE(gateway_spy.ul_tti_msg.has_value());
-  EXPECT_EQ(MAX_UL_PDUS_PER_SLOT, gateway_spy.ul_tti_msg->pdus.size());
-}
-
-TEST_F(mac_to_fapi_translator_fixture, dl_tti_pdus_are_ordered_by_channel_kind)
-{
-  mac_dl_sched_result_test_helper result_test = build_valid_mac_dl_sched_result_with_all_supported_pdus();
-  translator.on_new_downlink_scheduler_results(result_test.result);
-
-  // PDCCH, SSB, CSI-RS and PRS PDUs come first, followed by all the PDSCH PDUs (SIB, RAR, UE and paging).
-  std::vector<dl_pdu_kind> expected;
-  expected.insert(expected.end(), MAX_DL_PDCCH_PDUS_PER_SLOT, dl_pdu_kind::pdcch);
-  expected.insert(expected.end(), MAX_SSB_PER_SLOT, dl_pdu_kind::ssb);
-  expected.insert(expected.end(), MAX_CSI_RS_PDUS_PER_SLOT, dl_pdu_kind::csi_rs);
-  expected.insert(expected.end(), MAX_PRS_PDUS_PER_SLOT, dl_pdu_kind::prs);
-  expected.insert(expected.end(),
-                  MAX_SI_PDUS_PER_SLOT + MAX_RAR_PDUS_PER_SLOT + MAX_UE_PDUS_PER_SLOT + MAX_PAGING_PDUS_PER_SLOT,
-                  dl_pdu_kind::pdsch);
-  ASSERT_TRUE(gateway_spy.dl_tti_msg.has_value());
-  EXPECT_EQ(expected, get_pdu_kinds(*gateway_spy.dl_tti_msg));
-}
-
-TEST_F(mac_to_fapi_translator_fixture, ul_tti_pdus_are_ordered_by_channel_kind)
-{
-  mac_ul_sched_result_test_helper result_test = build_valid_mac_ul_sched_result_with_all_supported_pdus();
-  translator.on_new_uplink_scheduler_results(result_test.result);
-
-  std::vector<ul_pdu_kind> expected;
-  expected.insert(expected.end(), MAX_PRACH_OCCASIONS_PER_SLOT, ul_pdu_kind::prach);
-  expected.insert(expected.end(), MAX_PUSCH_PDUS_PER_SLOT, ul_pdu_kind::pusch);
-  expected.insert(expected.end(), MAX_PUCCH_PDUS_PER_SLOT, ul_pdu_kind::pucch);
-  expected.insert(expected.end(), MAX_SRS_PDUS_PER_SLOT, ul_pdu_kind::srs);
-  ASSERT_TRUE(gateway_spy.ul_tti_msg.has_value());
-  EXPECT_EQ(expected, get_pdu_kinds(*gateway_spy.ul_tti_msg));
+  const fapi::ul_tti_request& msg = *gateway_spy.ul_tti_msg;
+  EXPECT_EQ(MAX_PRACH_OCCASIONS_PER_SLOT, msg.prach_pdus.size());
+  EXPECT_EQ(MAX_PUSCH_PDUS_PER_SLOT, msg.pusch_pdus.size());
+  EXPECT_EQ(MAX_PUCCH_PDUS_PER_SLOT, msg.pucch_pdus.size());
+  EXPECT_EQ(MAX_SRS_PDUS_PER_SLOT, msg.srs_pdus.size());
 }
 
 TEST_F(mac_to_fapi_translator_fixture, scheduler_results_slot_is_forwarded_in_every_request)
@@ -326,7 +227,7 @@ TEST_F(mac_to_fapi_translator_fixture, ul_dci_request_is_not_sent_when_there_are
   translator.on_new_downlink_scheduler_results(result_test.result);
 
   ASSERT_TRUE(gateway_spy.dl_tti_msg.has_value());
-  EXPECT_TRUE(gateway_spy.dl_tti_msg->pdus.empty());
+  EXPECT_TRUE(gateway_spy.dl_tti_msg->empty());
   EXPECT_FALSE(gateway_spy.ul_dci_msg.has_value());
 }
 
@@ -334,10 +235,8 @@ TEST_F(mac_to_fapi_translator_fixture, ul_dci_request_is_not_sent_when_there_are
 static std::vector<unsigned> get_nof_csi_pdus_for_rm(const fapi::dl_tti_request& msg)
 {
   std::vector<unsigned> nof_csi_pdus;
-  for (const auto& pdu : msg.pdus) {
-    if (const auto* pdsch = std::get_if<fapi::dl_pdsch_pdu>(&pdu.pdu)) {
-      nof_csi_pdus.push_back(pdsch->nof_csi_pdus_for_rm);
-    }
+  for (const auto& pdsch : msg.pdsch_pdus) {
+    nof_csi_pdus.push_back(pdsch.nof_csi_pdus_for_rm);
   }
   return nof_csi_pdus;
 }

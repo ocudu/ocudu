@@ -14,15 +14,16 @@
 namespace ocudu {
 namespace fapi {
 
-/// Common uplink PDU information.
-struct ul_tti_request_pdu {
-  std::variant<ul_prach_pdu, ul_pusch_pdu, ul_pucch_pdu, ul_srs_pdu> pdu;
-};
-
 /// Uplink TTI request message.
 struct ul_tti_request {
-  slot_point                                              slot;
-  static_vector<ul_tti_request_pdu, MAX_UL_PDUS_PER_SLOT> pdus;
+  slot_point                                                slot;
+  static_vector<ul_prach_pdu, MAX_PRACH_OCCASIONS_PER_SLOT> prach_pdus;
+  static_vector<ul_pusch_pdu, MAX_PUSCH_PDUS_PER_SLOT>      pusch_pdus;
+  static_vector<ul_pucch_pdu, MAX_PUCCH_PDUS_PER_SLOT>      pucch_pdus;
+  static_vector<ul_srs_pdu, MAX_SRS_PDUS_PER_SLOT>          srs_pdus;
+
+  /// Returns true if the message has no PDUs.
+  bool empty() const { return prach_pdus.empty() && pusch_pdus.empty() && pucch_pdus.empty() && srs_pdus.empty(); }
 };
 
 } // namespace fapi
@@ -42,28 +43,17 @@ struct formatter<ocudu::fapi::ul_tti_request> {
   {
     format_to(ctx.out(), "UL_TTI.request slot={}", msg.slot);
 
-    for (const auto& pdu : msg.pdus) {
-      if (const auto* prach_pdu = std::get_if<ocudu::fapi::ul_prach_pdu>(&pdu.pdu)) {
-        format_to(ctx.out(), "{}", *prach_pdu);
-        continue;
-      }
-
-      if (const auto* pucch_pdu = std::get_if<ocudu::fapi::ul_pucch_pdu>(&pdu.pdu)) {
-        format_to(ctx.out(), "{}", *pucch_pdu);
-        continue;
-      }
-
-      if (const auto* pusch_pdu = std::get_if<ocudu::fapi::ul_pusch_pdu>(&pdu.pdu)) {
-        format_to(ctx.out(), "{}", *pusch_pdu);
-        continue;
-      }
-
-      if (const auto* srs_pdu = std::get_if<ocudu::fapi::ul_srs_pdu>(&pdu.pdu)) {
-        format_to(ctx.out(), "{}", *srs_pdu);
-        continue;
-      }
-
-      ocudu_assert(0, "UL_TTI.request PDU type value not recognized.");
+    for (const auto& pdu : msg.prach_pdus) {
+      format_to(ctx.out(), "{}", pdu);
+    }
+    for (const auto& pdu : msg.pusch_pdus) {
+      format_to(ctx.out(), "{}", pdu);
+    }
+    for (const auto& pdu : msg.pucch_pdus) {
+      format_to(ctx.out(), "{}", pdu);
+    }
+    for (const auto& pdu : msg.srs_pdus) {
+      format_to(ctx.out(), "{}", pdu);
     }
 
     return ctx.out();
