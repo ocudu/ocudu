@@ -10,6 +10,7 @@
 #include "ocudu/ran/pusch/tx_scheme_configuration.h"
 #include "ocudu/support/compiler.h"
 #include "ocudu/support/math/math_utils.h"
+#include "ocudu/support/math/pow2_utils.h"
 #include <algorithm>
 
 using namespace ocudu;
@@ -154,6 +155,11 @@ du_pusch_resource_manager::select_tx_codebook_subset(du_cell_index_t            
 unsigned du_pusch_resource_manager::select_srs_nof_ports(du_cell_index_t                             cell_idx,
                                                          const std::optional<ue_capability_summary>& ue_caps) const
 {
+  if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
+    // SRS resources support 1, 2 or 4 ports, and need at least as many ports as PUSCH layers.
+    return 1U << log2_ceil(select_max_rank(cell_idx, ue_caps));
+  }
+
   nr_band band = cell_cfg_list[cell_idx].ran.ul_carrier.band;
 
   if (not ue_caps.has_value() || ue_caps->bands.count(band) == 0) {
@@ -168,6 +174,10 @@ unsigned du_pusch_resource_manager::select_max_rank(du_cell_index_t             
 {
   nr_band  band           = cell_cfg_list[cell_idx].ran.ul_carrier.band;
   unsigned pusch_max_rank = cell_cfg_list[cell_idx].ran.init_bwp.pusch.max_nof_layers;
+
+  if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
+    return pusch_max_rank;
+  }
 
   if (not ue_caps.has_value() || ue_caps->bands.count(band) == 0) {
     return std::min(pusch_max_rank, ue_capability_summary::default_pusch_max_rank);

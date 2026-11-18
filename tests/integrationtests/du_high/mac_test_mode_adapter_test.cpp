@@ -37,6 +37,7 @@ struct mac_event_interceptor {
 
   std::optional<mac_uci_indication_message> last_uci;
   std::optional<mac_crc_indication_message> last_crc;
+  std::optional<mac_srs_indication_message> last_srs;
 };
 
 class phy_dummy : public mac_result_notifier, public mac_cell_result_notifier
@@ -89,10 +90,7 @@ public:
   std::optional<ue_con_res_id_t> resolve_msga_con_res_id(rnti_t tc_rnti) override { return std::nullopt; }
   void                           handle_crc(const mac_crc_indication_message& msg) override { events.last_crc = msg; }
   void                           handle_uci(const mac_uci_indication_message& msg) override { events.last_uci = msg; }
-  void                           handle_srs(const mac_srs_indication_message& msg) override
-  {
-    // TODO: Implement this.
-  }
+  void                           handle_srs(const mac_srs_indication_message& msg) override { events.last_srs = msg; }
   void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs) override {}
   void handle_slot_indication(const mac_cell_timing_context& context) override
   {
@@ -324,6 +322,54 @@ TEST_F(mac_test_mode_test, when_test_mode_ue_has_pusch_grants_then_crc_indicatio
   ASSERT_EQ(mac_events.last_crc->crcs[0].harq_id, ulgrant->pusch_cfg.harq_id);
   ASSERT_TRUE(mac_events.last_crc->crcs[0].tb_crc_success);
   ASSERT_TRUE(mac_events.last_crc->crcs[0].ul_sinr_dB.value() > 0);
+}
+
+TEST_F(mac_test_mode_test, when_srs_indication_is_received_then_test_mode_ue_channel_is_made_ideal)
+{
+  constexpr unsigned nof_rx_ports = 4;
+  constexpr unsigned nof_tx_ports = 2;
+  const rnti_t       other_rnti   = to_rnti(0x4602);
+
+  srs_channel_matrix measured_channel(nof_rx_ports, nof_tx_ports);
+  for (unsigned i_rx = 0; i_rx != nof_rx_ports; ++i_rx) {
+    for (unsigned i_tx = 0; i_tx != nof_tx_ports; ++i_tx) {
+      measured_channel.set_coefficient(cf_t(0.5F, -0.5F), i_rx, i_tx);
+    }
+  }
+
+  mac_srs_indication_message srs_ind;
+  srs_ind.sl_rx = next_slot.without_hyper_sfn();
+  srs_ind.srss.emplace_back(this->params.test_ue_cfg.rnti, std::nullopt, measured_channel);
+  srs_ind.srss.emplace_back(other_rnti, std::nullopt, measured_channel);
+  this->mac_wrapper->get_control_info_handler(to_du_cell_index(0)).handle_srs(srs_ind);
+
+  ASSERT_TRUE(mac_events.last_srs.has_value());
+  ASSERT_EQ(mac_events.last_srs->sl_rx, srs_ind.sl_rx);
+  ASSERT_EQ(mac_events.last_srs->srss.size(), 2);
+
+  // The test mode UE channel has one orthogonal path per UE port.
+  ASSERT_EQ(mac_events.last_srs->srss[0].rnti, this->params.test_ue_cfg.rnti);
+  const auto& test_ue_channel =
+      std::get<mac_srs_pdu::normalized_channel_iq_matrix>(mac_events.last_srs->srss[0].report).channel_matrix;
+  ASSERT_EQ(test_ue_channel.get_nof_rx_ports(), nof_rx_ports);
+  ASSERT_EQ(test_ue_channel.get_nof_tx_ports(), nof_tx_ports);
+  for (unsigned i_rx = 0; i_rx != nof_rx_ports; ++i_rx) {
+    for (unsigned i_tx = 0; i_tx != nof_tx_ports; ++i_tx) {
+      ASSERT_EQ(test_ue_channel.get_coefficient(i_rx, i_tx), i_rx == i_tx ? cf_t(1.0F, 0.0F) : cf_t(0.0F, 0.0F));
+    }
+  }
+
+  // The channel of other UEs is forwarded unchanged.
+  ASSERT_EQ(mac_events.last_srs->srss[1].rnti, other_rnti);
+  const auto& other_ue_channel =
+      std::get<mac_srs_pdu::normalized_channel_iq_matrix>(mac_events.last_srs->srss[1].report).channel_matrix;
+  ASSERT_EQ(other_ue_channel.get_nof_rx_ports(), nof_rx_ports);
+  ASSERT_EQ(other_ue_channel.get_nof_tx_ports(), nof_tx_ports);
+  for (unsigned i_rx = 0; i_rx != nof_rx_ports; ++i_rx) {
+    for (unsigned i_tx = 0; i_tx != nof_tx_ports; ++i_tx) {
+      ASSERT_EQ(other_ue_channel.get_coefficient(i_rx, i_tx), measured_channel.get_coefficient(i_rx, i_tx));
+    }
+  }
 }
 
 class mac_test_mode_auto_uci_test : public base_mac_test_mode_test, public ::testing::TestWithParam<test_params>

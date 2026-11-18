@@ -402,7 +402,30 @@ void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& ms
 
 void mac_test_mode_cell_adapter::handle_srs(const mac_srs_indication_message& msg)
 {
-  // TODO: Implement this method.
+  mac_srs_indication_message msg_copy = msg;
+
+  for (mac_srs_pdu& srs : msg_copy.srss) {
+    if (not is_test_ue(srs.rnti)) {
+      continue;
+    }
+    auto* iq_report = std::get_if<mac_srs_pdu::normalized_channel_iq_matrix>(&srs.report);
+    if (iq_report == nullptr) {
+      continue;
+    }
+
+    // Force an ideal channel, with one orthogonal path per UE port, so that the UL rank is limited only by the
+    // configuration.
+    srs_channel_matrix& matrix       = iq_report->channel_matrix;
+    const unsigned      nof_rx_ports = matrix.get_nof_rx_ports();
+    const unsigned      nof_tx_ports = matrix.get_nof_tx_ports();
+    for (unsigned i_rx = 0; i_rx != nof_rx_ports; ++i_rx) {
+      for (unsigned i_tx = 0; i_tx != nof_tx_ports; ++i_tx) {
+        matrix.set_coefficient(i_rx == i_tx ? cf_t(1.0F, 0.0F) : cf_t(0.0F, 0.0F), i_rx, i_tx);
+      }
+    }
+  }
+
+  adapted.handle_srs(msg_copy);
 }
 
 // Intercepts the sched + signalling results coming from the MAC.
