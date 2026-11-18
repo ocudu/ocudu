@@ -28,9 +28,9 @@ public:
   /// \brief Adds a new PDU to the Tx_Data.request message and returns a reference to the builder.
   ///
   /// These parameters are specified in SCF-222 v4.0 section 3.4.6 in table Tx_Data.request message body.
-  tx_data_request_builder& add_pdu(uint16_t pdu_index, uint8_t cw_index, const shared_transport_block& payload)
+  tx_data_request_builder& add_pdu(uint8_t cw_index, const shared_transport_block& payload)
   {
-    msg.pdus.emplace_back(pdu_index, cw_index, payload);
+    msg.pdus.emplace_back(cw_index, payload);
     return *this;
   }
 

@@ -263,26 +263,7 @@ TEST_F(mac_to_fapi_translator_fixture, pdsch_pdus_carry_no_csi_rs_pdus_when_the_
   EXPECT_EQ(std::vector<unsigned>(nof_csi_pdus.size(), 0U), nof_csi_pdus);
 }
 
-TEST_F(mac_to_fapi_translator_fixture, tx_data_pdus_are_indexed_in_the_order_of_the_dl_tti_pdsch_pdus)
-{
-  // One grant of each kind, except for two UE grants, all of them with a single codeword.
-  static constexpr std::array<unsigned, 1> one_grant  = {0};
-  static constexpr std::array<unsigned, 2> two_grants = {0, 0};
-
-  mac_dl_data_result_test_helper data_result = make_data_result(one_grant, one_grant, two_grants, one_grant);
-  translator.on_new_downlink_data(data_result.result);
-
-  ASSERT_TRUE(gateway_spy.tx_data_msg.has_value());
-  const auto& pdus = gateway_spy.tx_data_msg->pdus;
-  ASSERT_EQ(5U, pdus.size());
-  for (unsigned i = 0, e = pdus.size(); i != e; ++i) {
-    SCOPED_TRACE(i);
-    EXPECT_EQ(i, pdus[i].pdu_index);
-    EXPECT_EQ(0U, pdus[i].cw_index);
-  }
-}
-
-TEST_F(mac_to_fapi_translator_fixture, tx_data_pdus_of_the_same_pdsch_pdu_share_its_index)
+TEST_F(mac_to_fapi_translator_fixture, tx_data_pdus_keep_the_order_and_codeword_of_the_mac_pdus)
 {
   // One SIB, then a UE grant with two codewords, a UE grant with one codeword and a paging grant.
   static constexpr std::array<unsigned, 1> one_cw    = {0};
@@ -294,12 +275,10 @@ TEST_F(mac_to_fapi_translator_fixture, tx_data_pdus_of_the_same_pdsch_pdu_share_
   ASSERT_TRUE(gateway_spy.tx_data_msg.has_value());
   const auto& pdus = gateway_spy.tx_data_msg->pdus;
   ASSERT_EQ(5U, pdus.size());
-  static constexpr std::array<std::pair<unsigned, unsigned>, 5> expected_index_and_codeword = {
-      {{0, 0}, {1, 0}, {1, 1}, {2, 0}, {3, 0}}};
+  static constexpr std::array<unsigned, 5> expected_codewords = {0, 0, 1, 0, 0};
   for (unsigned i = 0, e = pdus.size(); i != e; ++i) {
     SCOPED_TRACE(i);
-    EXPECT_EQ(expected_index_and_codeword[i].first, pdus[i].pdu_index);
-    EXPECT_EQ(expected_index_and_codeword[i].second, pdus[i].cw_index);
+    EXPECT_EQ(expected_codewords[i], pdus[i].cw_index);
   }
 }
 

@@ -16,12 +16,8 @@ namespace fapi {
 struct tx_data_req_pdu {
   tx_data_req_pdu() = default;
 
-  tx_data_req_pdu(uint16_t pdu_index_, uint8_t cw_index_, shared_transport_block pdu_) :
-    pdu_index(pdu_index_), cw_index(cw_index_), pdu(std::move(pdu_))
-  {
-  }
+  tx_data_req_pdu(uint8_t cw_index_, shared_transport_block pdu_) : cw_index(cw_index_), pdu(std::move(pdu_)) {}
 
-  uint16_t               pdu_index;
   uint8_t                cw_index;
   shared_transport_block pdu;
 };

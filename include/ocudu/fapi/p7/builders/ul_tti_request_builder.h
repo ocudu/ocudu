@@ -35,10 +35,7 @@ public:
   /// \brief Adds a PRACH PDU to the message and returns a builder that helps to fill the parameters.
   ///
   /// These parameters are specified in SCF-222 v4.0 section 3.4.3.1 in table PRACH PDU.
-  ul_prach_pdu_builder add_prach_pdu()
-  {
-    return ul_prach_pdu_builder(msg.prach_pdus.emplace_back());
-  }
+  ul_prach_pdu_builder add_prach_pdu() { return ul_prach_pdu_builder(msg.prach_pdus.emplace_back()); }
 
   /// Adds a PUCCH PDU to the message with the given format type and returns a builder that helps to fill the
   /// parameters.
@@ -86,10 +83,7 @@ public:
   /// \brief Adds a PUSCH PDU to the message and returns a builder that helps to fill the parameters.
   ///
   /// These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table PUSCH PDU.
-  ul_pusch_pdu_builder add_pusch_pdu()
-  {
-    return ul_pusch_pdu_builder(msg.pusch_pdus.emplace_back());
-  }
+  ul_pusch_pdu_builder add_pusch_pdu() { return ul_pusch_pdu_builder(msg.pusch_pdus.emplace_back()); }
 
   /// \brief Adds a PUSCH PDU to the message and returns a builder that helps to fill the parameters.
   ///
@@ -105,10 +99,7 @@ public:
   /// \brief Adds an SRS PDU to the message and returns a builder that helps to fill the parameters.
   ///
   /// These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table SRS PDU.
-  ul_srs_pdu_builder add_srs_pdu()
-  {
-    return ul_srs_pdu_builder(msg.srs_pdus.emplace_back());
-  }
+  ul_srs_pdu_builder add_srs_pdu() { return ul_srs_pdu_builder(msg.srs_pdus.emplace_back()); }
 };
 
 } // namespace fapi

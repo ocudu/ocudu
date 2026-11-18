@@ -33,10 +33,7 @@ public:
 
   /// Adds a PDCCH PDU to the message, fills its basic parameters using the given arguments and returns a PDCCH PDU
   /// builder.
-  dl_pdcch_pdu_builder add_pdcch_pdu()
-  {
-    return dl_pdcch_pdu_builder(msg.pdcch_pdus.emplace_back());
-  }
+  dl_pdcch_pdu_builder add_pdcch_pdu() { return dl_pdcch_pdu_builder(msg.pdcch_pdus.emplace_back()); }
 
   /// Adds a PDSCH PDU to the message, fills its basic parameters using the given arguments and returns a PDSCH PDU
   /// builder.
@@ -50,28 +47,16 @@ public:
 
   /// Adds a PDSCH PDU to the message, fills its basic parameters using the given arguments and returns a PDSCH PDU
   /// builder.
-  dl_pdsch_pdu_builder add_pdsch_pdu()
-  {
-    return dl_pdsch_pdu_builder(msg.pdsch_pdus.emplace_back());
-  }
+  dl_pdsch_pdu_builder add_pdsch_pdu() { return dl_pdsch_pdu_builder(msg.pdsch_pdus.emplace_back()); }
 
   /// Adds a CSI-RS PDU to the message and returns a CSI-RS PDU builder.
-  dl_csi_rs_pdu_builder add_csi_rs_pdu()
-  {
-    return dl_csi_rs_pdu_builder(msg.csi_rs_pdus.emplace_back());
-  }
+  dl_csi_rs_pdu_builder add_csi_rs_pdu() { return dl_csi_rs_pdu_builder(msg.csi_rs_pdus.emplace_back()); }
 
   /// Adds a SSB PDU to the message and returns a SSB PDU builder.
-  dl_ssb_pdu_builder add_ssb_pdu()
-  {
-    return dl_ssb_pdu_builder(msg.ssb_pdus.emplace_back());
-  }
+  dl_ssb_pdu_builder add_ssb_pdu() { return dl_ssb_pdu_builder(msg.ssb_pdus.emplace_back()); }
 
   /// Adds a PRS PDU to the message and returns a PRS PDU builder.
-  dl_prs_pdu_builder add_prs_pdu()
-  {
-    return dl_prs_pdu_builder(msg.prs_pdus.emplace_back());
-  }
+  dl_prs_pdu_builder add_prs_pdu() { return dl_prs_pdu_builder(msg.prs_pdus.emplace_back()); }
 
 private:
   dl_tti_request& msg;
