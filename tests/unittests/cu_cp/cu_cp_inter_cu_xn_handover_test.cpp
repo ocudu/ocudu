@@ -941,6 +941,22 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_ue_arrived_by_xn_handover_then_next
   ASSERT_EQ(guami.amf_pointer.to_number(), 1);
 }
 
+TEST_F(cu_cp_inter_cu_xn_handover_test, when_bearer_setup_fails_at_target_then_handover_preparation_failure_is_sent)
+{
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(source_local_xnap_ue_id));
+
+  // The CU-UP rejects the bearer context.
+  get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_setup_failure(cu_cp_e1ap_id, cu_up_e1ap_id));
+
+  ASSERT_TRUE(this->wait_for_xnap_tx_pdu(xnc_peer_idx, xnap_pdu));
+  ASSERT_EQ(xnap_pdu.pdu.type().value, asn1::xnap::xnap_pdu_c::types_opts::unsuccessful_outcome);
+  ASSERT_EQ(xnap_pdu.pdu.unsuccessful_outcome().value.type().value,
+            asn1::xnap::xnap_elem_procs_o::unsuccessful_outcome_c::types_opts::ho_prep_fail);
+  const auto& cause = xnap_pdu.pdu.unsuccessful_outcome().value.ho_prep_fail()->cause;
+  ASSERT_EQ(cause.type().value, asn1::xnap::cause_c::types_opts::misc);
+  ASSERT_EQ(cause.misc().value, asn1::xnap::cause_misc_opts::unspecified);
+}
+
 // When the source proposes DL data forwarding for its QoS flows in the Data Forwarding and Offloading Info from
 // source NG-RAN node IE (TS 38.423 section 9.2.1.17), the target asks its CU-UP for a forwarding tunnel carrying
 // those flows (TS 37.483 section 9.3.2.5).

@@ -720,7 +720,12 @@ inter_cu_handover_target_routine::generate_handover_resource_allocation_response
 
   cu_cp_handover_request_failure ho_request_failure;
   ho_request_failure.ue_index = request.ue_index;
-  ho_request_failure.cause    = ngap_cause_t{cause_protocol_t::unspecified};
+
+  if (is_xn_handover()) {
+    ho_request_failure.cause = xnap_cause_t{xnap_cause_misc_t::unspecified};
+  } else {
+    ho_request_failure.cause = ngap_cause_t{ngap_cause_misc_t::unspecified};
+  }
 
   return ho_request_failure;
 }

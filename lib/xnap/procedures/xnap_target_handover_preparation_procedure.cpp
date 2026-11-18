@@ -8,6 +8,7 @@
 #include "xn_handover_asn1_helpers.h"
 #include "ocudu/asn1/xnap/common.h"
 #include "ocudu/asn1/xnap/xnap_pdu_contents.h"
+#include "ocudu/support/ocudu_assert.h"
 #include "ocudu/xnap/xnap_message.h"
 #include <variant>
 
@@ -148,7 +149,9 @@ void xnap_target_handover_preparation_procedure::send_handover_preparation_failu
   xnap_msg.pdu.set_unsuccessful_outcome();
   xnap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_XNAP_ID_HO_PREP);
 
-  handover_preparation_failure_to_asn1(xnap_msg.pdu.unsuccessful_outcome().value.ho_prep_fail(), ho_failure);
+  const bool has_xnap_cause =
+      handover_preparation_failure_to_asn1(xnap_msg.pdu.unsuccessful_outcome().value.ho_prep_fail(), ho_failure);
+  ocudu_assert(has_xnap_cause, "ue={}: Handover Preparation Failure without an XnAP cause", ho_failure.ue_index);
 
   auto& ho_fail = xnap_msg.pdu.unsuccessful_outcome().value.ho_prep_fail();
   // This is sent from the target to the source, so the source UE ID is the peer XNAP UE ID.
