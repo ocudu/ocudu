@@ -35,7 +35,8 @@ f1ap_ue_creation_response ocudu::odu::create_f1ap_ue(const f1ap_ue_creation_requ
 
   // Prepare response.
   f1ap_ue_creation_response resp{};
-  resp.result = true;
+  resp.result     = true;
+  resp.f1ap_ue_id = u.context.gnb_du_ue_f1ap_id;
   for (const f1c_bearer_to_addmod& srb : req.f1c_bearers_to_add) {
     resp.f1c_bearers_added.push_back(u.bearers.find_srb(srb.srb_id));
   }

@@ -22,17 +22,14 @@ namespace odu {
 /// \brief This class holds the context of an UE in the DU.
 struct du_ue_context {
   du_ue_context(du_ue_index_t ue_index_, du_cell_index_t pcell_index_, rnti_t rnti_, nr_cell_global_id_t nr_cgi_) :
-    ue_index(ue_index_),
-    rnti(rnti_),
-    f1ap_ue_id(int_to_gnb_du_ue_f1ap_id(ue_index_)),
-    pcell_index(pcell_index_),
-    nr_cgi(nr_cgi_)
+    ue_index(ue_index_), rnti(rnti_), pcell_index(pcell_index_), nr_cgi(nr_cgi_)
   {
   }
 
   const du_ue_index_t ue_index;
   rnti_t              rnti = rnti_t::INVALID_RNTI;
-  gnb_du_ue_f1ap_id_t f1ap_ue_id;
+  /// gNB-DU UE F1AP ID that the F1AP allocated to the UE. It differs from the UE index, which the DU reuses.
+  gnb_du_ue_f1ap_id_t f1ap_ue_id = gnb_du_ue_f1ap_id_t::invalid;
   du_cell_index_t     pcell_index;
   /// \brief The NR Cell Global Identity of the UE's serving cell.
   nr_cell_global_id_t nr_cgi;
