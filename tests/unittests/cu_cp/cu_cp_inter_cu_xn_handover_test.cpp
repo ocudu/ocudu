@@ -957,6 +957,56 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_bearer_setup_fails_at_target_then_h
   ASSERT_EQ(cause.misc().value, asn1::xnap::cause_misc_opts::unspecified);
 }
 
+// The NG handover target keeps the UE-AMBR of the NGAP Handover Request (TS 38.413 Section 9.2.3.4), so a later Xn
+// handover forwards it to the next target (TS 38.423 Section 9.2.1.1).
+TEST_F(cu_cp_inter_cu_xn_handover_test,
+       when_ue_arrived_by_ng_handover_then_next_xn_handover_request_carries_its_ue_ambr)
+{
+  // This CU-CP is the target of an NG handover.
+  ngap_message ng_ho_request         = generate_valid_handover_request(amf_ue_id);
+  auto&        ng_ue_ambr            = ng_ho_request.pdu.init_msg().value.ho_request()->ue_aggr_max_bit_rate;
+  ng_ue_ambr.ue_aggr_max_bit_rate_dl = 2000000000;
+  ng_ue_ambr.ue_aggr_max_bit_rate_ul = 1000000000;
+  get_amf().push_tx_pdu(ng_ho_request);
+  ASSERT_TRUE(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_bearer_context_setup_request(e1ap_pdu));
+  cu_cp_e1ap_id =
+      int_to_gnb_cu_cp_ue_e1ap_id(e1ap_pdu.pdu.init_msg().value.bearer_context_setup_request()->gnb_cu_cp_ue_e1ap_id);
+  ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
+  get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_modification_response(cu_cp_e1ap_id, cu_up_e1ap_id));
+  ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_handover_request_ack(ngap_pdu));
+  get_amf().push_tx_pdu(generate_valid_dl_ran_status_transfer(amf_ue_id, {}));
+  ASSERT_TRUE(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_bearer_context_modification_request(e1ap_pdu));
+  ASSERT_TRUE(send_bearer_context_modification_response());
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
+      du_ue_id, cu_ue_id, srb_id_t::srb1, make_byte_buffer("800008005b7d9d03").value()));
+  ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_handover_notify(ngap_pdu));
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_modification_request(f1ap_pdu));
+  ASSERT_TRUE(send_ue_context_modification_response_empty(cu_ue_id, du_ue_id));
+
+  // Now this CU-CP is the source of an Xn handover, towards the cell of the Xn-C peer (PCI 4). It is triggered by
+  // command, as a Measurement Report would need an integrity MAC from the keys of the NG handover.
+  this->get_xnc_cu_cp(xnc_peer_idx).try_pop_rx_pdu(xnap_pdu);
+  ASSERT_TRUE(get_cu_cp().get_command_handler().get_mobility_command_handler().trigger_handover(
+      pci_t{0}, crnti, pci_t{4}, plmn_identity::test_value(), 7));
+  ASSERT_TRUE(this->wait_for_xnap_tx_pdu(xnc_peer_idx, xnap_pdu));
+  ASSERT_EQ(xnap_pdu.pdu.type().value, asn1::xnap::xnap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(xnap_pdu.pdu.init_msg().value.type().value,
+            asn1::xnap::xnap_elem_procs_o::init_msg_c::types_opts::ho_request);
+
+  // The Handover Request carries the UE-AMBR of the NGAP Handover Request.
+  const auto& xn_ue_ambr = xnap_pdu.pdu.init_msg().value.ho_request()->ue_context_info_ho_request.ue_ambr;
+  ASSERT_EQ(xn_ue_ambr.dl_ue_ambr, ng_ue_ambr.ue_aggr_max_bit_rate_dl)
+      << "The Xn Handover Request does not carry the UE-AMBR of the NGAP Handover Request";
+  ASSERT_EQ(xn_ue_ambr.ul_ue_ambr, ng_ue_ambr.ue_aggr_max_bit_rate_ul)
+      << "The Xn Handover Request does not carry the UE-AMBR of the NGAP Handover Request";
+}
+
 // When the source proposes DL data forwarding for its QoS flows in the Data Forwarding and Offloading Info from
 // source NG-RAN node IE (TS 38.423 section 9.2.1.17), the target asks its CU-UP for a forwarding tunnel carrying
 // those flows (TS 37.483 section 9.3.2.5).
