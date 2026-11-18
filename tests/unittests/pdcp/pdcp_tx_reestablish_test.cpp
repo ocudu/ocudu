@@ -83,6 +83,38 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_um_reestablish_then_pdus_and_discard_t
   EXPECT_EQ(pdcp_rohc_factory->get_nof_decompressors(), 0);
 }
 
+/// Test that DRB UM reestablishment stops the discard timer of the discarded SDUs
+TEST_P(pdcp_tx_reestablish_test, when_drb_um_reestablish_then_new_sdu_keeps_full_discard_time)
+{
+  constexpr pdcp_discard_timer discard_timer       = pdcp_discard_timer::ms10;
+  constexpr uint32_t           discard_timer_ticks = static_cast<uint32_t>(discard_timer);
+  constexpr uint32_t           half_discard_ticks  = discard_timer_ticks / 2;
+  init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::um, discard_timer);
+
+  pdcp_tx->set_state(pdcp_tx_state{0, 0, 0, 0, 0});
+  pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::off);
+
+  // Start the discard timer with an SDU before the reestablishment.
+  pdcp_tx->handle_sdu(byte_buffer::create(sdu1).value());
+  wait_pending_crypto();
+  worker.run_pending_tasks();
+  tick_all(half_discard_ticks);
+  FLUSH_AND_ASSERT_EQ(1, pdcp_tx->nof_pdus_in_window());
+
+  pdcp_tx->reestablish(sec_cfg);
+  FLUSH_AND_ASSERT_EQ(0, pdcp_tx->nof_pdus_in_window());
+
+  // A new SDU stays in the window for the complete discard time.
+  pdcp_tx->handle_sdu(byte_buffer::create(sdu1).value());
+  wait_pending_crypto();
+  worker.run_pending_tasks();
+  tick_all(discard_timer_ticks - half_discard_ticks);
+  FLUSH_AND_ASSERT_EQ(1, pdcp_tx->nof_pdus_in_window());
+
+  tick_all(half_discard_ticks);
+  FLUSH_AND_ASSERT_EQ(0, pdcp_tx->nof_pdus_in_window());
+}
+
 /// Test DRB AM reestablishment
 TEST_P(pdcp_tx_reestablish_test, when_drb_am_reestablish_then_pdus_retx)
 {

@@ -1003,6 +1003,9 @@ void pdcp_entity_tx::reset()
 {
   st = {0, 0, 0, 0, 0};
   tx_window.clear();
+  if (cfg.discard_timer.has_value()) {
+    discard_timer.stop();
+  }
   logger.log_debug("Entity was reset. {}", st);
 }
 
