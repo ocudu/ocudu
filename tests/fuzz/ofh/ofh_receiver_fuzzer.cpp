@@ -90,8 +90,13 @@ constexpr std::array<bs_channel_bandwidth, 4> cell_bandwidths = {bs_channel_band
                                                                  bs_channel_bandwidth::MHz10,
                                                                  bs_channel_bandwidth::MHz20,
                                                                  bs_channel_bandwidth::MHz40};
-/// RU operating bandwidth when the input asks for one larger than the cell bandwidth.
-constexpr bs_channel_bandwidth wide_ru_bandwidth = bs_channel_bandwidth::MHz50;
+/// \brief RU operating bandwidth when the input asks for one larger than the cell bandwidth.
+///
+/// The widest bandwidth of the subcarrier spacing in FR1: 50 MHz at 15 kHz and 100 MHz, or 273 PRBs, at 30 kHz.
+bs_channel_bandwidth get_wide_ru_bandwidth(subcarrier_spacing scs)
+{
+  return scs == subcarrier_spacing::kHz30 ? bs_channel_bandwidth::MHz100 : bs_channel_bandwidth::MHz50;
+}
 
 /// Bit widths that the configuration validator accepts for BFP compression.
 constexpr std::array<unsigned, 5> bfp_widths = {8, 9, 12, 14, 16};
@@ -216,7 +221,7 @@ sector_configuration decode_sector_configuration(input_reader& input)
   cfg.is_downlink_static_compr_hdr_enabled = true;
   cfg.scs                      = (flags & 0x40U) != 0 ? subcarrier_spacing::kHz30 : subcarrier_spacing::kHz15;
   cfg.bw                       = cell_bandwidths[(misc >> 2U) & 0x03U];
-  cfg.ru_operating_bw          = (flags & 0x80U) != 0 ? wide_ru_bandwidth : cfg.bw;
+  cfg.ru_operating_bw          = (flags & 0x80U) != 0 ? get_wide_ru_bandwidth(cfg.scs) : cfg.bw;
   cfg.ul_compression_params    = decode_compression(ul_compr);
   cfg.prach_compression_params = decode_compression(prach_comp);
   cfg.iq_scaling               = 1.0F;
@@ -659,7 +664,8 @@ private:
   /// \brief Receives a U-Plane message of the input in a valid Ethernet frame and eCPRI header.
   ///
   /// The harness writes the headers that the receiver filters on, so that the fuzzer mutates the Open Fronthaul
-  /// message rather than the addresses. The raw frame operation covers the filters.
+  /// message rather than the addresses. The raw frame operation covers the filters. The input may set the revision,
+  /// concatenation and message type fields of the eCPRI header, which the eCPRI decoder checks.
   void receive_uplane_frame(input_reader& input)
   {
     uint8_t eaxc_selector = input.read_u8();
@@ -678,6 +684,15 @@ private:
     std::optional<uint16_t> ecpri_payload_size;
     if ((flags & 0x08U) != 0) {
       ecpri_payload_size = input.read_u16();
+    }
+
+    // First two bytes of the eCPRI common header: revision 1, last packet, IQ data message type, unless read from the
+    // input.
+    uint8_t ecpri_revision_byte = 0x10;
+    uint8_t ecpri_msg_type      = 0x00;
+    if ((flags & 0x10U) != 0) {
+      ecpri_revision_byte = input.read_u8();
+      ecpri_msg_type      = input.read_u8();
     }
 
     std::vector<uint8_t> message = to_vector(input.read_bytes(input.read_u16()));
@@ -706,9 +721,9 @@ private:
     frame.insert(frame.end(), ru_mac.begin(), ru_mac.end());
     frame.push_back(ether::ECPRI_ETH_TYPE >> 8U);
     frame.push_back(ether::ECPRI_ETH_TYPE & 0xffU);
-    // eCPRI common header: revision 1, last packet, IQ data message type.
-    frame.push_back(0x10);
-    frame.push_back(0x00);
+    // eCPRI common header.
+    frame.push_back(ecpri_revision_byte);
+    frame.push_back(ecpri_msg_type);
     frame.push_back(payload_size >> 8U);
     frame.push_back(payload_size & 0xffU);
     frame.push_back(eaxc >> 8U);

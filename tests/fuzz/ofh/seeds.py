@@ -77,6 +77,7 @@ SLOT_OF_LAST_UPLINK = 0x01
 SLOT_OF_LAST_PRACH = 0x02
 HARNESS_SEQ_ID = 0x04
 ECPRI_SIZE_FROM_INPUT = 0x08
+ECPRI_HEADER_FROM_INPUT = 0x10
 
 # PRACH formats, as indexes into the format table of the harness.
 FORMAT_0 = 0
@@ -114,14 +115,19 @@ def op_prach(delta, fmt, start=0, rb_offset=0, nof_td=0):
     return bytes([OP_PRACH_OCCASION, delta, fmt, start, rb_offset, nof_td])
 
 
-def op_uplane(eaxc_selector, flags, message, seq_id=None, ecpri_size=None):
+def op_uplane(eaxc_selector, flags, message, seq_id=None, ecpri_size=None, ecpri_header=None):
+    """U-Plane frame operation. ecpri_header gives the first two bytes of the eCPRI common header."""
     if ecpri_size is not None:
         flags |= ECPRI_SIZE_FROM_INPUT
+    if ecpri_header is not None:
+        flags |= ECPRI_HEADER_FROM_INPUT
     op = bytes([OP_UPLANE_FRAME, eaxc_selector, flags])
     if not flags & HARNESS_SEQ_ID:
         op += bytes([seq_id or 0])
     if ecpri_size is not None:
         op += ecpri_size.to_bytes(2, "big")
+    if ecpri_header is not None:
+        op += ecpri_header
     return op + len(message).to_bytes(2, "big") + message
 
 
@@ -131,6 +137,18 @@ def op_raw(frame):
 
 def op_advance(nof_symbols):
     return bytes([OP_ADVANCE, nof_symbols - 1])
+
+
+# MAC addresses of the harness: the DU is the destination and the RU the source of the received frames.
+DU_MAC = bytes.fromhex("020000000001")
+RU_MAC = bytes.fromhex("020000000002")
+ECPRI_ETH_TYPE = bytes.fromhex("aefe")
+
+
+def eth_frame(payload, dst=DU_MAC, src=RU_MAC, eth_type=ECPRI_ETH_TYPE):
+    """Ethernet frame as the NIC delivers it, VLAN tag stripped and padded to the minimum length of 64 bytes."""
+    frame = dst + src + eth_type + payload
+    return frame + bytes(max(0, 64 - len(frame)))
 
 
 # Number of bytes of a PRB of 16-bit IQ without compression, and of BFP 9-bit with its exponent.
@@ -209,12 +227,49 @@ RX_SEEDS = {
     # Frame from another source MAC address.
     "raw_frame_other_source": rx_config()
     + op_raw(bytes.fromhex("020000000001020000000099aefe1000000c00000000") + bytes(42)),
+    # Frame that is not eCPRI, from tests/unittests/ofh/ethernet/vlan_ethernet_frame_decoder_test.cpp.
+    "raw_frame_other_eth_type": rx_config() + op_raw(eth_frame(bytes(50), eth_type=bytes.fromhex("aabb"))),
+    # Frame shorter than the minimum Ethernet frame length.
+    "raw_frame_too_short": rx_config() + op_raw(eth_frame(b"")[:14]),
+    # eCPRI real-time control packet, from tests/unittests/ofh/ecpri/ecpri_packet_decoder_impl_test.cpp.
+    "raw_frame_ecpri_rt_control": rx_config()
+    + op_raw(eth_frame(bytes.fromhex("10020014bebecafe900000000101000000000000fffe0000"))),
+    # eCPRI IQ data packet for an eAxC that is not configured, from the same test.
+    "raw_frame_ecpri_iq_data": rx_config()
+    + op_raw(eth_frame(bytes.fromhex("10000014cafedeba900000000101000000000000fffe0000"))),
+    # eCPRI payload size field below the size of the PC_ID and SEQ_ID fields, from the same test.
+    "raw_frame_ecpri_truncated": rx_config() + op_raw(eth_frame(bytes.fromhex("10000003cafede"))),
+    # eCPRI header with an unsupported revision.
+    "ecpri_unsupported_revision": rx_config()
+    + op_uplane(
+        UL_EAXC, HARNESS_SEQ_ID, uplane_message(FILTER_STANDARD, 0, 0, 1, PRB_NONE_16), ecpri_header=bytes([0x20, 0x00])
+    ),
+    # eCPRI header of a concatenated packet.
+    "ecpri_concatenated": rx_config()
+    + op_uplane(
+        UL_EAXC, HARNESS_SEQ_ID, uplane_message(FILTER_STANDARD, 0, 0, 1, PRB_NONE_16), ecpri_header=bytes([0x11, 0x00])
+    ),
+    # eCPRI real-time control message type, with the payload size field ignored.
+    "ecpri_rt_control_ignore_size": rx_config(flags=0x04)
+    + op_uplane(
+        UL_EAXC, HARNESS_SEQ_ID, uplane_message(FILTER_STANDARD, 0, 0, 1, PRB_NONE_16), ecpri_header=bytes([0x10, 0x02])
+    ),
     # Four antennas, 40 MHz at 30 kHz, with OTA symbols advanced across the reception window.
     "four_antennas_30khz": rx_config(flags=0x40, misc=0x0F)
     + op_uplink_slot(2)
     + op_advance(28)
     + op_uplane(3, SLOT_OF_LAST_UPLINK | HARNESS_SEQ_ID, uplane_message(FILTER_STANDARD, 0, 0, 2, PRB_NONE_16))
     + op_advance(40),
+    # 40 MHz cell in a 100 MHz RU at 30 kHz, BFP 9-bit, with a section of all the 273 PRBs of the RU (number of PRBs
+    # set to 0).
+    "pusch_ru_100mhz_all_prbs": rx_config(flags=0xC0, ul_compr=0x81, misc=0x0C)
+    + op_uplink_slot(1)
+    + op_advance(28)
+    + op_uplane(
+        UL_EAXC,
+        SLOT_OF_LAST_UPLINK | HARNESS_SEQ_ID,
+        uplane_message(FILTER_STANDARD, 0, 0, 0, PRB_BFP_9) + bytes(273 * PRB_BFP_9),
+    ),
 }
 
 # ---------------------------------------------------------------------------
