@@ -89,6 +89,12 @@ rate_estimator::rate_estimator(const cell_configuration& cell_cfg)
 {
   // The maximum TBS only depends on the MCS table, the number of layers and the MCS of the UE, so it is computed once
   // for every combination. The MCS indexes above the maximum of each table are not reachable.
+  build_dl_max_tbs(cell_cfg);
+  build_ul_max_tbs(cell_cfg);
+}
+
+void rate_estimator::build_dl_max_tbs(const cell_configuration& cell_cfg)
+{
   const tbs_calculator_configuration dl_tbs_cfg_ref{
       .nof_symb_sh      = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
       .nof_oh_prb       = 0,
@@ -115,7 +121,10 @@ rate_estimator::rate_estimator(const cell_configuration& cell_cfg)
       }
     }
   }
+}
 
+void rate_estimator::build_ul_max_tbs(const cell_configuration& cell_cfg)
+{
   const tbs_calculator_configuration ul_tbs_cfg_ref{
       .nof_symb_sh      = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
       .nof_oh_prb       = 0,
@@ -126,7 +135,9 @@ rate_estimator::rate_estimator(const cell_configuration& cell_cfg)
     const pusch_time_domain_resource_allocation pusch_td_cfg{
         2, sch_mapping_type::typeA, {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP}};
     const dmrs_uplink_config dmrs_cfg{};
-    for (unsigned tp = 0; tp != 2; ++tp) {
+    // Transform precoding only allows a single layer.
+    const unsigned nof_tp_modes = nof_layers == 1 ? 2 : 1;
+    for (unsigned tp = 0; tp != nof_tp_modes; ++tp) {
       const bool                   use_transform_precoder = tp != 0;
       const auto                   dmrs                   = make_dmrs_info_dedicated(pusch_td_cfg,
                                                  cell_cfg.params.pci,

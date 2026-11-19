@@ -227,8 +227,8 @@ void ue_link_adaptation_controller::update_dl_mcs_lims(pdsch_mcs_table mcs_table
   }
 
   last_dl_mcs_table           = mcs_table;
-  const sch_mcs_index max_mcs = map_cqi_to_mcs(cqi_value::max(), mcs_table).value();
-  dl_mcs_lims                 = interval<sch_mcs_index, true>{cell_cfg.expert_cfg.ue.dl_mcs.start(),
+  const sch_mcs_index max_mcs = get_max_mcs_dl(mcs_table);
+  dl_mcs_lims                 = interval<sch_mcs_index, true>{std::min(cell_cfg.expert_cfg.ue.dl_mcs.start(), max_mcs),
                                                               std::min(cell_cfg.expert_cfg.ue.dl_mcs.stop(), max_mcs)};
 }
 
@@ -241,7 +241,7 @@ void ue_link_adaptation_controller::update_ul_mcs_lims(pusch_mcs_table mcs_table
   last_ul_mcs_table       = mcs_table;
   last_transform_precoder = transform_precoder;
 
-  ul_mcs_lims = interval<sch_mcs_index, true>{
-      cell_cfg.expert_cfg.ue.ul_mcs.start(),
-      std::min(cell_cfg.expert_cfg.ue.ul_mcs.stop(), get_max_mcs_ul(mcs_table, transform_precoder))};
+  const sch_mcs_index max_mcs = get_max_mcs_ul(mcs_table, transform_precoder);
+  ul_mcs_lims                 = interval<sch_mcs_index, true>{std::min(cell_cfg.expert_cfg.ue.ul_mcs.start(), max_mcs),
+                                                              std::min(cell_cfg.expert_cfg.ue.ul_mcs.stop(), max_mcs)};
 }

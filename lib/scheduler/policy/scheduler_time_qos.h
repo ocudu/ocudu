@@ -104,6 +104,11 @@ private:
   /// Maximum TBS in bytes, indexed by number of layers minus one and MCS index.
   using max_tbs_table = std::array<std::array<unsigned, NOF_MCS_INDEXES>, MAX_NOF_LAYERS>;
 
+  /// Fills the maximum DL TBS of every PDSCH MCS table.
+  void build_dl_max_tbs(const cell_configuration& cell_cfg);
+  /// Fills the maximum UL TBS of every PUSCH MCS table and transform precoding mode.
+  void build_ul_max_tbs(const cell_configuration& cell_cfg);
+
   /// Maximum DL TBS per PDSCH MCS table.
   std::array<max_tbs_table, NOF_DL_MCS_TABLES> dl_max_tbs{};
   /// Maximum UL TBS per PUSCH MCS table and use of transform precoding.

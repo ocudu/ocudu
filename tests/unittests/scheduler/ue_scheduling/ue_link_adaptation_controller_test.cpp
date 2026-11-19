@@ -14,27 +14,32 @@
 
 using namespace ocudu;
 
+/// Overrides of the default scheduler expert configuration.
+struct link_adaptation_test_options {
+  std::optional<float>         olla_cqi_inc;
+  std::optional<float>         max_cqi_offset;
+  std::optional<float>         target_bler;
+  std::optional<sch_mcs_index> fixed_mcs;
+};
+
 class base_ue_link_adaptation_controller_test
 {
 public:
-  base_ue_link_adaptation_controller_test(std::optional<float>         olla_cqi_inc   = std::nullopt,
-                                          std::optional<float>         max_cqi_offset = std::nullopt,
-                                          std::optional<float>         target_bler    = std::nullopt,
-                                          std::optional<sch_mcs_index> fixed_mcs      = std::nullopt) :
+  explicit base_ue_link_adaptation_controller_test(const link_adaptation_test_options& opts = {}) :
     sched_cfg([&]() {
       scheduler_expert_config cfg = config_helpers::make_default_scheduler_expert_config();
-      if (olla_cqi_inc.has_value()) {
-        cfg.ue.olla_cqi_inc = *olla_cqi_inc;
+      if (opts.olla_cqi_inc.has_value()) {
+        cfg.ue.olla_cqi_inc = *opts.olla_cqi_inc;
       }
-      if (max_cqi_offset.has_value()) {
-        cfg.ue.olla_max_cqi_offset = *max_cqi_offset;
+      if (opts.max_cqi_offset.has_value()) {
+        cfg.ue.olla_max_cqi_offset = *opts.max_cqi_offset;
       }
-      if (target_bler.has_value()) {
-        cfg.ue.olla_dl_target_bler = *target_bler;
+      if (opts.target_bler.has_value()) {
+        cfg.ue.olla_dl_target_bler = *opts.target_bler;
       }
-      if (fixed_mcs.has_value()) {
-        cfg.ue.dl_mcs = {*fixed_mcs, *fixed_mcs};
-        cfg.ue.ul_mcs = {*fixed_mcs, *fixed_mcs};
+      if (opts.fixed_mcs.has_value()) {
+        cfg.ue.dl_mcs = {*opts.fixed_mcs, *opts.fixed_mcs};
+        cfg.ue.ul_mcs = {*opts.fixed_mcs, *opts.fixed_mcs};
       }
       return cfg;
     }())
@@ -126,7 +131,10 @@ class ue_link_adaptation_controller_mcs_derivation_test : public base_ue_link_ad
                                                           public ::testing::Test
 {
 public:
-  ue_link_adaptation_controller_mcs_derivation_test() : base_ue_link_adaptation_controller_test(0.1, 15, 0.49) {}
+  ue_link_adaptation_controller_mcs_derivation_test() :
+    base_ue_link_adaptation_controller_test({.olla_cqi_inc = 0.1, .max_cqi_offset = 15, .target_bler = 0.49})
+  {
+  }
 };
 
 TEST_F(ue_link_adaptation_controller_mcs_derivation_test,
@@ -164,7 +172,7 @@ class ue_link_adaptation_controller_fixed_mcs_test : public base_ue_link_adaptat
 {
 public:
   ue_link_adaptation_controller_fixed_mcs_test() :
-    base_ue_link_adaptation_controller_test(std::nullopt, std::nullopt, std::nullopt, sch_mcs_index{28})
+    base_ue_link_adaptation_controller_test({.fixed_mcs = sch_mcs_index{28}})
   {
   }
 };
