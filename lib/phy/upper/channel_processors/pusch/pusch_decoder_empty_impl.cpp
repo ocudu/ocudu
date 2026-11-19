@@ -7,7 +7,6 @@
 #include "ocudu/ocuduvec/zero.h"
 #include "ocudu/phy/upper/channel_processors/pusch/pusch_decoder_notifier.h"
 #include "ocudu/phy/upper/channel_processors/pusch/pusch_decoder_result.h"
-#include "ocudu/ran/sch/sch_segmentation.h"
 
 using namespace ocudu;
 
@@ -35,8 +34,6 @@ void pusch_decoder_empty_impl::decoder_buffer_impl::new_data(span<uint8_t>      
                                                              ocudu::pusch_decoder_notifier&      notifier_,
                                                              const pusch_decoder::configuration& cfg)
 {
-  units::bytes tb_size = units::bytes(transport_block.size());
-
   // Erase transport block contents from a previous transmission.
   ocuduvec::zero(transport_block);
 
@@ -46,11 +43,6 @@ void pusch_decoder_empty_impl::decoder_buffer_impl::new_data(span<uint8_t>      
   notifier       = &notifier_;
   is_new_data    = cfg.new_data;
   softbits_count = 0;
-  nof_codeblocks = compute_nof_codeblocks(tb_size.to_bits(), cfg.base_graph);
-
-  // Calculate full code block size.
-  unsigned lifting_size = compute_lifting_size(tb_size.to_bits(), cfg.base_graph, nof_codeblocks);
-  codeblock_size        = compute_codeblock_size(cfg.base_graph, lifting_size);
 }
 
 span<log_likelihood_ratio> pusch_decoder_empty_impl::decoder_buffer_impl::get_next_block_view(unsigned block_size)
@@ -78,9 +70,7 @@ void pusch_decoder_empty_impl::decoder_buffer_impl::on_end_softbits()
 
   // Reset rate matching data if it a new transmission.
   if (is_new_data) {
-    for (unsigned i_cb = 0; i_cb != nof_codeblocks; ++i_cb) {
-      ocuduvec::zero(rm_buffer->get_codeblock_soft_bits(i_cb, codeblock_size.value()));
-    }
+    rm_buffer->zero_all_cb_soft_bits();
   }
 
   // Unlock buffer for a retransmissions.

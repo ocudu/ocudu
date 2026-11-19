@@ -6,6 +6,7 @@
 #pragma once
 
 #include "ocudu/adt/tensor.h"
+#include "ocudu/ocuduvec/zero.h"
 #include "ocudu/phy/upper/rx_buffer_decoder_callback.h"
 #include "ocudu/phy/upper/unique_rx_buffer.h"
 
@@ -29,27 +30,40 @@ public:
     ++const_count;
     return soft_bits.get_dimensions_size().back();
   }
-  void       reset_codeblocks_crc() override { ++count; }
+
+  void reset_codeblocks_crc() override { ++count; }
+
   span<bool> get_codeblocks_crc() override
   {
     ++count;
     return span<bool>(reinterpret_cast<bool*>(crc.data()), crc.size());
   }
+
   unsigned get_absolute_codeblock_id(unsigned codeblock_id) const override
   {
     ++const_count;
     return 0;
   }
+
   span<log_likelihood_ratio> get_codeblock_soft_bits(unsigned codeblock_id, unsigned data_size) override
   {
     ++count;
     return soft_bits.get_view<1>({codeblock_id}).first(data_size);
   }
+
   bit_buffer get_codeblock_data_bits(unsigned codeblock_id, unsigned data_size) override
   {
     ++count;
     return hard_bits[codeblock_id].first(data_size);
   }
+
+  void zero_all_cb_soft_bits() override
+  {
+    for (unsigned i_cb = 0, i_cb_end = soft_bits.get_dimensions_size().back(); i_cb != i_cb_end; ++i_cb) {
+      ocuduvec::zero(soft_bits.get_view<1>({i_cb}));
+    }
+  }
+
   void decode_cb_in_sequence(unsigned                    retransmission,
                              unsigned                    codeblock_id,
                              rx_buffer_decoder_callback& decoder_callback) override

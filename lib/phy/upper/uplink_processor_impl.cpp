@@ -303,6 +303,15 @@ void uplink_processor_impl::process_pusch(const uplink_pdu_slot_repository::pusc
       pusch_ues[notifier_adaptor_id];
   ues.clear();
 
+  // Clear all UEs soft bits from the buffers.
+  auto clear_ue_rm_buffers = [&ues] {
+    for (pusch_processor::ue_specific_parameters& ue : ues) {
+      if (ue.grant.codeword.has_value() && ue.grant.codeword->new_data) {
+        ue.rm_buffer->zero_all_cb_soft_bits();
+      }
+    }
+  };
+
   // Reserve the buffers of each UE.
   for (const uplink_pdu_slot_repository::pusch_ue_pdu& ue_pdu : pdu.ues) {
     const pusch_processor::ue_grant& ue = ue_pdu.grant;
@@ -324,6 +333,8 @@ void uplink_processor_impl::process_pusch(const uplink_pdu_slot_repository::pusc
 
     // Skip processing if the buffer is not valid. The pool shall log the context and the reason of the failure.
     if (!rm_buffer) {
+      // Clear buffer soft bits - a new data transmission buffer has been discarded.
+      clear_ue_rm_buffers();
       ues.clear();
       notify_discard_pusch(pdu);
       return;
@@ -338,6 +349,12 @@ void uplink_processor_impl::process_pusch(const uplink_pdu_slot_repository::pusc
                      ue.context.rnti,
                      ue.context.harq_id,
                      ue_pdu.tb_size);
+
+      // Clear buffer soft bits - a new data transmission buffer has been discarded.
+      if (new_data) {
+        rm_buffer->zero_all_cb_soft_bits();
+      }
+      clear_ue_rm_buffers();
       ues.clear();
       notify_discard_pusch(pdu);
       return;
@@ -363,6 +380,8 @@ void uplink_processor_impl::process_pusch(const uplink_pdu_slot_repository::pusc
   if (!success) {
     logger.warning(
         pdu.common.slot.sfn(), pdu.common.slot.slot_index(), "Failed to execute PUSCH. Ignoring processing.");
+    // Clear buffer soft bits - a new data transmission buffer has been discarded.
+    clear_ue_rm_buffers();
     ues.clear();
     notify_discard_pusch(pdu);
   }

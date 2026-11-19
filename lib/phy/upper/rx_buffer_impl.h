@@ -11,6 +11,7 @@
 #include "ocudu/adt/expected.h"
 #include "ocudu/adt/span.h"
 #include "ocudu/adt/static_vector.h"
+#include "ocudu/ocuduvec/zero.h"
 #include "ocudu/phy/upper/log_likelihood_ratio.h"
 #include "ocudu/phy/upper/rx_buffer_pool.h"
 #include "ocudu/phy/upper/unique_rx_buffer.h"
@@ -170,11 +171,12 @@ public:
     // Resize CRCs.
     crc.resize(nof_codeblocks);
 
-    // Reset CRCs and repetition counters.
+    // Reset CRCs, repetition counters and data bits.
     reset_codeblocks_crc();
     repetition_counter = 0;
     for (auto cb_id : codeblock_ids) {
       codeblock_pool.reset_repetition(cb_id);
+      codeblock_pool.get_data_bits(cb_id).zero();
     }
 
     return repetition_counter;
@@ -231,6 +233,14 @@ public:
     ocudu_assert(
         data_size <= data_max_size, "Codeblock data size {} exceeds maximum size {}.", data_size, data_max_size);
     return codeblock_pool.get_data_bits(cb_id).first(data_size);
+  }
+
+  // See interface for documentation.
+  void zero_all_cb_soft_bits() override
+  {
+    for (unsigned cb_id : codeblock_ids) {
+      ocuduvec::zero(codeblock_pool.get_soft_bits(cb_id));
+    }
   }
 
   // See the unique_rx_buffer::buffer_management interface for documentation.

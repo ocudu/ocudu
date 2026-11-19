@@ -62,6 +62,11 @@ public:
   /// \remark The codeblock identifier must not exceed get_max_nof_codeblocks()-1.
   /// \note Data bits do not include filler bits, codeblock-specific CRC bits or zero-padding bits.
   virtual bit_buffer get_codeblock_data_bits(unsigned codeblock_id, unsigned data_size) = 0;
+
+  /// \brief Clears the soft bits of all the reserved codeblocks.
+  /// \note When a new-data transmission is discarded without decoding, the soft bits must be zeroed so that a later
+  /// retransmission does not combine with soft bits from a previous transport block.
+  virtual void zero_all_cb_soft_bits() = 0;
 };
 
 } // namespace ocudu

@@ -43,6 +43,7 @@ public:
     static static_bit_buffer<8> buffer = {};
     return buffer;
   }
+  void zero_all_cb_soft_bits() override {}
   void decode_cb_in_sequence(unsigned                    retransmission,
                              unsigned                    codeblock_id,
                              rx_buffer_decoder_callback& decoder_callback) override

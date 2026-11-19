@@ -74,10 +74,6 @@ private:
     bool is_new_data = false;
     /// Counts the number of soft bits in the buffer.
     unsigned softbits_count = 0;
-    /// Number of codeblocks of the current transmission.
-    unsigned nof_codeblocks = 0;
-    /// Full code block size, it is used for setting the rate matching buffer to zero.
-    units::bits codeblock_size = units::bits(0);
   };
 
   /// Buffer instance.

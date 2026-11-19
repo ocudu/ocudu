@@ -135,6 +135,12 @@ void pusch_processor_impl::process(pusch_processor_result_notifier& notifier,
     for (ue_specific_parameters& ue_params : ues) {
       const ue_grant& ue = ue_params.grant;
 
+      // A discarded new data transmission must clear the buffer soft bits - otherwise, subsequent retransmissions will
+      // combine with a previous transport block.
+      if (ue.codeword.has_value() && ue.codeword->new_data) {
+        ue_params.rm_buffer->zero_all_cb_soft_bits();
+      }
+
       // Unlock RM buffer.
       ue_params.rm_buffer.unlock();
 

@@ -188,6 +188,11 @@ private:
                                                         ue_specific_parameters&          ue)
   {
     if (ue.rm_buffer.is_valid()) {
+      // A discarded new data transmission must clear the buffer soft bits - otherwise, subsequent retransmissions will
+      // combine with a previous transport block.
+      if (ue.grant.codeword.has_value() && ue.grant.codeword->new_data) {
+        ue.rm_buffer->zero_all_cb_soft_bits();
+      }
       ue.rm_buffer.unlock();
     }
     if (ue.grant.codeword.has_value()) {
