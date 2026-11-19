@@ -92,8 +92,11 @@ TEST_P(csi_rs_slot_derivation_test, generated_csi_meas_config_validation)
   // Note: Since by default we use periodic CSI, we don't care about pusch_td_alloc_list or ul_config_common.
   cell_cfg.csi_meas_cfg = make_csi_meas_config(result, {});
   ul_config_common ul_cfg_cmn{};
-  config_validators::validate_csi_meas_cfg(
-      cell_cfg, make_cell_rrm_config(config_helpers::make_default_ran_cell_config()).csi, tdd_cfg, ul_cfg_cmn);
+  // The ZP-CSI-RS resources of the cell come from the same parameters as the CSI-MeasConfig of the UE.
+  const cell_csi_rrm_config cell_csi{.zp_csi_rs_res_list = csi_helper::make_periodic_zp_csi_rs_resource_list(result),
+                                     .p_zp_csi_rs_res    = csi_helper::make_periodic_zp_csi_rs_resource_set(result)};
+  const auto validation = config_validators::validate_csi_meas_cfg(cell_cfg, cell_csi, tdd_cfg, ul_cfg_cmn);
+  ASSERT_TRUE(validation.has_value()) << validation.error();
 }
 
 INSTANTIATE_TEST_SUITE_P(

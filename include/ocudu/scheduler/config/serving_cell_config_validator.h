@@ -9,10 +9,12 @@
 #include "ocudu/scheduler/config/bwp_configuration.h"
 #include "ocudu/scheduler/config/pucch_resource_builder_params.h"
 #include "ocudu/scheduler/config/serving_cell_config.h"
-#include "ocudu/scheduler/rrm/cell_rrm_config.h"
 #include "ocudu/support/config/validator_result.h"
 
 namespace ocudu {
+
+struct cell_csi_rrm_config;
+
 namespace config_validators {
 
 /// \brief Validates PDCCH Config in \c sched_ue_creation_request_message used to create a UE.
@@ -40,11 +42,11 @@ validator_result validate_srs_cfg(const serving_cell_config& ue_cell_cfg,
 validator_result validate_nzp_csi_rs_list(span<const nzp_csi_rs_resource>               nzp_csi_rs_list,
                                           const std::optional<tdd_ul_dl_config_common>& tdd_cfg_common);
 
-/// \brief Validates CSI-MeasConfig and the ZP-CSI-RS resources in \c serving_cell_config passed to a UE.
+/// \brief Validates the CSI-MeasConfig of a UE, and checks it against the ZP-CSI-RS resources of the cell.
 ///
 /// The DU builds these from the cell configuration. Thus, the DU calls this function once per cell, with the default
 /// UE configuration of the cell.
-/// \param[in] ue_cell_cfg UE serving cell configuration to be validated.
+/// \param[in] ue_cell_cfg UE serving cell configuration, which holds the CSI-MeasConfig to be validated.
 /// \param[in] cell_csi CSI-RS parameters of the cell, which hold the ZP-CSI-RS resources.
 /// \param[in] tdd_cfg_common TDD configuration, if any.
 /// \return In case an invalid parameter is detected, returns a string containing an error message.

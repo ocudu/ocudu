@@ -1146,14 +1146,16 @@ asn1::rrc_nr::tci_state_s ocudu::odu::make_asn1_rrc_tci_state(const tci_state& c
 }
 
 /// Checks if the PDSCH-Config of a UE changes. The cell values are the same for all the UEs of the cell, thus only the
-/// UE values can change it.
-static bool pdsch_cfg_changed(const ue_rrm_config* src_rrm, const ue_rrm_config& dest_rrm)
+/// UE values can change it. The number of repetitions matters only through the TDRA list that it produces.
+static bool
+pdsch_cfg_changed(const ue_rrm_config* src_rrm, const ue_rrm_config& dest_rrm, const cell_pdsch_rrm_config& cell)
 {
   return src_rrm == nullptr or src_rrm->pdsch.mcs_table != dest_rrm.pdsch.mcs_table or
          src_rrm->pdsch.interleaving != dest_rrm.pdsch.interleaving or
          src_rrm->pdsch.res_alloc != dest_rrm.pdsch.res_alloc or
          src_rrm->pdsch.dci_harq_field_size != dest_rrm.pdsch.dci_harq_field_size or
-         src_rrm->pdsch.max_nof_repetitions != dest_rrm.pdsch.max_nof_repetitions;
+         make_ue_pdsch_td_alloc_list(cell.rep_td_alloc_list, src_rrm->pdsch.max_nof_repetitions) !=
+             make_ue_pdsch_td_alloc_list(cell.rep_td_alloc_list, dest_rrm.pdsch.max_nof_repetitions);
 }
 
 /// TCI state that the DU configures to the UEs. The UE assumes that the PDSCH is quasi co-located with the SSB 0.
@@ -1397,7 +1399,7 @@ static bool calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
     out.pdcch_cfg.set_release();
   }
 
-  if (pdsch_cfg_changed(src_rrm, dest_rrm)) {
+  if (pdsch_cfg_changed(src_rrm, dest_rrm, cell_rrm.pdsch)) {
     out.pdsch_cfg_present = true;
     calculate_pdsch_config_diff(out.pdsch_cfg.set_setup(),
                                 src_rrm != nullptr ? &src_rrm->pdsch : nullptr,

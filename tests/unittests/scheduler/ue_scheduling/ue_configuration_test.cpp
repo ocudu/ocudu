@@ -101,12 +101,13 @@ TEST_F(ue_configuration_test, when_td_alloc_list_r16_is_configured_then_dci_tdra
   const cell_configuration& cell_cfg = add_cell();
   ue_cell_configuration ue_cfg{to_rnti(0x4601), cell_cfg, cfg_pool.add_ue(ue_create_msg).cells[cell_cfg.cell_index]};
 
-  // Without Rel-16 TDRA lists, the DCI 1_1/0_1 TDRA field size follows the applied legacy/common lists.
+  // Without Rel-16 TDRA lists, the DCI 1_1/0_1 TDRA field size follows the applied legacy/common lists. The list of
+  // the repetitions of the cell has a different size.
+  ASSERT_NE(log2_ceil(common_pdsch_list.size()), log2_ceil(msg.rrm.pdsch.rep_td_alloc_list.size()));
   {
     const search_space_info& ss = ue_cfg.search_space(to_search_space_id(2));
     ASSERT_TRUE(ss.dci_sz.format1_1_ue_size.has_value());
-    ASSERT_EQ(ss.dci_sz.format1_1_ue_size->time_resource,
-              units::bits(log2_ceil(ss.bwp->dl.td_mapper().dedicated_pdsch_td_resources().size())));
+    ASSERT_EQ(ss.dci_sz.format1_1_ue_size->time_resource, units::bits(log2_ceil(common_pdsch_list.size())));
     ASSERT_TRUE(ss.dci_sz.format0_1_ue_size.has_value());
     ASSERT_EQ(ss.dci_sz.format0_1_ue_size->time_resource,
               units::bits(log2_ceil(ss.bwp->ul.td_mapper().dedicated_pusch_td_resources().size())));

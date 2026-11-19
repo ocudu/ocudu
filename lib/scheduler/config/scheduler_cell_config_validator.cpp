@@ -365,6 +365,9 @@ error_type<std::string> config_validators::validate_sched_cell_configuration_req
   for (const auto& pdsch : dl_lst) {
     VERIFY(pdsch.k0 <= SCHEDULER_MAX_K0, "k0={} value exceeds maximum supported k0", pdsch.k0);
   }
+  for (const auto& pdsch : msg.rrm.pdsch.rep_td_alloc_list) {
+    VERIFY(pdsch.k0 <= SCHEDULER_MAX_K0, "k0={} value of the PDSCH repetitions exceeds maximum supported k0", pdsch.k0);
+  }
 
   HANDLE_CODE(validate_pdcch_cfg_common(msg));
 

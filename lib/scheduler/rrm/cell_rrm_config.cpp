@@ -60,7 +60,7 @@ static std::vector<pdsch_time_domain_resource_allocation> make_pdsch_rep_td_allo
   return list;
 }
 
-static cell_csi_rrm_config make_cell_csi_rrm_config(const ran_cell_config& cell_cfg)
+cell_csi_rrm_config ocudu::make_cell_csi_rrm_config(const ran_cell_config& cell_cfg)
 {
   cell_csi_rrm_config csi;
   if (cell_cfg.init_bwp.csi.has_value()) {

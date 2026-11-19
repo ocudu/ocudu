@@ -126,7 +126,12 @@ TEST_F(du_pxsch_repetition_resource_manager_test, when_cell_disables_pdsch_repet
   std::vector<du_cell_config> cells{make_test_cell_config(params, 1, 1)};
   du_pdsch_resource_manager   mng{cells, test_cfg};
 
+  // With the repetitions enabled in the cell, the UE gets them.
   cell_group_config ue = make_ue();
+  pdsch_mng.update_resources(ue, make_caps(16, true));
+  ASSERT_GT(get_pdsch_rrm(ue).max_nof_repetitions, 1);
+
+  // With the repetitions disabled in the cell, the UE loses them.
   mng.update_resources(ue, make_caps(16, true));
   ASSERT_EQ(get_pdsch_rrm(ue).max_nof_repetitions, 1);
 }

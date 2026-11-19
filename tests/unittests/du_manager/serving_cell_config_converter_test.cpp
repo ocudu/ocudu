@@ -36,6 +36,14 @@ static const cell_rrm_config& default_cell_rrm()
   return rrm;
 }
 
+/// Resources that the RRM allocates to the UEs of the default cell, when the cell enables the PDSCH repetitions.
+static cell_rrm_config make_cell_rrm_with_pdsch_repetitions()
+{
+  odu::du_cell_config cell                    = default_cell_cfg();
+  cell.ran.init_bwp.pdsch.max_nof_repetitions = 8;
+  return make_cell_rrm_config(cell.ran);
+}
+
 static odu::du_ue_resource_config make_initial_du_ue_resource_config()
 {
   odu::du_ue_resource_config dest_cfg{};
@@ -246,7 +254,7 @@ TEST(serving_cell_config_converter_test, test_pdsch_cfg_conversion_of_ue_values)
   auto dest_cfg = make_initial_du_ue_resource_config();
 
   ue_pdsch_rrm_config& dest_pdsch = dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).rrm.pdsch;
-  dest_pdsch.mcs_table            = pdsch_mcs_table::qam256;
+  dest_pdsch.mcs_table            = pdsch_mcs_table::qam64LowSe;
   dest_pdsch.interleaving         = vrb_to_prb::mapping_type::interleaved_n4;
   dest_pdsch.res_alloc            = resource_allocation::dynamic_switch;
   dest_pdsch.dci_harq_field_size  = harq_process_num_field_size::n5;
@@ -256,7 +264,7 @@ TEST(serving_cell_config_converter_test, test_pdsch_cfg_conversion_of_ue_values)
 
   const auto& rrc_pdsch = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup();
   ASSERT_TRUE(rrc_pdsch.mcs_table_present);
-  ASSERT_EQ(rrc_pdsch.mcs_table, asn1::rrc_nr::pdsch_cfg_s::mcs_table_opts::qam256);
+  ASSERT_EQ(rrc_pdsch.mcs_table, asn1::rrc_nr::pdsch_cfg_s::mcs_table_opts::qam64_low_se);
   ASSERT_TRUE(rrc_pdsch.vrb_to_prb_interleaver_present);
   ASSERT_EQ(rrc_pdsch.vrb_to_prb_interleaver, asn1::rrc_nr::pdsch_cfg_s::vrb_to_prb_interleaver_opts::n4);
   ASSERT_EQ(rrc_pdsch.res_alloc, asn1::rrc_nr::pdsch_cfg_s::res_alloc_opts::dyn_switch);
@@ -270,9 +278,9 @@ TEST(serving_cell_config_converter_test, test_ue_pdsch_td_alloc_list_r16_convers
 {
   auto                       src_cfg = make_initial_du_ue_resource_config();
   odu::du_ue_resource_config dest_cfg{src_cfg};
-  cell_rrm_config            cell_rrm = default_cell_rrm();
-  cell_rrm.pdsch.rep_td_alloc_list.push_back({.k0 = 0, .map_type = sch_mapping_type::typeA, .symbols = {2, 14}});
-  cell_rrm.pdsch.rep_td_alloc_list.push_back({.k0 = 0, .map_type = sch_mapping_type::typeA, .symbols = {2, 14}});
+  const cell_rrm_config      cell_rrm  = make_cell_rrm_with_pdsch_repetitions();
+  const auto&                cell_list = cell_rrm.pdsch.rep_td_alloc_list;
+  ASSERT_FALSE(cell_list.empty());
   dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).rrm.pdsch.max_nof_repetitions = 8;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
@@ -289,11 +297,12 @@ TEST(serving_cell_config_converter_test, test_ue_pdsch_td_alloc_list_r16_convers
             asn1::rrc_nr::repeat_scheme_cfg_r16_c::types_opts::slot_based_r16);
   ASSERT_TRUE(rrc_pdsch_cfg.repeat_scheme_cfg_r16->setup().slot_based_r16().is_setup());
   const auto& rrc_list = rrc_pdsch_cfg.pdsch_time_domain_alloc_list_r16->setup();
-  ASSERT_EQ(rrc_list.size(), 2);
-  ASSERT_FALSE(rrc_list[0].repeat_num_r16_present);
-  ASSERT_TRUE(rrc_list[1].repeat_num_r16_present);
-  ASSERT_EQ(rrc_list[1].repeat_num_r16.to_number(), 8);
-  ASSERT_EQ(rrc_list[0].start_symbol_and_len_r16, rrc_list[1].start_symbol_and_len_r16);
+  ASSERT_EQ(rrc_list.size(), cell_list.size());
+  for (unsigned i = 0, e = rrc_list.size(); i != e; ++i) {
+    // Only the last entry carries the repetitions of the UE.
+    ASSERT_EQ(rrc_list[i].repeat_num_r16_present, i + 1 == e);
+  }
+  ASSERT_EQ(rrc_list.back().repeat_num_r16.to_number(), 8);
 
   // The generated cell group config must be packable.
   byte_buffer   packed;
@@ -303,8 +312,7 @@ TEST(serving_cell_config_converter_test, test_ue_pdsch_td_alloc_list_r16_convers
 
 TEST(serving_cell_config_converter_test, test_ue_pdsch_td_alloc_list_r16_release_conversion)
 {
-  cell_rrm_config cell_rrm = default_cell_rrm();
-  cell_rrm.pdsch.rep_td_alloc_list.push_back({.k0 = 0, .map_type = sch_mapping_type::typeA, .symbols = {2, 14}});
+  const cell_rrm_config cell_rrm = make_cell_rrm_with_pdsch_repetitions();
 
   auto src_cfg                                                                 = make_initial_du_ue_resource_config();
   src_cfg.cell_group.cells.at(SERVING_PCELL_IDX).rrm.pdsch.max_nof_repetitions = 2;
@@ -317,6 +325,23 @@ TEST(serving_cell_config_converter_test, test_ue_pdsch_td_alloc_list_r16_release
   auto& rrc_pdsch_cfg = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg.setup();
   ASSERT_TRUE(rrc_pdsch_cfg.pdsch_time_domain_alloc_list_r16.is_present());
   ASSERT_EQ(rrc_pdsch_cfg.pdsch_time_domain_alloc_list_r16->type(), asn1::setup_release_opts::release);
+}
+
+TEST(serving_cell_config_converter_test, test_pdsch_cfg_is_not_sent_if_repetitions_change_without_repetition_row)
+{
+  // The cell has no repetition row, so the number of repetitions of the UE does not change its TDRA list.
+  const cell_rrm_config cell_rrm = default_cell_rrm();
+  ASSERT_TRUE(cell_rrm.pdsch.rep_td_alloc_list.empty());
+
+  auto src_cfg                                                                 = make_initial_du_ue_resource_config();
+  src_cfg.cell_group.cells.at(SERVING_PCELL_IDX).rrm.pdsch.max_nof_repetitions = 1;
+  odu::du_ue_resource_config dest_cfg{src_cfg};
+  dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).rrm.pdsch.max_nof_repetitions = 4;
+
+  asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, cell_rrm);
+
+  ASSERT_FALSE(rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg_present);
 }
 
 TEST(serving_cell_config_converter_test, test_ue_pusch_td_alloc_list_dci_0_1_r16_conversion)
@@ -1046,6 +1071,10 @@ TEST(serving_cell_config_converter_test, serving_cell_cfg_is_sent_when_one_of_it
     EXPECT_EQ(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg_present, chg.pdsch_expected);
     EXPECT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.pusch_serving_cell_cfg_present, chg.pusch_expected);
     EXPECT_EQ(rrc_sp_cell_cfg_ded.init_dl_bwp.pdsch_cfg_present, chg.pdsch_cfg_expected);
+    if (chg.pdsch_cfg_expected) {
+      // The PDSCH-Config is only sent if the BWP that holds it is present too.
+      EXPECT_TRUE(rrc_sp_cell_cfg_ded.init_dl_bwp_present);
+    }
   }
 }
 

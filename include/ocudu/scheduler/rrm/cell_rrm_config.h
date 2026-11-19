@@ -77,13 +77,17 @@ struct cell_rrm_config {
 
 /// \brief Makes the dedicated PDSCH time domain allocation list of a UE.
 ///
-/// The list is empty if the UE has no repetitions, thus it uses the common list. Else, it is the list of the cell, with
-/// the repetition count of the UE in the last entry.
+/// The list is empty if the UE has no repetitions (\c nof_repetitions of 1) or the cell has no repetition list, thus
+/// the UE uses the common list. Else, it is the list of the cell, with the repetition count of the UE in the last
+/// entry.
 ///
 /// \param[in] cell_rep_list Repetition list of the cell. See \ref cell_pdsch_rrm_config::rep_td_alloc_list.
 /// \param[in] nof_repetitions Number of PDSCH repetitions of the UE. A value of 1 means no repetitions.
 std::vector<pdsch_time_domain_resource_allocation>
 make_ue_pdsch_td_alloc_list(span<const pdsch_time_domain_resource_allocation> cell_rep_list, unsigned nof_repetitions);
+
+/// Generates the CSI resources that the RRM allocates to the UEs of a cell.
+cell_csi_rrm_config make_cell_csi_rrm_config(const ran_cell_config& cell_cfg);
 
 /// Generates the cell resources that the RRM allocates to the UEs of a cell.
 cell_rrm_config make_cell_rrm_config(const ran_cell_config& cell_cfg);

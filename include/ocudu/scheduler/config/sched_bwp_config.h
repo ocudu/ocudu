@@ -16,19 +16,6 @@ namespace ocudu {
 struct dl_time_domain_mapper;
 struct ul_time_domain_mapper;
 
-/// PDSCH configuration of a BWP.
-class sched_pdsch_config
-{
-public:
-  sched_pdsch_config() = default;
-  explicit sched_pdsch_config(const pdsch_config_common& cfg_common) : cmn(&cfg_common) {}
-
-  const pdsch_config_common& common() const { return *cmn; }
-
-private:
-  const pdsch_config_common* cmn = nullptr;
-};
-
 /// Configuration of a Downlink Bandwidth Part (BWP) including the common config and optionally the dedicated config.
 class sched_bwp_dl_config
 {
@@ -43,7 +30,6 @@ public:
     bwp_dl_ded(ded),
     pdcch_cfg(&pdcch_cfg_),
     dl_td_mapper_ptr(&dl_td_mapper_),
-    pdsch_cfg(common.pdsch_common),
     ue_dl_bwp_cfg(ue_cfg)
   {
   }
@@ -53,7 +39,6 @@ public:
   bool                       has_ded_cfg() const { return bwp_dl_ded != nullptr and bwp_dl_ded->pdcch_cfg.has_value(); }
 
   const sched_pdcch_config& pdcch() const { return *pdcch_cfg; }
-  const sched_pdsch_config& pdsch() const { return pdsch_cfg; }
 
   const ue_downlink_bwp_config* ue_cfg() const { return ue_dl_bwp_cfg.has_value() ? &*ue_dl_bwp_cfg : nullptr; }
 
@@ -75,7 +60,6 @@ private:
   const bwp_downlink_dedicated* bwp_dl_ded       = nullptr;
   const sched_pdcch_config*     pdcch_cfg        = nullptr;
   const dl_time_domain_mapper*  dl_td_mapper_ptr = nullptr;
-  sched_pdsch_config            pdsch_cfg;
 
   // UE-specific DL BWP configuration.
   std::optional<ue_downlink_bwp_config> ue_dl_bwp_cfg;

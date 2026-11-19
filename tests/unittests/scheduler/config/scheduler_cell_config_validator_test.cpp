@@ -6,6 +6,7 @@
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "ocudu/scheduler/config/scheduler_cell_config_validator.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
+#include "ocudu/scheduler/sched_consts.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -95,6 +96,23 @@ TEST(scheduler_cell_config_validator_test, periodic_csi_report_that_does_not_fit
       msg, config_helpers::make_default_scheduler_expert_config());
   ASSERT_FALSE(result.has_value());
   ASSERT_NE(result.error().find("CSI report"), std::string::npos) << result.error();
+}
+
+TEST(scheduler_cell_config_validator_test, pdsch_repetition_row_with_k0_above_the_maximum_is_invalid)
+{
+  sched_cell_configuration_request_message msg = sched_config_helper::make_default_sched_cell_configuration_request();
+  const auto& common_list                      = msg.ran.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
+  msg.rrm.pdsch.rep_td_alloc_list.assign(common_list.begin(), common_list.end());
+  msg.rrm.pdsch.rep_td_alloc_list.push_back(common_list.front());
+  ASSERT_TRUE(config_validators::validate_sched_cell_configuration_request_message(
+                  msg, config_helpers::make_default_scheduler_expert_config())
+                  .has_value());
+
+  msg.rrm.pdsch.rep_td_alloc_list.back().k0 = SCHEDULER_MAX_K0 + 1;
+  const auto result                         = config_validators::validate_sched_cell_configuration_request_message(
+      msg, config_helpers::make_default_scheduler_expert_config());
+  ASSERT_FALSE(result.has_value());
+  ASSERT_NE(result.error().find("k0"), std::string::npos) << result.error();
 }
 
 /// Validates a cell with a Type 2 CG, after \c modify has been applied to its dedicated PDCCH configuration.

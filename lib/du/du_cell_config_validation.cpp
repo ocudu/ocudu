@@ -1217,7 +1217,7 @@ check_outcome odu::is_du_cell_config_valid(const du_cell_config& cell_cfg)
   HANDLE_ERROR(check_srs_config(cell_cfg));
   const serving_cell_config ue_serv_cell_cfg = config_helpers::make_default_ue_cell_config(cell_cfg.ran).serv_cell_cfg;
   HANDLE_ERROR(config_validators::validate_csi_meas_cfg(
-      ue_serv_cell_cfg, make_cell_rrm_config(cell_cfg.ran).csi, cell_cfg.ran.tdd_cfg, cell_cfg.ran.ul_cfg_common));
+      ue_serv_cell_cfg, make_cell_csi_rrm_config(cell_cfg.ran), cell_cfg.ran.tdd_cfg, cell_cfg.ran.ul_cfg_common));
   HANDLE_ERROR(check_dl_config_dedicated(cell_cfg));
   HANDLE_ERROR(check_ul_config_dedicated(cell_cfg));
   HANDLE_ERROR(check_si_sched_config(cell_cfg));
