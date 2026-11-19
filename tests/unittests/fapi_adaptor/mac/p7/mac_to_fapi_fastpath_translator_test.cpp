@@ -67,20 +67,27 @@ protected:
   {
   }
 
-  /// Returns a data result with one PDU of the given codewords for each kind of PDSCH grant, in the order SIB, RAR, UE
-  /// and paging.
-  static mac_dl_data_result_test_helper make_data_result(span<const unsigned> si_codewords,
-                                                         span<const unsigned> rar_codewords,
-                                                         span<const unsigned> ue_codewords,
-                                                         span<const unsigned> paging_codewords)
+  /// \brief Returns a data result with one PDU of the given codewords for each kind of PDSCH grant, in the order SIB,
+  /// RAR, UE and paging.
+  ///
+  /// The transport block of each PDU is a single byte holding the position of the PDU in that order, so that the PDUs
+  /// can be told apart.
+  mac_dl_data_result_test_helper make_data_result(span<const unsigned> si_codewords,
+                                                  span<const unsigned> rar_codewords,
+                                                  span<const unsigned> ue_codewords,
+                                                  span<const unsigned> paging_codewords)
   {
     mac_dl_data_result_test_helper helper;
-    helper.data        = std::make_unique<std::array<uint8_t, 1>>();
     helper.result.slot = slot_point(subcarrier_spacing::kHz30, 1, 1);
 
-    auto add_pdus = [&helper](auto& pdus, span<const unsigned> codewords) {
+    unsigned pdu_position = 0;
+    auto     add_pdus     = [this, &pdu_position](auto& pdus, span<const unsigned> codewords) {
       for (unsigned cw : codewords) {
-        pdus.emplace_back(cw, shared_transport_block(*helper.data));
+        ocudu_assert(pdu_position < tb_payloads.size(), "Not enough transport block payloads for the PDUs");
+        uint8_t& payload = tb_payloads[pdu_position];
+        payload          = static_cast<uint8_t>(pdu_position);
+        pdus.emplace_back(cw, shared_transport_block(span<const uint8_t>(&payload, 1)));
+        ++pdu_position;
       }
     };
     add_pdus(helper.result.si_pdus, si_codewords);
@@ -90,6 +97,8 @@ protected:
     return helper;
   }
 
+  /// Storage of the transport blocks of the data results built by \ref make_data_result.
+  std::array<uint8_t, 16>        tb_payloads = {};
   p7_requests_gateway_spy        gateway_spy;
   slot_last_message_notifier_spy notifier_spy;
   precoding_tools pm_tools  = generate_precoding_codebooks(pmi_codebook_one_port{}, antenna_topology::one_port, 0);
@@ -278,6 +287,10 @@ TEST_F(mac_to_fapi_translator_fixture, tx_data_pdus_keep_the_order_and_codeword_
   static constexpr std::array<unsigned, 5> expected_codewords = {0, 0, 1, 0, 0};
   for (unsigned i = 0, e = pdus.size(); i != e; ++i) {
     SCOPED_TRACE(i);
+    // Each transport block holds the position of its PDU in the MAC data result.
+    span<const uint8_t> payload = pdus[i].pdu.get_buffer();
+    ASSERT_EQ(1U, payload.size());
+    EXPECT_EQ(i, payload.front());
     EXPECT_EQ(expected_codewords[i], pdus[i].cw_index);
   }
 }
