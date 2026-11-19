@@ -88,6 +88,26 @@ cmake .. \
 make -j$(nproc) fuzz_targets
 ```
 
+With a compiler other than the AFL++ wrappers and outside OSS-Fuzz, `ENABLE_FUZZTESTS` compiles every source with
+`-fsanitize=fuzzer-no-link`, so that libFuzzer gets coverage feedback from the libraries under test and not only from
+the harness sources.
+
+### Restricting the instrumentation (optional)
+
+By default every source of the build is instrumented, including the support libraries and the external dependencies
+that a harness links. Restricting the instrumentation to the layer under test keeps the coverage map small, which makes
+each new edge stand out to the fuzzer. List the sources to instrument in an allowlist, in the format of the clang
+sanitizer special case lists. Both a `src:` and a `fun:` entry must match for a function to be instrumented:
+
+```text
+src:*/lib/ofh/*
+fun:*
+```
+
+Pass it with `AFL_LLVM_ALLOWLIST=/path/to/allowlist.txt` in the environment of the AFL++ build, or for libFuzzer with
+`-DCMAKE_C_FLAGS=-fsanitize-coverage-allowlist=/path/to/allowlist.txt` and the same `CMAKE_CXX_FLAGS`. Use a separate
+build directory per allowlist, as the other harnesses of the build then get no feedback from their own layers.
+
 ---
 
 ## Seed corpus
@@ -536,6 +556,42 @@ afl-whatsup findings/ofh_rx
 # Plot data over time
 afl-plot findings/ofh_rx/main plot_dir && open plot_dir/index.html
 ```
+
+---
+
+## Measuring coverage
+
+The edge counts that AFL++ and libFuzzer report include every instrumented source, so they say little about how much of
+the layer under test a corpus reaches. A source-based coverage report restricted to that layer does. It needs a
+separate libFuzzer build with clang's coverage mapping, which replays a corpus without fuzzing it:
+
+```bash
+mkdir build_cov && cd build_cov
+
+CXX=clang++ CC=clang \
+cmake .. \
+    -DCMAKE_BUILD_TYPE=Debug \
+    -DENABLE_FUZZTESTS=ON \
+    -DBUILD_TESTING=OFF \
+    -DCMAKE_C_FLAGS="-fprofile-instr-generate -fcoverage-mapping" \
+    -DCMAKE_CXX_FLAGS="-fprofile-instr-generate -fcoverage-mapping"
+
+make -j$(nproc) ofh_receiver_fuzzer
+
+# Replay the queue of a fuzzing run (or a seed corpus) once, writing the execution counts.
+LLVM_PROFILE_FILE=ofh_rx.profraw ./tests/fuzz/ofh/ofh_receiver_fuzzer -runs=0 \
+    ../build_fuzz/findings/ofh_rx/default/queue
+llvm-profdata merge -sparse ofh_rx.profraw -o ofh_rx.profdata
+
+# Summary per source file, restricted to the layer under test.
+llvm-cov report ./tests/fuzz/ofh/ofh_receiver_fuzzer -instr-profile=ofh_rx.profdata ../lib/ofh
+
+# Annotated sources, to see which branches the corpus misses.
+llvm-cov show ./tests/fuzz/ofh/ofh_receiver_fuzzer -instr-profile=ofh_rx.profdata -format=html \
+    -output-dir=coverage_ofh ../lib/ofh
+```
+
+`llvm-profdata` and `llvm-cov` come with the `llvm` package and must match the version of clang.
 
 ---
 

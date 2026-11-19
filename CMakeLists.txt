@@ -237,6 +237,14 @@ if (ENABLE_ASAN)
     ADD_CXX_COMPILER_FLAG_IF_AVAILABLE("-Wl,--disable-new-dtags" HAVE_RPATH_FORCE)
 endif (ENABLE_ASAN)
 
+# The fuzz harnesses get -fsanitize=fuzzer in tests/fuzz, which instruments only their own sources. The AFL++ compiler
+# wrappers instrument every source and OSS-Fuzz passes the instrumentation in CXXFLAGS, but a plain clang (libFuzzer)
+# build must instrument the libraries under test here, or libFuzzer gets no coverage feedback from them.
+if (ENABLE_FUZZTESTS AND NOT DEFINED ENV{LIB_FUZZING_ENGINE} AND NOT CMAKE_CXX_COMPILER MATCHES "afl-")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=fuzzer-no-link")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=fuzzer-no-link")
+endif ()
+
 if (ENABLE_TSAN)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread")
     add_definitions(-DENABLE_TSAN)
