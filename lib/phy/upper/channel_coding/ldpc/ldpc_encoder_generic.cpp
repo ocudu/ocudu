@@ -183,6 +183,10 @@ void ldpc_encoder_generic::write_codeblock(span<uint8_t> out, unsigned offset) c
                offset,
                bg_N_short * lifting_size);
 
+  if (out.empty()) {
+    return;
+  }
+
   // Rate matching as per TS38.212 Section 5.4.2.1 always reads from a lifted-node boundary, so node_offset is zero in
   // 3GPP operation, but the ldpc_encoder_buffer interface allows arbitrary bit offsets.
   unsigned first_node  = nof_punctured_nodes + offset / lifting_size;

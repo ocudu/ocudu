@@ -15,7 +15,8 @@ namespace ocudu {
 /// \brief Generic LDPC encoder implementation operating on packed bits.
 ///
 /// Each stored variable node holds two consecutive copies of its lifted bits, which turns a circular shift of the node
-/// into a read at a bit offset.
+/// into a read at a bit offset. Little-endian \c uint64_t node paths use \c __builtin_bswap64 after \c memcpy for
+/// MSB-first packed bytes.
 class ldpc_encoder_generic : public ldpc_encoder_impl
 {
 protected:
