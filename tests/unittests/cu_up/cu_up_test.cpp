@@ -214,12 +214,12 @@ protected:
     return deps;
   }
 
-  /// Polls \c predicate until it holds or the timeout elapses, ticking the timers once per millisecond.
+  /// Polls \c predicate until it holds or \c timeout of timer time elapses, ticking the timers once per millisecond.
+  /// Note: The timeout counts ticks rather than wall-clock time, so that a slow host does not shorten it.
   bool wait_until(const std::function<bool()>& predicate, std::chrono::milliseconds timeout)
   {
-    const auto deadline = std::chrono::steady_clock::now() + timeout;
-    while (not predicate()) {
-      if (std::chrono::steady_clock::now() > deadline) {
+    for (auto nof_ticks = timeout.count(); not predicate(); --nof_ticks) {
+      if (nof_ticks == 0) {
         return false;
       }
       std::this_thread::sleep_for(std::chrono::milliseconds{1});
@@ -465,7 +465,6 @@ TEST_F(cu_up_test, when_cu_cp_rejects_the_e1_setup_on_startup_with_time_to_wait_
   e1ap_client.e1_setup_time_to_wait   = asn1::e1ap::time_to_wait_opts::v2s;
   init(get_default_cu_up_config(), get_default_cu_up_dependencies());
 
-  // Note: wait_until ticks the timers at most once per millisecond, so less than 2s of timer time elapse here.
   ASSERT_FALSE(
       wait_until([this]() { return e1ap_client.nof_connection_requests >= 2U; }, std::chrono::milliseconds{1500}))
       << "CU-UP retried the E1 Setup before the Time to Wait elapsed";
@@ -481,9 +480,12 @@ TEST_F(cu_up_test, when_cu_cp_keeps_rejecting_the_e1_setup_then_cu_up_can_still_
       wait_until([this]() { return e1ap_client.nof_connection_requests >= 2U; }, std::chrono::milliseconds{5000}));
 
   // The stop only waits for the current retry period of the pending retry.
-  auto stop = std::async(std::launch::async, [this]() { cu_up->stop(); });
-  ASSERT_TRUE(wait_until([&stop]() { return stop.wait_for(std::chrono::seconds{0}) == std::future_status::ready; },
-                         std::chrono::milliseconds{1500}));
+  auto stop    = std::async(std::launch::async, [this]() { cu_up->stop(); });
+  auto stopped = [&stop]() { return stop.wait_for(std::chrono::seconds{0}) == std::future_status::ready; };
+  EXPECT_TRUE(wait_until(stopped, std::chrono::milliseconds{1500}));
+
+  // A late stop still needs the timers to complete. Otherwise, the destructor of the future blocks forever.
+  wait_until(stopped, std::chrono::milliseconds::max());
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
