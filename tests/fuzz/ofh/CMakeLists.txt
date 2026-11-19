@@ -5,45 +5,6 @@
 set_directory_properties(PROPERTIES LABELS "fuzz|ofh")
 
 # ---------------------------------------------------------------------------
-# OFH U-Plane decoder fuzzer
-# ---------------------------------------------------------------------------
-add_executable(ofh_uplane_decoder_fuzzer ofh_uplane_decoder_fuzzer.cpp)
-target_include_directories(ofh_uplane_decoder_fuzzer PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(ofh_uplane_decoder_fuzzer
-    ocudu_ofh_message_serdes
-    ocudu_support
-    ocudulog
-    ${FUZZ_SANITIZER_FLAGS_LINK}
-)
-target_compile_options(ofh_uplane_decoder_fuzzer PRIVATE ${FUZZ_SANITIZER_FLAGS_COMPILE})
-
-# ---------------------------------------------------------------------------
-# OFH eCPRI decoder fuzzer
-# ---------------------------------------------------------------------------
-add_executable(ofh_ecpri_decoder_fuzzer ofh_ecpri_decoder_fuzzer.cpp)
-target_include_directories(ofh_ecpri_decoder_fuzzer PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(ofh_ecpri_decoder_fuzzer
-    ocudu_ofh_ecpri
-    ocudu_support
-    ocudulog
-    ${FUZZ_SANITIZER_FLAGS_LINK}
-)
-target_compile_options(ofh_ecpri_decoder_fuzzer PRIVATE ${FUZZ_SANITIZER_FLAGS_COMPILE})
-
-# ---------------------------------------------------------------------------
-# OFH VLAN frame decoder fuzzer
-# ---------------------------------------------------------------------------
-add_executable(ofh_vlan_frame_decoder_fuzzer ofh_vlan_frame_decoder_fuzzer.cpp)
-target_include_directories(ofh_vlan_frame_decoder_fuzzer PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(ofh_vlan_frame_decoder_fuzzer
-    ocudu_ofh_ethernet
-    ocudu_support
-    ocudulog
-    ${FUZZ_SANITIZER_FLAGS_LINK}
-)
-target_compile_options(ofh_vlan_frame_decoder_fuzzer PRIVATE ${FUZZ_SANITIZER_FLAGS_COMPILE})
-
-# ---------------------------------------------------------------------------
 # OFH receiver fuzzer
 #
 # Wires the receiver and the uplink request handler of a sector to shared context repositories, and
@@ -61,11 +22,6 @@ target_link_libraries(ofh_receiver_fuzzer
 )
 target_compile_options(ofh_receiver_fuzzer PRIVATE ${FUZZ_SANITIZER_FLAGS_COMPILE})
 
-add_dependencies(fuzz_targets
-    ofh_uplane_decoder_fuzzer
-    ofh_ecpri_decoder_fuzzer
-    ofh_vlan_frame_decoder_fuzzer
-    ofh_receiver_fuzzer
-)
+add_dependencies(fuzz_targets ofh_receiver_fuzzer)
 
 add_fuzz_corpus(ofh_fuzz_corpus seeds.py)

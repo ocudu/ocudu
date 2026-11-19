@@ -130,12 +130,11 @@ python3 tests/fuzz/gen_corpus.py tests/fuzz/*/seeds.py --zip-dir $OUT
 
 ```bash
 # Default: findings/ inside the build directory
-mkdir -p findings/{mac_ul,ofh_uplane,ofh_ecpri,ofh_vlan,ofh_rx,ngap,ngap_cu_cp,rrc_ue,rrc_cu_cp,gtpu,e1ap,f1ap}
+mkdir -p findings/{mac_ul,ofh_rx,ngap,ngap_cu_cp,rrc_ue,rrc_cu_cp,gtpu,e1ap,f1ap}
 
 # Alternative: any absolute path
 export FUZZ_OUTPUT_DIR=/tmp/fuzz_findings
-mkdir -p $FUZZ_OUTPUT_DIR/mac_ul $FUZZ_OUTPUT_DIR/ofh_uplane $FUZZ_OUTPUT_DIR/ofh_ecpri \
-         $FUZZ_OUTPUT_DIR/ofh_vlan $FUZZ_OUTPUT_DIR/ofh_rx $FUZZ_OUTPUT_DIR/ngap \
+mkdir -p $FUZZ_OUTPUT_DIR/mac_ul $FUZZ_OUTPUT_DIR/ofh_rx $FUZZ_OUTPUT_DIR/ngap \
          $FUZZ_OUTPUT_DIR/ngap_cu_cp $FUZZ_OUTPUT_DIR/rrc_ue $FUZZ_OUTPUT_DIR/rrc_cu_cp \
          $FUZZ_OUTPUT_DIR/gtpu $FUZZ_OUTPUT_DIR/e1ap $FUZZ_OUTPUT_DIR/f1ap
 ```
@@ -188,33 +187,6 @@ context is filled.
 Logs are routed to `/dev/null` at debug level rather than switched off, because the subPDU formatter decodes the MAC CEs
 it prints, which makes it part of the surface under test.
 
-### OFH U-Plane decoder fuzzer
-
-```bash
-afl-fuzz \
-    -i tests/fuzz/corpus/ofh_uplane \
-    -o findings/ofh_uplane \
-    -- ./tests/fuzz/ofh/ofh_uplane_decoder_fuzzer @@
-```
-
-### OFH eCPRI decoder fuzzer
-
-```bash
-afl-fuzz \
-    -i tests/fuzz/corpus/ofh_ecpri \
-    -o findings/ofh_ecpri \
-    -- ./tests/fuzz/ofh/ofh_ecpri_decoder_fuzzer @@
-```
-
-### OFH VLAN frame decoder fuzzer
-
-```bash
-afl-fuzz \
-    -i tests/fuzz/corpus/ofh_vlan \
-    -o findings/ofh_vlan \
-    -- ./tests/fuzz/ofh/ofh_vlan_frame_decoder_fuzzer @@
-```
-
 ### OFH receiver fuzzer
 
 ```bash
@@ -224,9 +196,11 @@ afl-fuzz \
     -- ./tests/fuzz/ofh/ofh_receiver_fuzzer @@
 ```
 
-The decoder fuzzers above stop once a message is decoded, and every value that fits in a field decodes. Whether a
-decoded symbol, PRB range or eAxC may be used depends on the contexts that the PHY has requested and on the
-configuration, which is where the receiver indexes its buffers. This harness wires the receiver and the uplink request
+The receiver runs every received frame through the VLAN Ethernet, eCPRI and U-Plane decoders, so this one harness
+covers all of them, under each decoder variant that the configuration selects. A decoder alone stops once a message is
+decoded, and every value that fits in a field decodes. Whether a decoded symbol, PRB range or eAxC may be used depends
+on the contexts that the PHY has requested and on the configuration, which is where the receiver indexes its buffers.
+This harness wires the receiver and the uplink request
 handler of a sector to shared context repositories, as `create_ofh_sector()` does, and replays an input made of uplink
 requests, received Ethernet frames and OTA symbols on a single thread. Only the Ethernet receiver, the executors and the
 PHY-facing notifier are replaced.
@@ -539,28 +513,28 @@ pointing at the same output directory:
 ```bash
 # Terminal 1 - main instance
 afl-fuzz -M main \
-    -i tests/fuzz/corpus/ofh_uplane \
-    -o findings/ofh_uplane \
-    -- ./tests/fuzz/ofh/ofh_uplane_decoder_fuzzer @@
+    -i tests/fuzz/corpus/ofh_rx \
+    -o findings/ofh_rx \
+    -- ./tests/fuzz/ofh/ofh_receiver_fuzzer @@
 
 # Terminal 2 - secondary instance
 afl-fuzz -S worker1 \
-    -i tests/fuzz/corpus/ofh_uplane \
-    -o findings/ofh_uplane \
-    -- ./tests/fuzz/ofh/ofh_uplane_decoder_fuzzer @@
+    -i tests/fuzz/corpus/ofh_rx \
+    -o findings/ofh_rx \
+    -- ./tests/fuzz/ofh/ofh_receiver_fuzzer @@
 ```
 
-In parallel mode, AFL++ writes each instance's findings to a named subdirectory: `findings/ofh_uplane/main/`,
-`findings/ofh_uplane/worker1/`, etc.
+In parallel mode, AFL++ writes each instance's findings to a named subdirectory: `findings/ofh_rx/main/`,
+`findings/ofh_rx/worker1/`, etc.
 
 ### Monitoring progress
 
 ```bash
 # Live dashboard for a running instance
-afl-whatsup findings/ofh_uplane
+afl-whatsup findings/ofh_rx
 
 # Plot data over time
-afl-plot findings/ofh_uplane/main plot_dir && open plot_dir/index.html
+afl-plot findings/ofh_rx/main plot_dir && open plot_dir/index.html
 ```
 
 ---
@@ -571,11 +545,11 @@ afl-plot findings/ofh_uplane/main plot_dir && open plot_dir/index.html
 
 Crash inputs are written to `findings/<target>/<instance>/crashes/`. The instance is `default` for single-instance runs,
 including those of `run_fuzzers.sh`, and the name given with `-M` or `-S` for parallel runs (e.g.
-`findings/ofh_uplane/main/crashes/`). To reproduce a crash:
+`findings/ofh_rx/main/crashes/`). To reproduce a crash:
 
 ```bash
-./tests/fuzz/ofh/ofh_uplane_decoder_fuzzer \
-    findings/ofh_uplane/default/crashes/id:000000,*
+./tests/fuzz/ofh/ofh_receiver_fuzzer \
+    findings/ofh_rx/default/crashes/id:000000,*
 ```
 
 ### Minimising a crash
@@ -584,9 +558,9 @@ Reduce a crashing input to its smallest reproducing form before filing a bug:
 
 ```bash
 afl-tmin \
-    -i findings/ofh_uplane/default/crashes/id:000000,* \
+    -i findings/ofh_rx/default/crashes/id:000000,* \
     -o minimised_crash \
-    -- ./tests/fuzz/ofh/ofh_uplane_decoder_fuzzer @@
+    -- ./tests/fuzz/ofh/ofh_receiver_fuzzer @@
 ```
 
 ### Symbolising ASAN output
@@ -595,8 +569,8 @@ ASAN prints a full stack trace when the crash is reproduced. Pipe through `llvm-
 
 ```bash
 ASAN_SYMBOLIZER_PATH=$(which llvm-symbolizer) \
-    ./tests/fuzz/ofh/ofh_uplane_decoder_fuzzer \
-    findings/ofh_uplane/default/crashes/id:000000,*
+    ./tests/fuzz/ofh/ofh_receiver_fuzzer \
+    findings/ofh_rx/default/crashes/id:000000,*
 ```
 
 ### Converting a crash to a unit-test literal
@@ -606,11 +580,11 @@ ASAN_SYMBOLIZER_PATH=$(which llvm-symbolizer) \
 ```bash
 # Print a C array literal for a single crash file
 python3 ../tests/fuzz/crash_to_hex.py --format c \
-    findings/ofh_uplane/default/crashes/id:000000,*
+    findings/ofh_rx/default/crashes/id:000000,*
 
 # Convert all crashes in a directory at once
 python3 ../tests/fuzz/crash_to_hex.py --format c \
-    findings/ofh_uplane/default/crashes/
+    findings/ofh_rx/default/crashes/
 ```
 
 Available formats: `hex` (default), `xxd` (annotated hex dump), `c` (C/C++ `uint8_t` array literal). Add the resulting
@@ -626,9 +600,9 @@ base:
 ```bash
 # Merge and deduplicate queue entries into the seed corpus
 afl-cmin \
-    -i findings/ofh_uplane/default/queue \
-    -o tests/fuzz/corpus/ofh_uplane \
-    -- ./tests/fuzz/ofh/ofh_uplane_decoder_fuzzer @@
+    -i findings/ofh_rx/default/queue \
+    -o tests/fuzz/corpus/ofh_rx \
+    -- ./tests/fuzz/ofh/ofh_receiver_fuzzer @@
 ```
 
 The corpus in the build tree is not tracked and `fuzz_corpus` rewrites the generated seeds whenever a `seeds.py`
@@ -695,19 +669,15 @@ After the run, `findings/` in the build directory contains:
 
 ```text
 findings/
-├── ofh_uplane_decoder_fuzzer.log   afl-fuzz stdout for this target
-├── ofh_ecpri_decoder_fuzzer.log
-├── ofh_vlan_frame_decoder_fuzzer.log
+├── ofh_receiver_fuzzer.log         afl-fuzz stdout for this target
 ├── ngap_pdu_decoder_fuzzer.log
 ├── ngap_cu_cp_fuzzer.log
-├── ofh_uplane/                     AFL++ output directory
+├── ofh_rx/                         AFL++ output directory
 │   └── default/                    AFL++ instance directory
 │       ├── crashes/                inputs that caused a crash
 │       ├── hangs/                  inputs that caused a hang
 │       ├── queue/                  all corpus entries found
 │       └── fuzzer_stats            run statistics
-├── ofh_ecpri/
-├── ofh_vlan/
 ├── ngap/
 └── ngap_cu_cp/
 ```
