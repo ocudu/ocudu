@@ -116,7 +116,6 @@ security_status integrity_engine_generic::verify_integrity(byte_buffer& buf, uin
     // Integrity failure.
     security::sec_mac mac_rx;
     std::copy(m.begin(), m.end(), mac_rx.begin());
-    span m_rx{mac.data(), sec_mac_len};
     logger.warning("Integrity check failed. count={}", count);
     logger.warning("K_int: {}", k_128_int);
     logger.warning("MAC-I received: {}", mac_rx);
