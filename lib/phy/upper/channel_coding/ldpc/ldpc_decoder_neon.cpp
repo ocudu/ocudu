@@ -51,9 +51,9 @@ void ldpc_decoder_neon::specific_init()
   node_size_byte = node_size_neon * NEON_SIZE_BYTE;
 }
 
-void ldpc_decoder_neon::compute_var_to_check_msgs(span<log_likelihood_ratio>       this_var_to_check,
-                                                  span<const log_likelihood_ratio> this_soft_bits,
-                                                  span<const log_likelihood_ratio> this_check_to_var)
+void ldpc_decoder_neon::compute_var_to_check_msgs(const span<log_likelihood_ratio>&       this_var_to_check,
+                                                  const span<const log_likelihood_ratio>& this_soft_bits,
+                                                  const span<const log_likelihood_ratio>& this_check_to_var)
 {
   ocudu_ocuduvec_assert_size(this_check_to_var, this_soft_bits);
   ocudu_ocuduvec_assert_size(this_check_to_var, this_var_to_check);
@@ -92,12 +92,12 @@ void ldpc_decoder_neon::compute_var_to_check_msgs(span<log_likelihood_ratio>    
   }
 }
 
-void ldpc_decoder_neon::analyze_var_to_check_msgs(span<log_likelihood_ratio>       min_var_to_check,
-                                                  span<log_likelihood_ratio>       second_min_var_to_check,
-                                                  span<uint8_t>                    min_var_to_check_index,
-                                                  span<uint8_t>                    sign_prod_var_to_check,
-                                                  span<const log_likelihood_ratio> rotated_node,
-                                                  unsigned                         var_node)
+void ldpc_decoder_neon::analyze_var_to_check_msgs(const span<log_likelihood_ratio>&       min_var_to_check,
+                                                  const span<log_likelihood_ratio>&       second_min_var_to_check,
+                                                  const span<uint8_t>&                    min_var_to_check_index,
+                                                  const span<uint8_t>&                    sign_prod_var_to_check,
+                                                  const span<const log_likelihood_ratio>& rotated_node,
+                                                  unsigned                                var_node)
 {
   neon::neon_span       min_var_to_check_neon(min_var_to_check, node_size_neon);
   neon::neon_span       second_min_var_to_check_neon(second_min_var_to_check, node_size_neon);
@@ -145,15 +145,15 @@ void ldpc_decoder_neon::scale(span<log_likelihood_ratio> out, span<const log_lik
   }
 }
 
-void ldpc_decoder_neon::compute_check_to_var_msgs(span<log_likelihood_ratio> this_check_to_var,
-                                                  span<const log_likelihood_ratio> /*this_var_to_check*/,
-                                                  span<const log_likelihood_ratio> rotated_node,
-                                                  span<const log_likelihood_ratio> min_var_to_check,
-                                                  span<const log_likelihood_ratio> second_min_var_to_check,
-                                                  span<const uint8_t>              min_var_to_check_index,
-                                                  span<const uint8_t>              sign_prod_var_to_check,
-                                                  unsigned                         shift,
-                                                  unsigned                         var_node)
+void ldpc_decoder_neon::compute_check_to_var_msgs(const span<log_likelihood_ratio>& this_check_to_var,
+                                                  const span<const log_likelihood_ratio>& /*this_var_to_check*/,
+                                                  const span<const log_likelihood_ratio>& rotated_node,
+                                                  const span<const log_likelihood_ratio>& min_var_to_check,
+                                                  const span<const log_likelihood_ratio>& second_min_var_to_check,
+                                                  const span<const uint8_t>&              min_var_to_check_index,
+                                                  const span<const uint8_t>&              sign_prod_var_to_check,
+                                                  unsigned                                shift,
+                                                  unsigned                                var_node)
 {
   neon::neon_const_span min_var_to_check_neon(min_var_to_check, node_size_neon);
   neon::neon_const_span second_min_var_to_check_neon(second_min_var_to_check, node_size_neon);
@@ -185,9 +185,9 @@ void ldpc_decoder_neon::compute_check_to_var_msgs(span<log_likelihood_ratio> thi
       this_check_to_var.first(lifting_size), span<log_likelihood_ratio>(help_check_to_var).first(lifting_size), shift);
 }
 
-void ldpc_decoder_neon::compute_soft_bits(span<log_likelihood_ratio>       this_soft_bits,
-                                          span<const log_likelihood_ratio> this_var_to_check,
-                                          span<const log_likelihood_ratio> this_check_to_var)
+void ldpc_decoder_neon::compute_soft_bits(const span<log_likelihood_ratio>&       this_soft_bits,
+                                          const span<const log_likelihood_ratio>& this_var_to_check,
+                                          const span<const log_likelihood_ratio>& this_check_to_var)
 {
   neon::neon_const_span this_check_to_var_neon(this_check_to_var, node_size_neon);
   neon::neon_const_span this_var_to_check_neon(this_var_to_check, node_size_neon);

@@ -80,6 +80,10 @@ private:
     return span<log_likelihood_ratio>(var_to_check).subspan(2 * i_node * node_size_byte + shift, node_size_byte);
   }
 
+  // The kernels below take their spans by reference. Passed by value, the spans that do not fit in registers go on the
+  // stack, and some compilers copy each one there with a vector load right after storing its two halves, which stalls
+  // store-to-load forwarding on every call.
+
   /// \brief Helper function for \ref update_check_to_variable_messages - Analyzes the variable-to-check messages for a
   /// check node.
   ///
@@ -97,12 +101,12 @@ private:
   ///                                     messages.
   /// \param[in]  var_node                Counting index of the variable node, that is it can only take values between
   ///                                     zero and the degree of the check node minus one.
-  virtual void analyze_var_to_check_msgs(span<log_likelihood_ratio>       min_var_to_check,
-                                         span<log_likelihood_ratio>       second_min_var_to_check,
-                                         span<uint8_t>                    min_var_to_check_index,
-                                         span<uint8_t>                    sign_prod_var_to_check,
-                                         span<const log_likelihood_ratio> rotated_node,
-                                         unsigned                         var_node) = 0;
+  virtual void analyze_var_to_check_msgs(const span<log_likelihood_ratio>&       min_var_to_check,
+                                         const span<log_likelihood_ratio>&       second_min_var_to_check,
+                                         const span<uint8_t>&                    min_var_to_check_index,
+                                         const span<uint8_t>&                    sign_prod_var_to_check,
+                                         const span<const log_likelihood_ratio>& rotated_node,
+                                         unsigned                                var_node) = 0;
 
   /// \brief helper function for scaling buffers of log-likelihood ratios.
   /// \param[out] out Buffer with the output log-likelihood ratios.
@@ -127,15 +131,15 @@ private:
   /// \param[in]  shift                   Shift applied to the variable-to-check edges when lifting the base graph.
   /// \param[in]  var_node                Counting index of the variable node, that is it can only take values between
   ///                                     zero and the degree of the check node minus one.
-  virtual void compute_check_to_var_msgs(span<log_likelihood_ratio>       this_check_to_var,
-                                         span<const log_likelihood_ratio> this_var_to_check,
-                                         span<const log_likelihood_ratio> rotated_node,
-                                         span<const log_likelihood_ratio> min_var_to_check,
-                                         span<const log_likelihood_ratio> second_min_var_to_check,
-                                         span<const uint8_t>              min_var_to_check_index,
-                                         span<const uint8_t>              sign_prod_var_to_check,
-                                         unsigned                         shift,
-                                         unsigned                         var_node) = 0;
+  virtual void compute_check_to_var_msgs(const span<log_likelihood_ratio>&       this_check_to_var,
+                                         const span<const log_likelihood_ratio>& this_var_to_check,
+                                         const span<const log_likelihood_ratio>& rotated_node,
+                                         const span<const log_likelihood_ratio>& min_var_to_check,
+                                         const span<const log_likelihood_ratio>& second_min_var_to_check,
+                                         const span<const uint8_t>&              min_var_to_check_index,
+                                         const span<const uint8_t>&              sign_prod_var_to_check,
+                                         unsigned                                shift,
+                                         unsigned                                var_node) = 0;
 
   /// \brief Updates the soft bits corresponding to the variable nodes connected to the same base graph check node.
   /// \param[in] check_node The check node (in the base graph) the variables nodes are connected to.
@@ -148,9 +152,9 @@ private:
   /// \param[out] this_soft_bits     View to the updated soft bits.
   /// \param[in]  this_var_to_check  View to the input variable-to-check messages.
   /// \param[in]  this_check_to_var  View to the input check-to-variable messages.
-  virtual void compute_soft_bits(span<log_likelihood_ratio>       this_soft_bits,
-                                 span<const log_likelihood_ratio> this_var_to_check,
-                                 span<const log_likelihood_ratio> this_check_to_var) = 0;
+  virtual void compute_soft_bits(const span<log_likelihood_ratio>&       this_soft_bits,
+                                 const span<const log_likelihood_ratio>& this_var_to_check,
+                                 const span<const log_likelihood_ratio>& this_check_to_var) = 0;
 
   /// \brief Helper function for \ref update_variable_to_check_messages().
   ///
@@ -160,9 +164,9 @@ private:
   /// \param[in]  this_soft_bits     Current soft bits.
   /// \param[in]  this_check_to_var  Current check-to-variable messages.
   /// \remark An exception is raised if the size of the three spans is not the same.
-  virtual void compute_var_to_check_msgs(span<log_likelihood_ratio>       this_var_to_check,
-                                         span<const log_likelihood_ratio> this_soft_bits,
-                                         span<const log_likelihood_ratio> this_check_to_var) = 0;
+  virtual void compute_var_to_check_msgs(const span<log_likelihood_ratio>&       this_var_to_check,
+                                         const span<const log_likelihood_ratio>& this_soft_bits,
+                                         const span<const log_likelihood_ratio>& this_check_to_var) = 0;
 
   /// \brief Converts soft bits into hard bits and returns the decoded message.
   ///

@@ -10,9 +10,9 @@
 using namespace ocudu;
 using namespace ocudu::ldpc;
 
-void ldpc_decoder_generic::compute_var_to_check_msgs(span<log_likelihood_ratio>       this_var_to_check,
-                                                     span<const log_likelihood_ratio> this_soft_bits,
-                                                     span<const log_likelihood_ratio> this_check_to_var)
+void ldpc_decoder_generic::compute_var_to_check_msgs(const span<log_likelihood_ratio>&       this_var_to_check,
+                                                     const span<const log_likelihood_ratio>& this_soft_bits,
+                                                     const span<const log_likelihood_ratio>& this_check_to_var)
 {
   ocudu_ocuduvec_assert_size(this_var_to_check, this_soft_bits);
   ocudu_ocuduvec_assert_size(this_var_to_check, this_check_to_var);
@@ -26,12 +26,12 @@ void ldpc_decoder_generic::compute_var_to_check_msgs(span<log_likelihood_ratio> 
                  [](log_likelihood_ratio a, log_likelihood_ratio b) { return a - b; });
 }
 
-void ldpc_decoder_generic::analyze_var_to_check_msgs(span<log_likelihood_ratio>       min_var_to_check,
-                                                     span<log_likelihood_ratio>       second_min_var_to_check,
-                                                     span<uint8_t>                    min_var_to_check_index,
-                                                     span<uint8_t>                    sign_prod_var_to_check,
-                                                     span<const log_likelihood_ratio> rotated_node,
-                                                     unsigned                         var_node)
+void ldpc_decoder_generic::analyze_var_to_check_msgs(const span<log_likelihood_ratio>&       min_var_to_check,
+                                                     const span<log_likelihood_ratio>&       second_min_var_to_check,
+                                                     const span<uint8_t>&                    min_var_to_check_index,
+                                                     const span<uint8_t>&                    sign_prod_var_to_check,
+                                                     const span<const log_likelihood_ratio>& rotated_node,
+                                                     unsigned                                var_node)
 {
   // Look for the two var_to_check messages with minimum absolute value and compute the sign product of all
   // var_to_check messages.
@@ -65,15 +65,15 @@ void ldpc_decoder_generic::scale(span<log_likelihood_ratio> out, span<const log_
 
 // In the generic implementation we don't physically rotate the node, since we can access the corresponding values by
 // a simple shift - therefore the unused parameter.
-void ldpc_decoder_generic::compute_check_to_var_msgs(span<log_likelihood_ratio>       this_check_to_var,
-                                                     span<const log_likelihood_ratio> this_var_to_check,
-                                                     span<const log_likelihood_ratio> /*rotated_node*/,
-                                                     span<const log_likelihood_ratio> min_var_to_check,
-                                                     span<const log_likelihood_ratio> second_min_var_to_check,
-                                                     span<const uint8_t>              min_var_to_check_index,
-                                                     span<const uint8_t>              sign_prod_var_to_check,
-                                                     unsigned                         shift,
-                                                     unsigned                         var_node)
+void ldpc_decoder_generic::compute_check_to_var_msgs(const span<log_likelihood_ratio>&       this_check_to_var,
+                                                     const span<const log_likelihood_ratio>& this_var_to_check,
+                                                     const span<const log_likelihood_ratio>& /*rotated_node*/,
+                                                     const span<const log_likelihood_ratio>& min_var_to_check,
+                                                     const span<const log_likelihood_ratio>& second_min_var_to_check,
+                                                     const span<const uint8_t>&              min_var_to_check_index,
+                                                     const span<const uint8_t>&              sign_prod_var_to_check,
+                                                     unsigned                                shift,
+                                                     unsigned                                var_node)
 {
   for (unsigned j = 0; j != lifting_size; ++j) {
     unsigned tmp_index = (j + lifting_size - shift) % lifting_size;
@@ -90,9 +90,9 @@ void ldpc_decoder_generic::compute_check_to_var_msgs(span<log_likelihood_ratio> 
   }
 }
 
-void ldpc_decoder_generic::compute_soft_bits(span<log_likelihood_ratio>       this_soft_bits,
-                                             span<const log_likelihood_ratio> this_var_to_check,
-                                             span<const log_likelihood_ratio> this_check_to_var)
+void ldpc_decoder_generic::compute_soft_bits(const span<log_likelihood_ratio>&       this_soft_bits,
+                                             const span<const log_likelihood_ratio>& this_var_to_check,
+                                             const span<const log_likelihood_ratio>& this_check_to_var)
 {
   ocudu_ocuduvec_assert_size(this_soft_bits, this_var_to_check);
   ocudu_ocuduvec_assert_size(this_soft_bits, this_check_to_var);

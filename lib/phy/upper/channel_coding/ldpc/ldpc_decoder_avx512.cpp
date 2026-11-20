@@ -67,9 +67,9 @@ void ldpc_decoder_avx512::specific_init()
   node_size_byte   = node_size_avx512 * AVX512_SIZE_BYTE;
 }
 
-void ldpc_decoder_avx512::compute_var_to_check_msgs(span<log_likelihood_ratio>       this_var_to_check,
-                                                    span<const log_likelihood_ratio> this_soft_bits,
-                                                    span<const log_likelihood_ratio> this_check_to_var)
+void ldpc_decoder_avx512::compute_var_to_check_msgs(const span<log_likelihood_ratio>&       this_var_to_check,
+                                                    const span<const log_likelihood_ratio>& this_soft_bits,
+                                                    const span<const log_likelihood_ratio>& this_check_to_var)
 {
   ocudu_ocuduvec_assert_size(this_check_to_var, this_soft_bits);
   ocudu_ocuduvec_assert_size(this_check_to_var, this_var_to_check);
@@ -109,12 +109,12 @@ void ldpc_decoder_avx512::compute_var_to_check_msgs(span<log_likelihood_ratio>  
   }
 }
 
-void ldpc_decoder_avx512::analyze_var_to_check_msgs(span<log_likelihood_ratio>       min_var_to_check,
-                                                    span<log_likelihood_ratio>       second_min_var_to_check,
-                                                    span<uint8_t>                    min_var_to_check_index,
-                                                    span<uint8_t>                    sign_prod_var_to_check,
-                                                    span<const log_likelihood_ratio> rotated_node,
-                                                    unsigned                         var_node)
+void ldpc_decoder_avx512::analyze_var_to_check_msgs(const span<log_likelihood_ratio>&       min_var_to_check,
+                                                    const span<log_likelihood_ratio>&       second_min_var_to_check,
+                                                    const span<uint8_t>&                    min_var_to_check_index,
+                                                    const span<uint8_t>&                    sign_prod_var_to_check,
+                                                    const span<const log_likelihood_ratio>& rotated_node,
+                                                    unsigned                                var_node)
 {
   mm512::avx512_span       min_var_to_check_avx512(min_var_to_check, node_size_avx512);
   mm512::avx512_span       second_min_var_to_check_avx512(second_min_var_to_check, node_size_avx512);
@@ -164,15 +164,15 @@ void ldpc_decoder_avx512::scale(span<log_likelihood_ratio> out, span<const log_l
   }
 }
 
-void ldpc_decoder_avx512::compute_check_to_var_msgs(span<log_likelihood_ratio> this_check_to_var,
-                                                    span<const log_likelihood_ratio> /*this_var_to_check*/,
-                                                    span<const log_likelihood_ratio> rotated_node,
-                                                    span<const log_likelihood_ratio> min_var_to_check,
-                                                    span<const log_likelihood_ratio> second_min_var_to_check,
-                                                    span<const uint8_t>              min_var_to_check_index,
-                                                    span<const uint8_t>              sign_prod_var_to_check,
-                                                    unsigned                         shift,
-                                                    unsigned                         var_node)
+void ldpc_decoder_avx512::compute_check_to_var_msgs(const span<log_likelihood_ratio>& this_check_to_var,
+                                                    const span<const log_likelihood_ratio>& /*this_var_to_check*/,
+                                                    const span<const log_likelihood_ratio>& rotated_node,
+                                                    const span<const log_likelihood_ratio>& min_var_to_check,
+                                                    const span<const log_likelihood_ratio>& second_min_var_to_check,
+                                                    const span<const uint8_t>&              min_var_to_check_index,
+                                                    const span<const uint8_t>&              sign_prod_var_to_check,
+                                                    unsigned                                shift,
+                                                    unsigned                                var_node)
 {
   mm512::avx512_const_span min_var_to_check_avx512(min_var_to_check, node_size_avx512);
   mm512::avx512_const_span second_min_var_to_check_avx512(second_min_var_to_check, node_size_avx512);
@@ -210,9 +210,9 @@ void ldpc_decoder_avx512::compute_check_to_var_msgs(span<log_likelihood_ratio> t
       this_check_to_var.first(lifting_size), span<log_likelihood_ratio>(help_check_to_var).first(lifting_size), shift);
 }
 
-void ldpc_decoder_avx512::compute_soft_bits(span<log_likelihood_ratio>       this_soft_bits,
-                                            span<const log_likelihood_ratio> this_var_to_check,
-                                            span<const log_likelihood_ratio> this_check_to_var)
+void ldpc_decoder_avx512::compute_soft_bits(const span<log_likelihood_ratio>&       this_soft_bits,
+                                            const span<const log_likelihood_ratio>& this_var_to_check,
+                                            const span<const log_likelihood_ratio>& this_check_to_var)
 {
   mm512::avx512_const_span this_check_to_var_avx512(this_check_to_var, node_size_avx512);
   mm512::avx512_const_span this_var_to_check_avx512(this_var_to_check, node_size_avx512);
