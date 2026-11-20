@@ -11,10 +11,12 @@ using namespace ocudu;
 template <unsigned NOF_REGISTERS>
 void ldpc_encoder_avx2::compute_check_node_avx2(span<uint8_t> out, unsigned i_check, unsigned nof_var_nodes) const
 {
-  __m256i sum[NOF_REGISTERS];
-  std::fill_n(sum, NOF_REGISTERS, _mm256_setzero_si256());
+  static_assert(NOF_REGISTERS == 1 || NOF_REGISTERS == 2);
 
-  for_each_connected_node(i_check, nof_var_nodes, [&sum](const uint8_t* doubled_node, unsigned shift) {
+  __m256i sum0 = _mm256_setzero_si256();
+  __m256i sum1 = _mm256_setzero_si256();
+
+  for_each_connected_node(i_check, nof_var_nodes, [&](const uint8_t* doubled_node, unsigned shift) {
     const uint8_t* data      = doubled_node + shift / 8;
     unsigned       bit_shift = shift % 8;
 
@@ -25,14 +27,19 @@ void ldpc_encoder_avx2::compute_check_node_avx2(span<uint8_t> out, unsigned i_ch
       __m256i tail = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(data + i_reg * AVX2_SIZE_BYTE + 1));
       head         = _mm256_and_si256(_mm256_slli_epi16(head, bit_shift), head_mask);
       tail         = _mm256_andnot_si256(head_mask, _mm256_srli_epi16(tail, 8 - bit_shift));
-      sum[i_reg]   = _mm256_xor_si256(sum[i_reg], _mm256_or_si256(head, tail));
+      __m256i mix  = _mm256_or_si256(head, tail);
+      if (i_reg == 0) {
+        sum0 = _mm256_xor_si256(sum0, mix);
+      } else {
+        sum1 = _mm256_xor_si256(sum1, mix);
+      }
     }
   });
 
   // The second register holds at most the last 16 bytes of the largest lifting size.
-  _mm256_storeu_si256(reinterpret_cast<__m256i*>(out.data()), sum[0]);
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(out.data()), sum0);
   if constexpr (NOF_REGISTERS == 2) {
-    _mm_storeu_si128(reinterpret_cast<__m128i*>(out.data() + AVX2_SIZE_BYTE), _mm256_castsi256_si128(sum[1]));
+    _mm_storeu_si128(reinterpret_cast<__m128i*>(out.data() + AVX2_SIZE_BYTE), _mm256_castsi256_si128(sum1));
   }
 }
 
