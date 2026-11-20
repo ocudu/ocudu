@@ -24,18 +24,21 @@ struct re_pattern {
   /// Symbol mask. True entries indicate the symbols affected by the pattern.
   symbol_slot_mask symbols;
 
-  /// Default constructor. It allows instantiating the structure without using other constructors.
+  /// Creates a pattern with no CRBs, resource elements or symbols.
   re_pattern() = default;
 
-  /// \brief Constructs an RE pattern from parameters.
-  /// \param[in] rb_begin  Start RB block index {0, ..., 274}.
-  /// \param[in] rb_end    End RB block index {0, ..., 275} (excluded).
-  /// \param[in] rb_stride RB index jump {1, ..., 274}.
-  /// \param[in] re_mask_  RE Mask.
-  /// \param[in] symbols_  Symbol mask.
-  /// \remark An assertion is triggered if \c rb_begin, \c rb_end or \c rb_stride value is not within the indicated
-  /// interval.
-  /// \remark An assertion is triggered if \c rb_end is less than \c rb_begin.
+  /// \brief Constructs an RE pattern from a CRB range with a stride.
+  ///
+  /// The pattern contains the CRBs \c rb_begin, \c rb_begin + \c rb_stride, ... below \c rb_end. The CRB mask has
+  /// \c rb_end entries.
+  ///
+  /// \param[in] rb_begin  First CRB index, within {0, ..., MAX_NOF_PRBS - 1}.
+  /// \param[in] rb_end    CRB index after the last CRB, within {1, ..., MAX_NOF_PRBS}.
+  /// \param[in] rb_stride CRB index step, within {1, ..., MAX_NOF_PRBS - 1}.
+  /// \param[in] re_mask_  Resource element mask per CRB.
+  /// \param[in] symbols_  OFDM symbol mask.
+  /// \remark An assertion is triggered if \c rb_begin, \c rb_end or \c rb_stride is outside its range.
+  /// \remark An assertion is triggered if \c rb_begin is not lower than \c rb_end.
   re_pattern(unsigned rb_begin, unsigned rb_end, unsigned rb_stride, re_prb_mask re_mask_, symbol_slot_mask symbols_) :
     crb_mask(rb_end), re_mask(std::move(re_mask_)), symbols(std::move(symbols_))
   {
@@ -72,24 +75,26 @@ struct re_pattern {
     // Do nothing.
   }
 
-  /// \brief Include the described resource element pattern in a resource grid symbol mask.
+  /// \brief Sets the resource elements of the pattern in an OFDM symbol mask.
   ///
-  /// This method sets to true the elements that are described in the pattern for a given symbol index. The mask
-  /// represents resource elements allocation for a given symbol in a resource grid.
+  /// The mask has one entry per subcarrier, starting at Point A, and any size. The method ignores the pattern resource
+  /// elements beyond the mask size. It leaves the mask unchanged if the pattern does not use \c symbol.
   ///
-  /// \param[in,out] mask Provides a mask representing an entire symbol in a resource grid.
-  /// \param[in] symbol Indicates the symbol index for the mask to be included.
-  /// \note This method expects that the number of elements of \c mask is equal to or greater than \c rb_end
+  /// \param[in,out] mask   Resource element mask of one OFDM symbol.
+  /// \param[in]     symbol OFDM symbol index within the slot.
+  /// \remark An assertion is triggered if \c symbol is not lower than the size of \c symbols.
+  /// \remark An assertion is triggered if the pattern uses \c symbol and \c crb_mask has no CRBs.
   void get_inclusion_mask(bounded_bitset<MAX_NOF_SUBCARRIERS>& mask, unsigned symbol) const;
 
-  /// \brief Exclude the described resource element pattern in a resource grid symbol mask.
+  /// \brief Clears the resource elements of the pattern in an OFDM symbol mask.
   ///
-  /// This method sets to false the elements that are described in the pattern for a given symbol index. The mask
-  /// represents resource elements allocation for a given symbol in a resource grid.
+  /// The mask has one entry per subcarrier, starting at Point A, and any size. The method ignores the pattern resource
+  /// elements beyond the mask size. It leaves the mask unchanged if the pattern does not use \c symbol.
   ///
-  /// \param[in,out] mask Provides a mask representing an entire symbol in a resource grid.
-  /// \param[in] symbol Indicates the symbol index for the mask to be excluded.
-  /// \note This method expects that the number of elements of \c mask is equal to or greater than \c rb_end
+  /// \param[in,out] mask   Resource element mask of one OFDM symbol.
+  /// \param[in]     symbol OFDM symbol index within the slot.
+  /// \remark An assertion is triggered if \c symbol is not lower than the size of \c symbols.
+  /// \remark An assertion is triggered if the pattern uses \c symbol and \c crb_mask has no CRBs.
   void get_exclusion_mask(bounded_bitset<MAX_NOF_SUBCARRIERS>& mask, unsigned symbol) const;
 };
 
@@ -117,7 +122,7 @@ inline bool operator==(const re_pattern& pattern1, const re_pattern& pattern2)
 class re_pattern_list
 {
 private:
-  /// Defines the maximum number or RE pattern a list can carry.
+  /// Maximum number of RE patterns in a list.
   static constexpr unsigned MAX_RE_PATTERN = 4;
 
   /// Resource element pattern storage.
@@ -130,9 +135,9 @@ public:
   /// Implicit construction from a single RE pattern.
   re_pattern_list(const re_pattern& pattern) { list.emplace_back(pattern); }
 
-  /// \brief Create a pattern list from an initializer list of patterns.
+  /// \brief Creates a pattern list by merging the patterns of an initializer list.
   ///
-  /// This is useful for static constant pattern list creation. For example:
+  /// It suits static constant pattern lists. For example:
   /// \code
   ///   re_pattern_list list = {
   ///      {0, 52, 1, {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0}},
@@ -140,6 +145,7 @@ public:
   /// \endcode
   ///
   /// \param[in] patterns Initializer list with patterns.
+  /// \remark An assertion is triggered if the merged patterns need more than \c MAX_RE_PATTERN entries.
   re_pattern_list(std::initializer_list<const re_pattern> patterns)
   {
     for (const re_pattern& pattern : patterns) {
@@ -155,13 +161,15 @@ public:
     // Do nothing.
   }
 
-  /// Clear the current pattern list.
+  /// Removes all the patterns from the list.
   void clear() { list.clear(); }
 
-  /// Get the number of internal resource element pattern.
+  /// Returns the number of patterns in the list.
   unsigned get_nof_entries() const { return list.size(); }
 
-  /// \brief Merges a given resource element pattern list into the list.
+  /// \brief Merges the patterns of another pattern list into the list, one by one.
+  /// \param[in] other Pattern list to merge.
+  /// \remark An assertion is triggered if the merged patterns need more than \c MAX_RE_PATTERN entries.
   void merge(const re_pattern_list& other)
   {
     for (const auto& pattern : other.get_re_patterns()) {
@@ -169,14 +177,19 @@ public:
     }
   }
 
-  /// \brief Merges a given resource element pattern into the list.
+  /// \brief Merges a resource element pattern into the list.
   ///
-  /// This method tries to combine a new pattern with the existing ones in the list according to if
-  /// - the resource block allocation parameters are identical, and
-  /// - the symbol mask or the resource element mask is identical.
-  /// Otherwise, the pattern is appended in the list.
+  /// The method combines \c pattern with the first pattern in the list that has at least two equal masks:
+  /// - all masks equal: the list already contains \c pattern;
+  /// - symbol and resource element masks equal: the CRB masks combine;
+  /// - CRB and symbol masks equal: the resource element masks combine;
+  /// - CRB and resource element masks equal: the symbol masks combine.
   ///
-  /// \param[in] pattern Provides the reference to a resource element pattern.
+  /// Otherwise, it appends \c pattern to the list.
+  ///
+  /// \param[in] pattern Resource element pattern to merge.
+  /// \remark An assertion is triggered if the list has \c MAX_RE_PATTERN entries and \c pattern does not combine with
+  /// any of them.
   void merge(const re_pattern& pattern);
 
   /// \brief Checks if the pattern list is equal to another pattern list.
@@ -185,45 +198,49 @@ public:
   /// of RBs and symbols.
   /// \param[in] other The other pattern list.
   /// \return True if the patterns described by the two lists are equal.
+  /// \remark The assertions of re_pattern::get_inclusion_mask() apply to every pattern of both lists.
   bool operator==(const re_pattern_list& other) const;
 
-  /// \brief Checks if the pattern list is the pattern list is different from another pattern list.
+  /// \brief Checks if the pattern list is different from another pattern list.
   ///
   /// \param[in] other The other pattern list.
   /// \return True if the patterns described by the two lists are different.
   bool operator!=(const re_pattern_list& other) const { return !(*this == other); }
 
-  /// \brief Includes the described resource element pattern list in a resource grid symbol mask.
+  /// \brief Sets the resource elements of all the patterns in an OFDM symbol mask.
   ///
-  /// This method sets to true the elements that are described in the pattern list for a given symbol index. The mask
-  /// represents resource elements allocation for a given symbol in a resource grid.
+  /// The mask has one entry per subcarrier, starting at Point A, and any size. The method ignores the pattern resource
+  /// elements beyond the mask size.
   ///
-  /// \param[in,out] mask   Provides a mask representing an entire symbol in a resource grid.
-  /// \param[in]     symbol Indicates the symbol index for the mask to be included.
-  /// \note This method expects that the number of elements of \c mask is equal to or greater than \c rb_end.
+  /// \param[in,out] mask   Resource element mask of one OFDM symbol.
+  /// \param[in]     symbol OFDM symbol index within the slot.
+  /// \remark The assertions of re_pattern::get_inclusion_mask() apply to every pattern.
   void get_inclusion_mask(bounded_bitset<MAX_NOF_SUBCARRIERS>& mask, unsigned symbol) const;
 
-  /// \brief Counts the number of elements included in the described pattern.
+  /// \brief Counts the resource elements of the pattern list within a symbol range and a CRB selection.
   ///
-  /// This method counts the included elements in the described pattern for a symbol range and a selection of PRB.
+  /// The method counts each resource element once, even if several patterns contain it.
   ///
-  /// \param[in] start_symbol Indicates the start symbol index within the slot.
-  /// \param[in] nof_symbols  Indicates the number of symbols within the slot.
-  /// \param[in] rb_mask     Selection of Common Resource Blocks (CRB) to count.
-  /// \return The number of included elements.
+  /// \param[in] start_symbol First OFDM symbol index within the slot.
+  /// \param[in] nof_symbols  Number of OFDM symbols.
+  /// \param[in] crb_mask     Selection of CRBs to count.
+  /// \return The number of resource elements within the symbols {start_symbol, ..., start_symbol + nof_symbols - 1}
+  /// and the CRBs of \c crb_mask.
+  /// \remark The symbol range is within the symbol mask of every pattern.
+  /// \remark With several patterns, the assertions of re_pattern::get_inclusion_mask() apply to every pattern.
   unsigned get_inclusion_count(unsigned start_symbol, unsigned nof_symbols, const crb_bitmap& crb_mask) const;
 
-  /// \brief Excludes the described resource element pattern list in a resource grid symbol mask.
+  /// \brief Clears the resource elements of all the patterns in an OFDM symbol mask.
   ///
-  /// This method sets to false the elements that are described in the pattern list for a given symbol index. The mask
-  /// represents resource elements allocation for a given symbol in a resource grid.
+  /// The mask has one entry per subcarrier, starting at Point A, and any size. The method ignores the pattern resource
+  /// elements beyond the mask size.
   ///
-  /// \param[in,out] mask   Provides a mask representing an entire symbol in a resource grid.
-  /// \param[in]     symbol Indicates the symbol index for the mask to be excluded.
-  /// \note This method expects that the number of elements of \c mask is equal to or greater than \c rb_end.
+  /// \param[in,out] mask   Resource element mask of one OFDM symbol.
+  /// \param[in]     symbol OFDM symbol index within the slot.
+  /// \remark The assertions of re_pattern::get_exclusion_mask() apply to every pattern.
   void get_exclusion_mask(bounded_bitset<MAX_NOF_SUBCARRIERS>& mask, unsigned symbol) const;
 
-  /// Get the internal resource element patterns.
+  /// Returns the resource element patterns of the list.
   span<const re_pattern> get_re_patterns() const { return list; }
 };
 

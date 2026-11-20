@@ -226,6 +226,50 @@ TEST(re_pattern_test, inclusion_count)
   ASSERT_EQ(list.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, rb_mask_unmatch), 0);
 }
 
+// Tests that the inclusion count only considers the symbols within the requested symbol range.
+TEST(re_pattern_test, inclusion_count_symbol_range)
+{
+  // Create a pattern that reserves all the subcarriers of one PRB in symbols 2 and 3.
+  re_pattern pattern;
+  pattern.crb_mask = crb_bitmap(MAX_NOF_PRBS);
+  pattern.crb_mask.set(0);
+  pattern.re_mask.fill(0, NOF_SUBCARRIERS_PER_RB);
+  pattern.symbols.set(2);
+  pattern.symbols.set(3);
+
+  // A single-pattern list takes the direct calculation path.
+  re_pattern_list list;
+  list.merge(pattern);
+  ASSERT_EQ(list.get_nof_entries(), 1);
+
+  crb_bitmap rb_mask(1);
+  rb_mask.set(0);
+
+  // Symbol range excludes the pattern symbols.
+  ASSERT_EQ(list.get_inclusion_count(0, 2, rb_mask), 0);
+  ASSERT_EQ(list.get_inclusion_count(4, 10, rb_mask), 0);
+
+  // Symbol range partially overlaps the pattern symbols.
+  ASSERT_EQ(list.get_inclusion_count(3, 2, rb_mask), NOF_SUBCARRIERS_PER_RB);
+
+  // Symbol range includes all the pattern symbols.
+  ASSERT_EQ(list.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, rb_mask), 2 * NOF_SUBCARRIERS_PER_RB);
+
+  // Add a second pattern outside the RB mask. A different RE mask prevents the merge, so the list takes the
+  // multiple-pattern path. The counts match the single-pattern path.
+  re_pattern pattern_other = pattern;
+  pattern_other.crb_mask.reset();
+  pattern_other.crb_mask.set(1);
+  pattern_other.re_mask.reset();
+  pattern_other.re_mask.set(0);
+  list.merge(pattern_other);
+  ASSERT_EQ(list.get_nof_entries(), 2);
+  ASSERT_EQ(list.get_inclusion_count(0, 2, rb_mask), 0);
+  ASSERT_EQ(list.get_inclusion_count(4, 10, rb_mask), 0);
+  ASSERT_EQ(list.get_inclusion_count(3, 2, rb_mask), NOF_SUBCARRIERS_PER_RB);
+  ASSERT_EQ(list.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, rb_mask), 2 * NOF_SUBCARRIERS_PER_RB);
+}
+
 // Test that a pattern is equal to itself and different to others.
 TEST(re_pattern_test, equal)
 {
@@ -284,4 +328,84 @@ TEST(re_pattern_test, bracket_initializer)
   // Validate that all lists are equal.
   ASSERT_TRUE(list1 == list2);
   ASSERT_TRUE(list1 == list3);
+}
+
+// Tests that an empty list has no included resource elements.
+TEST(re_pattern_test, inclusion_count_empty)
+{
+  re_pattern_list list;
+
+  crb_bitmap rb_mask(2);
+  rb_mask.fill(0, 2);
+  ASSERT_EQ(list.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, rb_mask), 0);
+}
+
+// Tests that merging a pattern with a larger CRB mask into a pattern with a smaller one combines both CRB masks.
+TEST(re_pattern_test, merge_larger_crb_mask)
+{
+  // Create a pattern with a CRB mask of 10 CRBs.
+  re_pattern pattern_small;
+  pattern_small.crb_mask = crb_bitmap(10);
+  pattern_small.crb_mask.set(0);
+  pattern_small.re_mask.set(0);
+  pattern_small.symbols.set(0);
+
+  // Create a pattern with the same subcarriers and symbols and a CRB mask of 20 CRBs.
+  re_pattern pattern_large = pattern_small;
+  pattern_large.crb_mask   = crb_bitmap(20);
+  pattern_large.crb_mask.set(15);
+
+  // Merge the larger pattern into the smaller one.
+  re_pattern_list list;
+  list.merge(pattern_small);
+  list.merge(pattern_large);
+  ASSERT_EQ(list.get_nof_entries(), 1);
+
+  // The merged pattern contains CRB 0 and CRB 15.
+  crb_bitmap rb_mask(20);
+  rb_mask.fill(0, 20);
+  ASSERT_EQ(list.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, rb_mask), 2);
+}
+
+// Tests the exclusion mask of a pattern with contiguous CRBs and all subcarriers within each CRB.
+TEST(re_pattern_test, exclusion_mask_contiguous)
+{
+  // Create a pattern that reserves all the subcarriers of CRB 2 to 4 in symbol 1.
+  re_pattern pattern;
+  pattern.crb_mask = crb_bitmap(MAX_NOF_PRBS);
+  pattern.crb_mask.fill(2, 5);
+  pattern.re_mask.fill(0, NOF_SUBCARRIERS_PER_RB);
+  pattern.symbols.set(1);
+
+  re_pattern_list list;
+  list.merge(pattern);
+
+  // Mask of 10 CRBs: the subcarriers of CRB 2 to 4 are excluded in symbol 1.
+  bounded_bitset<MAX_NOF_SUBCARRIERS> expected(10 * NOF_SUBCARRIERS_PER_RB);
+  expected.fill(0, expected.size());
+  expected.fill(2 * NOF_SUBCARRIERS_PER_RB, 5 * NOF_SUBCARRIERS_PER_RB, false);
+
+  bounded_bitset<MAX_NOF_SUBCARRIERS> mask(10 * NOF_SUBCARRIERS_PER_RB);
+  mask.fill(0, mask.size());
+  list.get_exclusion_mask(mask, 1);
+  ASSERT_EQ(mask, expected);
+
+  // Mask of 4 CRBs: CRB 4 is outside the mask, so only CRBs 2 and 3 are excluded.
+  expected.resize(4 * NOF_SUBCARRIERS_PER_RB);
+  mask.resize(4 * NOF_SUBCARRIERS_PER_RB);
+  mask.fill(0, mask.size());
+  list.get_exclusion_mask(mask, 1);
+  ASSERT_EQ(mask, expected);
+
+  // Mask of 2 CRBs: the pattern lies outside the mask and excludes nothing.
+  mask.resize(2 * NOF_SUBCARRIERS_PER_RB);
+  mask.fill(0, mask.size());
+  list.get_exclusion_mask(mask, 1);
+  ASSERT_TRUE(mask.all());
+
+  // The pattern does not use symbol 0 and excludes nothing.
+  mask.resize(10 * NOF_SUBCARRIERS_PER_RB);
+  mask.fill(0, mask.size());
+  list.get_exclusion_mask(mask, 0);
+  ASSERT_TRUE(mask.all());
 }

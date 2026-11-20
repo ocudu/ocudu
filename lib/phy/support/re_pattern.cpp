@@ -180,7 +180,10 @@ re_pattern_list::get_inclusion_count(unsigned start_symbol, unsigned nof_symbols
     // Filter the CRB of interest.
     crb_mask &= rb_mask;
 
-    return crb_mask.count() * pattern.symbols.count() * pattern.re_mask.count();
+    // Pattern symbols outside the requested range do not overlap the allocation.
+    unsigned nof_pattern_symbols = pattern.symbols.slice(start_symbol, start_symbol + nof_symbols).count();
+
+    return crb_mask.count() * nof_pattern_symbols * pattern.re_mask.count();
   }
 
   unsigned count = 0;
