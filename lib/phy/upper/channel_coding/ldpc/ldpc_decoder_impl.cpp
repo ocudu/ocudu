@@ -15,6 +15,34 @@
 using namespace ocudu;
 using namespace ocudu::ldpc;
 
+/// Returns the number of LLRs up to and including the last non-zero one.
+static unsigned get_nof_significant_llrs(span<const log_likelihood_ratio> llrs)
+{
+  static constexpr unsigned block_size = 64;
+
+  unsigned nof_llrs = llrs.size();
+
+  // Skip the blocks of zero LLRs at the end. A block is tested without an early exit, which compilers vectorize. Not
+  // every compiler vectorizes an early exit loop such as a reverse std::find_if.
+  while (nof_llrs >= block_size) {
+    bool is_zero = true;
+    for (log_likelihood_ratio llr : llrs.subspan(nof_llrs - block_size, block_size)) {
+      is_zero &= (llr == 0);
+    }
+    if (!is_zero) {
+      break;
+    }
+    nof_llrs -= block_size;
+  }
+
+  // Find the last non-zero LLR in the remaining block.
+  while ((nof_llrs != 0) && (llrs[nof_llrs - 1] == 0)) {
+    --nof_llrs;
+  }
+
+  return nof_llrs;
+}
+
 void ldpc_decoder_impl::init(const configuration& cfg)
 {
   uint8_t  pos   = get_lifting_size_position(cfg.lifting_size);
@@ -64,12 +92,8 @@ std::optional<unsigned> ldpc_decoder_impl::decode(bit_buffer&                   
                input.size(),
                min_input_length);
 
-  // Find the last soft bit in the buffer and trim the output.
-  const log_likelihood_ratio* last =
-      std::find_if(input.rbegin(), input.rend(), [](const log_likelihood_ratio& in) { return in != 0; }).base();
-
-  // Determine input length.
-  unsigned input_size = std::distance(input.begin(), last);
+  // Determine the input length, up to the last non-zero soft bit.
+  unsigned input_size = get_nof_significant_llrs(input);
 
   // The input meaningful number of bits must contain the message length number of bits to successfully decode the
   // codeblock.
