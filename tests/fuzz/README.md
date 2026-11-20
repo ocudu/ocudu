@@ -94,19 +94,26 @@ the harness sources.
 
 ### Restricting the instrumentation (optional)
 
-By default every source of the build is instrumented, including the support libraries and the external dependencies
-that a harness links. Restricting the instrumentation to the layer under test keeps the coverage map small, which makes
-each new edge stand out to the fuzzer. List the sources to instrument in an allowlist, in the format of the clang
-sanitizer special case lists. Both a `src:` and a `fun:` entry must match for a function to be instrumented:
+By default every source of the build is instrumented, including the support libraries and the external dependencies that
+a harness links. Restricting the instrumentation to the layer under test keeps the coverage map small, which makes each
+new edge stand out to the fuzzer. List the sources to instrument in an allowlist. Use a separate build directory per
+allowlist, as the other harnesses of the build then get no feedback from their own layers.
+
+For AFL++, pass the allowlist with `AFL_LLVM_ALLOWLIST=/path/to/allowlist.txt` in the environment of the build. A
+function is instrumented when either its source file or its name matches an entry, so list only the source files:
+
+```text
+src:*/lib/ofh/*
+```
+
+For libFuzzer, pass it with `-DCMAKE_C_FLAGS=-fsanitize-coverage-allowlist=/path/to/allowlist.txt` and the same
+`CMAKE_CXX_FLAGS`. Clang reads the format of the sanitizer special case lists, in which a function is instrumented only
+when both a `src:` and a `fun:` entry match, so the list also needs a `fun:` entry matching every function:
 
 ```text
 src:*/lib/ofh/*
 fun:*
 ```
-
-Pass it with `AFL_LLVM_ALLOWLIST=/path/to/allowlist.txt` in the environment of the AFL++ build, or for libFuzzer with
-`-DCMAKE_C_FLAGS=-fsanitize-coverage-allowlist=/path/to/allowlist.txt` and the same `CMAKE_CXX_FLAGS`. Use a separate
-build directory per allowlist, as the other harnesses of the build then get no feedback from their own layers.
 
 ---
 
@@ -216,14 +223,13 @@ afl-fuzz \
     -- ./tests/fuzz/ofh/ofh_receiver_fuzzer @@
 ```
 
-The receiver runs every received frame through the VLAN Ethernet, eCPRI and U-Plane decoders, so this one harness
-covers all of them, under each decoder variant that the configuration selects. A decoder alone stops once a message is
-decoded, and every value that fits in a field decodes. Whether a decoded symbol, PRB range or eAxC may be used depends
-on the contexts that the PHY has requested and on the configuration, which is where the receiver indexes its buffers.
-This harness wires the receiver and the uplink request
-handler of a sector to shared context repositories, as `create_ofh_sector()` does, and replays an input made of uplink
-requests, received Ethernet frames and OTA symbols on a single thread. Only the Ethernet receiver, the executors and the
-PHY-facing notifier are replaced.
+The receiver runs every received frame through the VLAN Ethernet, eCPRI and U-Plane decoders, so this one harness covers
+all of them, under each decoder variant that the configuration selects. A decoder alone stops once a message is decoded,
+and every value that fits in a field decodes. Whether a decoded symbol, PRB range or eAxC may be used depends on the
+contexts that the PHY has requested and on the configuration, which is where the receiver indexes its buffers. This
+harness wires the receiver and the uplink request handler of a sector to shared context repositories, as
+`create_ofh_sector()` does, and replays an input made of uplink requests, received Ethernet frames and OTA symbols on a
+single thread. Only the Ethernet receiver, the executors and the PHY-facing notifier are replaced.
 
 The downlink side of the transmitter is not built: its Ethernet frame pools take most of the time to build a sector, and
 none of it is reachable from received frames. The uplink C-Plane frame pool and the PHY buffers are built once and
@@ -562,8 +568,8 @@ afl-plot findings/ofh_rx/main plot_dir && open plot_dir/index.html
 ## Measuring coverage
 
 The edge counts that AFL++ and libFuzzer report include every instrumented source, so they say little about how much of
-the layer under test a corpus reaches. A source-based coverage report restricted to that layer does. It needs a
-separate libFuzzer build with clang's coverage mapping, which replays a corpus without fuzzing it:
+the layer under test a corpus reaches. A source-based coverage report restricted to that layer does. It needs a separate
+libFuzzer build with clang's coverage mapping, which replays a corpus without fuzzing it:
 
 ```bash
 mkdir build_cov && cd build_cov
