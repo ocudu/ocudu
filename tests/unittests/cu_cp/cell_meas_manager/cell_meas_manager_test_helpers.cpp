@@ -640,3 +640,84 @@ void cell_meas_manager_test::create_cho_manager_a5_inter_frequency()
                                      .logger                = ocudulog::fetch_basic_logger("CU-CP")});
   ASSERT_NE(manager, nullptr);
 }
+
+void cell_meas_manager_test::create_cho_manager_with_regular_reports()
+{
+  cell_meas_manager_config cfg;
+
+  // Serving cell on 632628 and three neighbours, all with a regular A3 report:
+  // - nci 1 (PCI 2) on 633000 with only the regular report. Its NTN polarization adds it to the cell list of its
+  //   measurement object in the regular config.
+  // - nci 2 (PCI 3) on 634000, also a CHO candidate (inter-frequency).
+  // - nci 3 (PCI 4) on the serving frequency, also a CHO candidate (intra-frequency).
+  gnb_id_t         gnb_id{0x19b, 32};
+  nr_cell_identity nci_serving       = nr_cell_identity::create(gnb_id, 0).value();
+  nr_cell_identity nci_regular_only  = nr_cell_identity::create(gnb_id, 1).value();
+  nr_cell_identity nci_inter_freq    = nr_cell_identity::create(gnb_id, 2).value();
+  nr_cell_identity nci_intra_freq    = nr_cell_identity::create(gnb_id, 3).value();
+  const auto       regular_report_id = uint_to_report_cfg_id(2);
+  const auto       cond_report_id    = uint_to_report_cfg_id(1);
+
+  cell_meas_config serving_cfg = make_cell_config(gnb_id, nci_serving, 1, 632628);
+
+  neighbor_cell_meas_config ncell_regular_only;
+  ncell_regular_only.nci = nci_regular_only;
+  ncell_regular_only.report_cfg_ids.push_back(regular_report_id);
+  ncell_regular_only.ntn_polarization.emplace().dl = ntn_polarization_t::polarization_type::rhcp;
+  serving_cfg.ncells.push_back(ncell_regular_only);
+
+  neighbor_cell_meas_config ncell_inter_freq;
+  ncell_inter_freq.nci = nci_inter_freq;
+  ncell_inter_freq.report_cfg_ids.push_back(regular_report_id);
+  ncell_inter_freq.report_cfg_ids.push_back(cond_report_id);
+  serving_cfg.ncells.push_back(ncell_inter_freq);
+
+  neighbor_cell_meas_config ncell_intra_freq;
+  ncell_intra_freq.nci = nci_intra_freq;
+  ncell_intra_freq.report_cfg_ids.push_back(regular_report_id);
+  ncell_intra_freq.report_cfg_ids.push_back(cond_report_id);
+  serving_cfg.ncells.push_back(ncell_intra_freq);
+
+  cfg.cells.emplace(nci_serving, serving_cfg);
+  cfg.cells.emplace(nci_regular_only, make_cell_config(gnb_id, nci_regular_only, 2, 633000));
+  cfg.cells.emplace(nci_inter_freq, make_cell_config(gnb_id, nci_inter_freq, 3, 634000));
+  cfg.cells.emplace(nci_intra_freq, make_cell_config(gnb_id, nci_intra_freq, 4, 632628));
+
+  // Regular A3 report.
+  rrc_event_trigger_cfg event_trigger_cfg = {};
+  rrc_event_id          event_a3;
+  event_a3.id = rrc_event_id::event_id_t::a3;
+  event_a3.meas_trigger_quant_thres_or_offset.emplace();
+  event_a3.meas_trigger_quant_thres_or_offset.value().rsrp.emplace() = 6;
+  event_a3.hysteresis                                                = 0;
+  event_a3.time_to_trigger                                           = 100;
+  event_a3.use_allowed_cell_list                                     = false;
+  event_trigger_cfg.event_id                                         = event_a3;
+  event_trigger_cfg.rs_type                                          = ocucp::rrc_nr_rs_type::ssb;
+  event_trigger_cfg.report_interv                                    = 1024;
+  event_trigger_cfg.report_amount                                    = -1;
+  event_trigger_cfg.report_quant_cell.rsrp                           = true;
+  event_trigger_cfg.max_report_cells                                 = 4;
+  rrc_report_cfg_nr a3_report_cfg                                    = event_trigger_cfg;
+  cfg.report_config_ids.emplace(regular_report_id, a3_report_cfg);
+
+  // CHO conditional A3 trigger.
+  rrc_cond_trigger_cfg cond_trigger;
+  rrc_event_id         cond_event_a3;
+  cond_event_a3.id = rrc_event_id::event_id_t::a3;
+  cond_event_a3.meas_trigger_quant_thres_or_offset.emplace();
+  cond_event_a3.meas_trigger_quant_thres_or_offset.value().rsrp = 6;
+  cond_event_a3.hysteresis                                      = 0;
+  cond_event_a3.time_to_trigger                                 = 100;
+  cond_trigger.cond_event_id                                    = cond_event_a3;
+  cond_trigger.rs_type                                          = rrc_nr_rs_type::ssb;
+  rrc_report_cfg_nr cho_trigger_cfg                             = cond_trigger;
+  cfg.report_config_ids.emplace(cond_report_id, cho_trigger_cfg);
+
+  manager = std::make_unique<cell_meas_manager>(
+      cfg,
+      cell_meas_manager_dependencies{.mobility_mng_notifier = mobility_manager,
+                                     .ue_mng                = ue_mng,
+                                     .logger                = ocudulog::fetch_basic_logger("CU-CP")});
+  ASSERT_NE(manager, nullptr);
+}

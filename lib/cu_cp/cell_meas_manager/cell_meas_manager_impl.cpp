@@ -76,19 +76,6 @@ cell_meas_manager::get_measurement_config(cu_cp_ue_index_t                   ue_
 
   auto& ue_meas_context = ue_mng.get_measurement_context(ue_index);
 
-  // Create fresh config.
-  meas_cfg.emplace();
-  auto& new_cfg = meas_cfg.value();
-
-  // Request removal of old measurement config if it exists.
-  if (current_meas_config.has_value()) {
-    add_old_meas_config_to_rem_list(new_cfg, current_meas_config.value());
-  }
-
-  // Clear existing measurement object ids and measurement ids in UE context.
-  ue_meas_context.clear_meas_obj_ids();
-  ue_meas_context.clear_meas_ids();
-
   // Build ssb_freqs vector.
   // For regular: serving cell (if periodic report configured) plus neighbors with report configs.
   // For CHO: candidate neighbors filtered by optional PCI set.
@@ -102,6 +89,43 @@ cell_meas_manager::get_measurement_config(cu_cp_ue_index_t                   ue_
   } else {
     ssb_freqs = generate_measurement_object_list(serving_nci, cfg, logger);
   }
+
+  // The measurement object indicated by servingCellMO must be on the SSB frequency of the serving cell, as per
+  // TS 38.331, Section 6.3.2 (ServingCellConfig).
+  if (cond_meas && current_meas_config.has_value()) {
+    const ssb_frequency_t serving_ssb_freq = cell_config.serving_cell_cfg.ssb_arfcn->value();
+    const auto&           current_mos      = current_meas_config->meas_obj_to_add_mod_list;
+    const auto            current_mo_it =
+        std::find_if(current_mos.begin(), current_mos.end(), [serving_ssb_freq](const rrc_meas_obj_to_add_mod& mo) {
+          return mo.meas_obj_nr.has_value() && mo.meas_obj_nr->ssb_freq == serving_ssb_freq;
+        });
+    // The serving frequency comes first in ssb_freqs, so it gets the first id unless the measurement object loop below
+    // skips it.
+    const bool serving_mo_is_first =
+        ssb_freq_to_meas_object.count(serving_ssb_freq) != 0 && ssb_freq_to_ncis.count(serving_ssb_freq) != 0;
+    if (current_mo_it != current_mos.end() &&
+        (!serving_mo_is_first || current_mo_it->meas_obj_id != meas_obj_id_t::min)) {
+      logger.error("ue={}: CHO measurement config moves the serving frequency ssb_freq={} from meas_obj_id={}, "
+                   "servingCellMO of the UE becomes inconsistent",
+                   ue_index,
+                   serving_ssb_freq,
+                   fmt::underlying(current_mo_it->meas_obj_id));
+      return std::nullopt;
+    }
+  }
+
+  // Create fresh config.
+  meas_cfg.emplace();
+  auto& new_cfg = meas_cfg.value();
+
+  // Request removal of old measurement config if it exists.
+  if (current_meas_config.has_value()) {
+    add_old_meas_config_to_rem_list(new_cfg, current_meas_config.value());
+  }
+
+  // Clear existing measurement object ids and measurement ids in UE context.
+  ue_meas_context.clear_meas_obj_ids();
+  ue_meas_context.clear_meas_ids();
 
   // TODO: Filter measurement objects using UE capabilities.
 

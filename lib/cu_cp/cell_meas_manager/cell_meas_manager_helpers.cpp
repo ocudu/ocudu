@@ -323,12 +323,13 @@ ocudu::ocucp::generate_cho_measurement_object_list(nr_cell_identity             
   auto serving_it = cells.find(serving_nci);
   ocudu_assert(serving_it != cells.end(), "No cell config for nci={:#x}", serving_nci);
 
-  std::unordered_set<ssb_frequency_t> freqs;
+  std::vector<ssb_frequency_t> freqs;
 
-  // Add the serving cell frequency measurement object. Required for inter-frequency handovers (e.g. A5 CHO).
+  // Add the serving cell frequency first, so that it gets the first measurement object id like in the regular
+  // measurement configuration. The serving frequency is also required for inter-frequency CHO (e.g. A5).
   const cell_meas_config& serving_cell = serving_it->second;
   if (is_complete(serving_cell.serving_cell_cfg)) {
-    freqs.insert(serving_cell.serving_cell_cfg.ssb_arfcn->value());
+    freqs.push_back(serving_cell.serving_cell_cfg.ssb_arfcn->value());
   }
 
   std::unordered_set<pci_t> candidate_pcis_set(candidate_pcis.begin(), candidate_pcis.end());
@@ -346,10 +347,13 @@ ocudu::ocucp::generate_cho_measurement_object_list(nr_cell_identity             
       continue;
     }
 
-    freqs.insert(ncell_cfg.ssb_arfcn->value());
+    if (ssb_frequency_t ssb_freq = ncell_cfg.ssb_arfcn->value();
+        std::find(freqs.begin(), freqs.end(), ssb_freq) == freqs.end()) {
+      freqs.push_back(ssb_freq);
+    }
   }
 
-  return {freqs.begin(), freqs.end()};
+  return freqs;
 }
 
 bool ocudu::ocucp::is_cond_trigger_report_config(report_cfg_id_t                                     report_cfg_id,

@@ -633,6 +633,263 @@ TEST_F(cell_meas_manager_test, cho_a5_inter_frequency_includes_serving_cell_meas
   ASSERT_EQ(cho_result->nci_to_meas_ids.find(nci_serving), cho_result->nci_to_meas_ids.end());
 }
 
+namespace {
+
+/// Returns the id of the measurement object of \c cfg on the given SSB frequency, or invalid if there is none.
+meas_obj_id_t find_meas_obj_id(const rrc_meas_cfg& cfg, uint32_t ssb_arfcn)
+{
+  for (const auto& meas_obj : cfg.meas_obj_to_add_mod_list) {
+    if (meas_obj.meas_obj_nr.has_value() && meas_obj.meas_obj_nr->ssb_freq == ssb_arfcn) {
+      return meas_obj.meas_obj_id;
+    }
+  }
+  return meas_obj_id_t::invalid;
+}
+
+/// Builds a measurement object to add/mod on the given SSB frequency.
+rrc_meas_obj_to_add_mod make_meas_obj(meas_obj_id_t meas_obj_id, uint32_t ssb_arfcn)
+{
+  rrc_meas_obj_to_add_mod meas_obj;
+  meas_obj.meas_obj_id                    = meas_obj_id;
+  meas_obj.meas_obj_nr.emplace().ssb_freq = ssb_arfcn;
+  return meas_obj;
+}
+
+} // namespace
+
+TEST_F(cell_meas_manager_test, when_cho_meas_config_is_generated_then_serving_frequency_is_first_meas_object)
+{
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MOB-15");
+
+  create_cho_manager_multi_frequency();
+
+  cu_cp_ue_index_t ue_index = ue_mng.add_ue(uint_to_cu_cp_du_index(0));
+  ASSERT_NE(ue_index, cu_cp_ue_index_t::invalid);
+  ASSERT_TRUE(ue_mng.set_plmn(ue_index, plmn_identity::test_value()));
+  attach_rrc_ue(ue_index);
+
+  gnb_id_t         gnb_id{0x19b, 32};
+  nr_cell_identity nci_serving = nr_cell_identity::create(gnb_id, 0).value();
+
+  std::vector<pci_t> candidate_pcis = {2, 3};
+  auto cho_result = manager->get_measurement_config(ue_index, nci_serving, std::nullopt, true, candidate_pcis);
+  ASSERT_TRUE(cho_result.has_value());
+
+  // The serving frequency comes first and the candidate frequencies follow in neighbour list order, so the ids are
+  // deterministic and the servingCellMO of the UE (the first measurement object) stays valid.
+  ASSERT_EQ(cho_result->meas_obj_to_add_mod_list.size(), 3);
+  EXPECT_EQ(find_meas_obj_id(cho_result.value(), 632628), uint_to_meas_obj_id(1));
+  EXPECT_EQ(find_meas_obj_id(cho_result.value(), 633000), uint_to_meas_obj_id(2));
+  EXPECT_EQ(find_meas_obj_id(cho_result.value(), 634000), uint_to_meas_obj_id(3));
+}
+
+TEST_F(cell_meas_manager_test, when_cho_follows_regular_config_then_serving_meas_object_id_is_kept)
+{
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MOB-15");
+
+  create_cho_manager_a5_inter_frequency();
+
+  cu_cp_ue_index_t ue_index = ue_mng.add_ue(uint_to_cu_cp_du_index(0));
+  ASSERT_NE(ue_index, cu_cp_ue_index_t::invalid);
+  ASSERT_TRUE(ue_mng.set_plmn(ue_index, plmn_identity::test_value()));
+  attach_rrc_ue(ue_index);
+
+  gnb_id_t         gnb_id{0x19b, 32};
+  nr_cell_identity nci_serving = nr_cell_identity::create(gnb_id, 0).value();
+
+  // The regular config sets the measurement object the servingCellMO of the UE points to.
+  std::optional<rrc_meas_cfg> regular_cfg = manager->get_measurement_config(ue_index, nci_serving);
+  ASSERT_TRUE(regular_cfg.has_value());
+  const meas_obj_id_t serving_mo_id = find_meas_obj_id(regular_cfg.value(), 632628);
+  ASSERT_NE(serving_mo_id, meas_obj_id_t::invalid);
+
+  // The CHO config carries no CellGroupConfig: the serving frequency must stay on the same measurement object.
+  std::vector<pci_t> candidate_pcis = {2};
+  auto cho_result = manager->get_measurement_config(ue_index, nci_serving, regular_cfg, true, candidate_pcis);
+  ASSERT_TRUE(cho_result.has_value());
+  EXPECT_EQ(find_meas_obj_id(cho_result.value(), 632628), serving_mo_id);
+  EXPECT_NE(find_meas_obj_id(cho_result.value(), 633000), serving_mo_id);
+
+  // The serving measurement object is modified in place, never removed.
+  const auto& rem_list = cho_result->meas_obj_to_rem_list;
+  EXPECT_EQ(std::find(rem_list.begin(), rem_list.end(), serving_mo_id), rem_list.end());
+}
+
+TEST_F(cell_meas_manager_test, when_cho_replaces_regular_config_with_reports_then_only_cho_config_remains)
+{
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MOB-15");
+
+  create_cho_manager_with_regular_reports();
+
+  cu_cp_ue_index_t ue_index = ue_mng.add_ue(uint_to_cu_cp_du_index(0));
+  ASSERT_NE(ue_index, cu_cp_ue_index_t::invalid);
+  ASSERT_TRUE(ue_mng.set_plmn(ue_index, plmn_identity::test_value()));
+  attach_rrc_ue(ue_index);
+
+  gnb_id_t         gnb_id{0x19b, 32};
+  nr_cell_identity nci_serving       = nr_cell_identity::create(gnb_id, 0).value();
+  const auto       regular_report_id = uint_to_report_cfg_id(2);
+  const auto       cond_report_id    = uint_to_report_cfg_id(1);
+
+  // Regular config: serving frequency, then the neighbour frequencies in neighbour list order.
+  std::optional<rrc_meas_cfg> regular_cfg = manager->get_measurement_config(ue_index, nci_serving);
+  ASSERT_TRUE(regular_cfg.has_value());
+  ASSERT_EQ(regular_cfg->meas_obj_to_add_mod_list.size(), 3);
+  ASSERT_EQ(find_meas_obj_id(regular_cfg.value(), 632628), uint_to_meas_obj_id(1));
+  ASSERT_EQ(find_meas_obj_id(regular_cfg.value(), 633000), uint_to_meas_obj_id(2));
+  ASSERT_EQ(find_meas_obj_id(regular_cfg.value(), 634000), uint_to_meas_obj_id(3));
+  ASSERT_FALSE(regular_cfg->meas_id_to_add_mod_list.empty());
+  ASSERT_EQ(regular_cfg->report_cfg_to_add_mod_list.size(), 1);
+  ASSERT_EQ(regular_cfg->report_cfg_to_add_mod_list[0].report_cfg_id, regular_report_id);
+
+  // CHO towards the inter-frequency (PCI 3) and intra-frequency (PCI 4) candidates.
+  std::vector<pci_t> candidate_pcis = {3, 4};
+  auto cho_result = manager->get_measurement_config(ue_index, nci_serving, regular_cfg, true, candidate_pcis);
+  ASSERT_TRUE(cho_result.has_value());
+
+  // Only the serving and candidate frequencies remain. The serving frequency keeps id 1, the candidate frequency reuses
+  // id 2, and the measurement object of the frequency without a candidate is removed.
+  ASSERT_EQ(cho_result->meas_obj_to_add_mod_list.size(), 2);
+  EXPECT_EQ(find_meas_obj_id(cho_result.value(), 632628), uint_to_meas_obj_id(1));
+  EXPECT_EQ(find_meas_obj_id(cho_result.value(), 634000), uint_to_meas_obj_id(2));
+  EXPECT_EQ(cho_result->meas_obj_to_rem_list, std::vector<meas_obj_id_t>{uint_to_meas_obj_id(3)});
+
+  for (const auto& meas_obj : cho_result->meas_obj_to_add_mod_list) {
+    ASSERT_TRUE(meas_obj.meas_obj_nr.has_value());
+    const auto& cells_to_add = meas_obj.meas_obj_nr->cells_to_add_mod_list;
+    const auto& cells_to_rem = meas_obj.meas_obj_nr->cells_to_rem_list;
+    if (meas_obj.meas_obj_id == uint_to_meas_obj_id(1)) {
+      // Serving frequency: the intra-frequency candidate is added, and the serving cell is never listed.
+      ASSERT_EQ(cells_to_add.size(), 1);
+      EXPECT_EQ(cells_to_add[0].pci, 4);
+      EXPECT_TRUE(cells_to_rem.empty());
+    } else {
+      // Id 2 moves from 633000 to 634000. The cell list is a delta (TS 38.331, Section 5.5.2.5), so the cell of the old
+      // frequency is removed explicitly and only the candidate of the new frequency remains.
+      ASSERT_EQ(cells_to_add.size(), 1);
+      EXPECT_EQ(cells_to_add[0].pci, 3);
+      EXPECT_EQ(cells_to_rem, std::vector<pci_t>{2});
+    }
+  }
+
+  // The regular report config is removed and only the conditional trigger is configured.
+  ASSERT_EQ(cho_result->report_cfg_to_add_mod_list.size(), 1);
+  EXPECT_EQ(cho_result->report_cfg_to_add_mod_list[0].report_cfg_id, cond_report_id);
+  EXPECT_EQ(cho_result->report_cfg_to_rem_list, std::vector<report_cfg_id_t>{regular_report_id});
+
+  // Each candidate gets measurement ids for its condExecutionCond, which link the measurement object of its frequency
+  // to the conditional trigger.
+  const std::vector<std::pair<nr_cell_identity, meas_obj_id_t>> candidates = {
+      {nr_cell_identity::create(gnb_id, 2).value(), uint_to_meas_obj_id(2)},
+      {nr_cell_identity::create(gnb_id, 3).value(), uint_to_meas_obj_id(1)}};
+  ASSERT_EQ(cho_result->nci_to_meas_ids.size(), candidates.size());
+  for (const auto& [nci, meas_obj_id] : candidates) {
+    auto cand_it = cho_result->nci_to_meas_ids.find(nci);
+    ASSERT_NE(cand_it, cho_result->nci_to_meas_ids.end()) << fmt::format("nci={:#x}", nci.value());
+    ASSERT_FALSE(cand_it->second.empty()) << fmt::format("nci={:#x}", nci.value());
+    for (meas_id_t meas_id : cand_it->second) {
+      auto meas_id_it = std::find_if(cho_result->meas_id_to_add_mod_list.begin(),
+                                     cho_result->meas_id_to_add_mod_list.end(),
+                                     [meas_id](const rrc_meas_id_to_add_mod& m) { return m.meas_id == meas_id; });
+      ASSERT_NE(meas_id_it, cho_result->meas_id_to_add_mod_list.end()) << "meas_id=" << static_cast<unsigned>(meas_id);
+      EXPECT_EQ(meas_id_it->meas_obj_id, meas_obj_id);
+      EXPECT_EQ(meas_id_it->report_cfg_id, cond_report_id);
+    }
+  }
+
+  // Every measurement id of the CHO config uses the conditional trigger, and every regular measurement id is either
+  // removed or reused (modified) by the CHO config.
+  for (const auto& meas_id : cho_result->meas_id_to_add_mod_list) {
+    EXPECT_EQ(meas_id.report_cfg_id, cond_report_id);
+  }
+  for (const auto& old_meas_id : regular_cfg->meas_id_to_add_mod_list) {
+    const auto& rem_list = cho_result->meas_id_to_rem_list;
+    const bool  removed  = std::find(rem_list.begin(), rem_list.end(), old_meas_id.meas_id) != rem_list.end();
+    const bool  reused =
+        std::any_of(cho_result->meas_id_to_add_mod_list.begin(),
+                    cho_result->meas_id_to_add_mod_list.end(),
+                    [&old_meas_id](const rrc_meas_id_to_add_mod& m) { return m.meas_id == old_meas_id.meas_id; });
+    EXPECT_NE(removed, reused) << "meas_id=" << static_cast<unsigned>(old_meas_id.meas_id);
+  }
+
+  // The UE context only knows the candidates, each on the measurement object of its frequency.
+  const cell_meas_manager_ue_context& ue_meas_context = ue_mng.get_measurement_context(ue_index);
+  EXPECT_EQ(ue_meas_context.nci_to_meas_obj_id.size(), 2);
+  EXPECT_EQ(ue_meas_context.nci_to_meas_obj_id.at(nr_cell_identity::create(gnb_id, 2).value()), uint_to_meas_obj_id(2));
+  EXPECT_EQ(ue_meas_context.nci_to_meas_obj_id.at(nr_cell_identity::create(gnb_id, 3).value()), uint_to_meas_obj_id(1));
+}
+
+TEST_F(cell_meas_manager_test,
+       when_current_config_has_serving_frequency_on_other_meas_object_then_cho_meas_config_is_rejected)
+{
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MOB-15");
+
+  create_cho_manager_a5_inter_frequency();
+
+  cu_cp_ue_index_t ue_index = ue_mng.add_ue(uint_to_cu_cp_du_index(0));
+  ASSERT_NE(ue_index, cu_cp_ue_index_t::invalid);
+  ASSERT_TRUE(ue_mng.set_plmn(ue_index, plmn_identity::test_value()));
+  attach_rrc_ue(ue_index);
+
+  gnb_id_t         gnb_id{0x19b, 32};
+  nr_cell_identity nci_serving = nr_cell_identity::create(gnb_id, 0).value();
+
+  // Fill the measurement context of the UE with a regular config.
+  ASSERT_TRUE(manager->get_measurement_config(ue_index, nci_serving).has_value());
+  const cell_meas_manager_ue_context& ue_meas_context     = ue_mng.get_measurement_context(ue_index);
+  const size_t                        nof_meas_obj_ids    = ue_meas_context.meas_obj_ids.size();
+  const auto                          meas_id_to_meas_ctx = ue_meas_context.meas_id_to_meas_context;
+  const auto                          nci_to_meas_obj_id  = ue_meas_context.nci_to_meas_obj_id;
+  ASSERT_GT(nof_meas_obj_ids, 1U);
+
+  // Current config with the target frequency on the first measurement object and the serving frequency on the third.
+  rrc_meas_cfg current_cfg;
+  current_cfg.meas_obj_to_add_mod_list.push_back(make_meas_obj(uint_to_meas_obj_id(1), 633000));
+  current_cfg.meas_obj_to_add_mod_list.push_back(make_meas_obj(uint_to_meas_obj_id(3), 632628));
+
+  // The CHO config would put the serving frequency on the first measurement object while the servingCellMO of the UE
+  // stays on the third one, so no CHO config is generated.
+  std::vector<pci_t> candidate_pcis = {2};
+  EXPECT_FALSE(manager->get_measurement_config(ue_index, nci_serving, current_cfg, true, candidate_pcis).has_value());
+
+  // The measurement context of the UE is untouched, so that the reports of its current config are still handled.
+  EXPECT_EQ(ue_meas_context.meas_obj_ids.size(), nof_meas_obj_ids);
+  EXPECT_EQ(ue_meas_context.meas_id_to_meas_context.size(), meas_id_to_meas_ctx.size());
+  EXPECT_EQ(ue_meas_context.nci_to_meas_obj_id, nci_to_meas_obj_id);
+}
+
+TEST_F(cell_meas_manager_test, when_cho_meas_config_is_regenerated_then_layout_is_unchanged)
+{
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MOB-15");
+
+  create_cho_manager_multi_frequency();
+
+  cu_cp_ue_index_t ue_index = ue_mng.add_ue(uint_to_cu_cp_du_index(0));
+  ASSERT_NE(ue_index, cu_cp_ue_index_t::invalid);
+  ASSERT_TRUE(ue_mng.set_plmn(ue_index, plmn_identity::test_value()));
+  attach_rrc_ue(ue_index);
+
+  gnb_id_t         gnb_id{0x19b, 32};
+  nr_cell_identity nci_serving = nr_cell_identity::create(gnb_id, 0).value();
+
+  // A second CHO (e.g. after a cancel) starts from the first CHO config.
+  std::vector<pci_t> candidate_pcis = {2, 3};
+  auto first_cho = manager->get_measurement_config(ue_index, nci_serving, std::nullopt, true, candidate_pcis);
+  ASSERT_TRUE(first_cho.has_value());
+  auto second_cho = manager->get_measurement_config(ue_index, nci_serving, first_cho, true, candidate_pcis);
+  ASSERT_TRUE(second_cho.has_value());
+
+  // Same frequency on the same measurement object, so nothing is removed.
+  ASSERT_EQ(second_cho->meas_obj_to_add_mod_list.size(), first_cho->meas_obj_to_add_mod_list.size());
+  for (uint32_t ssb_arfcn : {632628U, 633000U, 634000U}) {
+    EXPECT_EQ(find_meas_obj_id(second_cho.value(), ssb_arfcn), find_meas_obj_id(first_cho.value(), ssb_arfcn));
+  }
+  EXPECT_EQ(find_meas_obj_id(second_cho.value(), 632628), uint_to_meas_obj_id(1));
+  EXPECT_TRUE(second_cho->meas_obj_to_rem_list.empty());
+  EXPECT_TRUE(second_cho->meas_id_to_rem_list.empty());
+  EXPECT_TRUE(second_cho->report_cfg_to_rem_list.empty());
+}
+
 // ===================== NTN Neighbour Cell Info Tests =====================
 
 static rrc_ntn_neighbour_cell_info make_test_ntn_neighbour_info()
