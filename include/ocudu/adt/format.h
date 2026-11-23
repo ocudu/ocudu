@@ -50,9 +50,10 @@ OutputIt bitset_to_hex_string(const Bitset& s, OutputIt&& mem_buffer, bool rever
   }
   constexpr bool   lowest_info_bit_is_msb = Bitset::bit_order();
   constexpr size_t bits_per_word          = Bitset::bits_per_word;
-  const size_t     rem_bits               = sz % bits_per_word;
-  const size_t     rem_digits             = (rem_bits + 3U) / 4U;
   const size_t     nwords                 = (sz + bits_per_word - 1) / bits_per_word;
+  // Number of bits in the last word, which is full when the size is a multiple of the word size.
+  const size_t rem_bits   = sz - (nwords - 1) * bits_per_word;
+  const size_t rem_digits = (rem_bits + 3U) / 4U;
 
   const uint64_t* words = s.data();
 
