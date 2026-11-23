@@ -150,7 +150,8 @@ TEST_F(du_high_tester, when_ue_context_release_received_then_ue_gets_deleted)
 /// not yet shut down), ensure that:
 /// - space is still reserved for the UE periodic resources (e.g. PUCCH for CSI/ACK) and other UE grants do not
 /// interfere with it;
-/// - no new grants are scheduled for the UE being removed.
+/// - no new DL grants are scheduled for the UE being removed;
+/// - the SRs of the UE being removed end up being ignored, and no UL grants are scheduled after that.
 TEST_F(du_high_tester,
        while_ue_context_release_is_on_going_then_grants_are_not_scheduled_and_ue_periodic_resources_are_still_scheduled)
 {
@@ -211,17 +212,36 @@ TEST_F(du_high_tester,
   unsigned ue2_pdsch_count = 0;
   unsigned ue1_csi_count   = 0;
   unsigned ue1_sr_count    = 0;
+  // The DU only stops granting SRs once it learns that the RRC Release was delivered, which happens asynchronously
+  // with respect to the UE reception. Thus, early SRs may still be granted.
+  const unsigned          max_sr_grant_delay = 10;
+  std::optional<unsigned> ue1_sr_pending_count;
+  bool                    ue1_sr_ignored = false;
+  // Whether UE1 still had PUCCH resources scheduled after one of its SRs was ignored.
+  bool ue1_sr_ignored_while_active = false;
   for (unsigned count = 0, max_count = 1000; count < max_count and cu_notifier.f1ap_ul_msgs.empty(); ++count) {
     run_slot();
+
+    // An SR that is not granted within a few slots is considered ignored.
+    if (ue1_sr_pending_count.has_value() and count - *ue1_sr_pending_count > max_sr_grant_delay) {
+      ue1_sr_ignored = true;
+      ue1_sr_pending_count.reset();
+    }
 
     if (phy.cells[0].last_dl_res.has_value()) {
       const auto dl_res = phy.cells[0].last_dl_res->dl_res;
 
-      // TEST CASE: Ensure no PDSCH/PUSCH grants are scheduled for UE1.
+      // TEST CASE: Ensure no PDSCH grants are scheduled for UE1, given that its DRBs are deactivated before the RRC
+      // Release is sent.
       ASSERT_EQ(find_ue_dl_pdcch(rnti1, dl_res), nullptr)
           << "New DL grants were scheduled for UE1 while its release was ongoing";
-      ASSERT_EQ(find_ue_ul_pdcch(rnti1, dl_res), nullptr)
-          << "New UL grants were scheduled for UE1 while its release was ongoing";
+
+      // TEST CASE: Ensure PUSCH grants for UE1 only answer SRs and stop once an SR gets ignored.
+      if (find_ue_ul_pdcch(rnti1, dl_res) != nullptr) {
+        ASSERT_FALSE(ue1_sr_ignored) << "New UL grants were scheduled for UE1 after one of its SRs was ignored";
+        ASSERT_TRUE(ue1_sr_pending_count.has_value()) << "New UL grants were scheduled for UE1 without a pending SR";
+        ue1_sr_pending_count.reset();
+      }
 
       // TEST CASE: Ensure that UE2 activity is unaffected.
       if (find_ue_pdsch_with_lcid(rnti2, LCID_MIN_DRB, dl_res.ue_grants()) != nullptr) {
@@ -235,23 +255,30 @@ TEST_F(du_high_tester,
     const span<const pucch_info> pucchs = phy.cells[0].last_ul_res->ul_res.pucchs().unsorted();
 
     // TEST CASE: Ensure UE1 UCI periodic resources are still scheduled.
-    if (find_ue_pucch_with_csi(rnti1, pucchs) != nullptr) {
+    const bool ue1_csi_pucch = find_ue_pucch_with_csi(rnti1, pucchs) != nullptr;
+    if (ue1_csi_pucch) {
       ue1_csi_count++;
     }
     auto* pucch = find_ue_pucch_with_sr(rnti1, pucchs);
+    // An SR ignored due to the UE removal from the scheduler does not count.
+    if (ue1_sr_ignored and (ue1_csi_pucch or pucch != nullptr)) {
+      ue1_sr_ignored_while_active = true;
+    }
     if (pucch != nullptr) {
-      // Push SR indication to MAC. It should be ignored.
+      // Push SR indication to MAC.
       mac_uci_indication_message uci;
       uci.sl_rx = next_slot.without_hyper_sfn() - 1;
       uci.ucis.push_back(test_helpers::create_uci_pdu(*pucch, true));
       du_hi->get_control_info_handler(to_du_cell_index(0)).handle_uci(uci);
       ue1_sr_count++;
+      ue1_sr_pending_count = count;
     }
   }
   ASSERT_FALSE(cu_notifier.f1ap_ul_msgs.empty()) << "UE Context Release Complete was not sent within the expected time";
   ASSERT_GT(ue2_pdsch_count, 0) << "No periodic PDSCH resources were scheduled for UE2";
   ASSERT_GT(ue1_csi_count, 0) << "No periodic CSI resources were scheduled for UE1 while its release was ongoing";
   ASSERT_GT(ue1_sr_count, 0) << "No periodic SR resources were scheduled for UE1 while its release was ongoing";
+  ASSERT_TRUE(ue1_sr_ignored_while_active) << "SRs of UE1 were not ignored while its release was ongoing";
 }
 
 TEST_F(du_high_tester, when_f1ap_reset_received_then_ues_are_removed)
