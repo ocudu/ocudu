@@ -46,6 +46,10 @@ add_executable(async_exec_test async_exec_test.cpp)
 target_link_libraries(async_exec_test ocudulog ocudu_support GTest::gtest ocudu_gtest_main)
 gtest_discover_tests(async_exec_test)
 
+add_executable(sync_wait_test sync_wait_test.cpp)
+target_link_libraries(sync_wait_test ocudulog ocudu_support GTest::gtest ocudu_gtest_main)
+gtest_discover_tests(sync_wait_test)
+
 add_executable(async_queue_test async_queue_test.cpp)
 target_link_libraries(async_queue_test ocudulog ocudu_support GTest::gtest ocudu_gtest_main)
 add_test(async_queue_test async_queue_test)
