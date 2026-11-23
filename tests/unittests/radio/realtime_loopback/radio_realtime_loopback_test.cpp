@@ -1221,7 +1221,8 @@ TEST(RealtimeLoopbackRadioDeathTest, Misuse)
       },
       "Stream 1 has different number of transmit");
 
-  // Invalid RF time scales are reported as user errors.
+  // Invalid RF time scales are reported as user errors. The exit code is not checked because Valgrind replaces it when
+  // it reports the memory still reachable at exit.
   for (const char* args : {"rf_time_scale=0",
                            "rf_time_scale=-1",
                            "rf_time_scale=abc",
@@ -1232,7 +1233,7 @@ TEST(RealtimeLoopbackRadioDeathTest, Misuse)
                            "rf_time_scale=0.5x,foo=1"}) {
     radio_configuration::radio config = make_radio_config(1, 1);
     config.args                       = args;
-    ASSERT_EXIT(create(config), ::testing::ExitedWithCode(1), "Invalid rf_time_scale") << args;
+    ASSERT_DEATH(create(config), "Invalid rf_time_scale") << args;
   }
 
   async_task_worker.stop();
