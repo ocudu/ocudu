@@ -9,7 +9,6 @@
 #include "ocudu/adt/static_vector.h"
 #include "ocudu/ran/csi_rs/csi_meas_config.h"
 #include "ocudu/ran/dmrs/dmrs.h"
-#include "ocudu/ran/pdsch/pdsch_prb_bundling.h"
 #include "ocudu/ran/pdsch/pdsch_time_domain_resource.h"
 #include "ocudu/ran/pucch/pucch_configuration.h"
 #include "ocudu/ran/sch/tbs_calculator.h"
@@ -35,6 +34,9 @@ struct cell_pucch_rrm_config {
   static_vector<uint8_t, 8> dl_data_to_ul_ack;
 };
 
+/// Size of the static PRB bundle of the PDSCH. See TS 38.214, Section 5.1.2.3.
+enum class pdsch_prb_bundle_size { n4, wideband };
+
 /// PDSCH parameters of the UEs of a cell.
 struct cell_pdsch_rrm_config {
   /// \c xOverhead of the \c PDSCH-ServingCellConfig of the UEs.
@@ -48,8 +50,8 @@ struct cell_pdsch_rrm_config {
   /// Size of the static PRB bundle of the PDSCH. If absent, the UE applies a size of 2 PRBs. See TS 38.331, \c
   /// prb-BundlingType.
   std::optional<pdsch_prb_bundle_size> prb_bundle_size;
-  /// DCI format 1_1 time domain allocation list of the UEs with PDSCH repetitions: the common list, plus one entry
-  /// for the repetitions. Empty if the cell has no PDSCH repetitions. See \ref make_ue_pdsch_td_alloc_list.
+  /// Time domain allocation list of the UEs with PDSCH repetitions: the common list plus one entry for the repetitions.
+  /// The same for all the UEs. Empty if the cell has no repetitions. See \ref make_ue_pdsch_td_alloc_list.
   std::vector<pdsch_time_domain_resource_allocation> rep_td_alloc_list;
 };
 
@@ -74,6 +76,13 @@ struct cell_rrm_config {
   cell_csi_rrm_config   csi;
   cell_pusch_rrm_config pusch;
 };
+
+/// \brief Makes the PDSCH time domain allocation list of the UEs with repetitions: the common list plus one entry for
+/// the repetitions.
+///
+/// The list is empty if the cell has no repetitions: the app does not enable them, the common list has no room for one
+/// more entry, or it has no entry that ends at the last symbol of the slot.
+std::vector<pdsch_time_domain_resource_allocation> make_pdsch_rep_td_alloc_list(const ran_cell_config& cell_cfg);
 
 /// \brief Makes the dedicated PDSCH time domain allocation list of a UE.
 ///

@@ -29,9 +29,13 @@ static cell_pucch_rrm_config make_cell_pucch_rrm_config(const ran_cell_config& c
   return pucch;
 }
 
-/// Makes the PDSCH time domain allocation list of the UEs with repetitions.
-static std::vector<pdsch_time_domain_resource_allocation> make_pdsch_rep_td_alloc_list(const ran_cell_config& cell_cfg)
+std::vector<pdsch_time_domain_resource_allocation> ocudu::make_pdsch_rep_td_alloc_list(const ran_cell_config& cell_cfg)
 {
+  // The cell has no repetitions when the app does not enable them.
+  if (cell_cfg.init_bwp.pdsch.max_nof_repetitions <= 1) {
+    return {};
+  }
+
   // See TS 38.331, \c maxNrofDL-Allocations.
   static constexpr unsigned max_nof_dl_allocs = 16;
 
@@ -99,10 +103,7 @@ static cell_pdsch_rrm_config make_cell_pdsch_rrm_config(const ran_cell_config& c
       break;
   }
 
-  // The cell has no repetitions when the app does not enable them.
-  if (cell_cfg.init_bwp.pdsch.max_nof_repetitions > 1) {
-    pdsch.rep_td_alloc_list = make_pdsch_rep_td_alloc_list(cell_cfg);
-  }
+  pdsch.rep_td_alloc_list = make_pdsch_rep_td_alloc_list(cell_cfg);
   return pdsch;
 }
 

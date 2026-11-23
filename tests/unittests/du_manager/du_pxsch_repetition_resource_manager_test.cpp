@@ -136,6 +136,21 @@ TEST_F(du_pxsch_repetition_resource_manager_test, when_cell_disables_pdsch_repet
   ASSERT_EQ(get_pdsch_rrm(ue).max_nof_repetitions, 1);
 }
 
+TEST_F(du_pxsch_repetition_resource_manager_test, when_cell_cannot_build_the_repetition_list_then_ue_has_no_repetitions)
+{
+  // The common list has 16 entries, which leaves no room for the repetition entry.
+  std::vector<du_cell_config> cells{make_test_cell_config(params, 8, 8)};
+  auto& common_list = cells.front().ran.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
+  while (common_list.size() < 16) {
+    common_list.push_back(common_list.front());
+  }
+  du_pdsch_resource_manager mng{cells, test_cfg};
+
+  cell_group_config ue = make_ue();
+  mng.update_resources(ue, make_caps(16, false));
+  ASSERT_EQ(get_pdsch_rrm(ue).max_nof_repetitions, 1);
+}
+
 TEST_F(du_pxsch_repetition_resource_manager_test, when_ue_supports_pusch_repetitions_then_dci_0_1_list_r16_is_built)
 {
   cell_group_config ue = make_ue();

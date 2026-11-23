@@ -178,9 +178,9 @@ validate_cg_cfg(const serving_cell_config& serv_cell_cfg, const ue_rrm_config& r
   return {};
 }
 
-validator_result validate_bwp_ded_cfg(const serving_cell_config& ue_cell_cfg,
-                                      const ue_rrm_config&       rrm,
-                                      const cell_configuration&  cell_cfg)
+static validator_result validate_bwp_ded_cfg(const serving_cell_config& ue_cell_cfg,
+                                             const ue_rrm_config&       rrm,
+                                             const cell_configuration&  cell_cfg)
 {
   const auto& ue_bwp_ded              = ue_cell_cfg.init_dl_bwp;
   const auto& expected_bwp_ded_pdcchs = cell_cfg.bwp_res[to_bwp_id(0)].dl().ded_pdcchs;

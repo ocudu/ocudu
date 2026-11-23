@@ -29,7 +29,8 @@ using harq_dl_feedback_disabled_mask = bounded_bitset<MAX_NOF_HARQS, true>;
 /// Bitset mask for UL HARQ mode configuration.
 using harq_ul_mode_mask = bounded_bitset<MAX_NOF_HARQS, true>;
 
-/// Number of bits of the HARQ process number field of the DCI formats that schedule a PDSCH or a PUSCH.
+/// Number of bits of the HARQ process number field of the DCI formats that schedule a PDSCH or a PUSCH. The field has 4
+/// bits, or 5 bits if the higher layers configure it. See TS 38.212, Sections 7.3.1.1.2 and 7.3.1.2.2.
 enum class harq_process_num_field_size : uint8_t { n4 = 4, n5 = 5 };
 
 constexpr harq_process_num_field_size to_harq_process_num_field_size(unsigned nof_bits)

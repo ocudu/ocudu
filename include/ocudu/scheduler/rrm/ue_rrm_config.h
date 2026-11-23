@@ -71,7 +71,7 @@ struct ue_pdsch_rrm_config {
   vrb_to_prb::mapping_type interleaving = vrb_to_prb::mapping_type::non_interleaved;
   /// Resource allocation type of the PDSCH for DCI format 1_1. See TS 38.331, \c resourceAllocation.
   resource_allocation res_alloc = resource_allocation::resource_allocation_type_1;
-  /// Number of bits of the HARQ process number field of the DCI formats 1_1 and 1_2.
+  /// Number of bits of the HARQ process number field of the DCI format 1_1.
   harq_process_num_field_size dci_harq_field_size = harq_process_num_field_size::n4;
   /// Maximum number of PDSCH repetitions of the UE. A value of 1 means no repetitions. See TS 38.331, \c
   /// repetitionNumber-r16.

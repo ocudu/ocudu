@@ -42,6 +42,9 @@ private:
                                             const std::optional<ue_capability_summary>& ue_caps) const;
   unsigned select_max_nof_harqs(du_cell_index_t cell_idx, const std::optional<ue_capability_summary>& ue_caps) const;
   unsigned select_max_mimo_layers(du_cell_index_t cell_idx, const std::optional<ue_capability_summary>& ue_caps) const;
+  /// Selects the size of the HARQ process number field of the DCI formats of the UE.
+  /// \remark [Implementation-defined] The DU uses the 5-bit field only for the UEs that support NTN, when both the cell
+  /// and the UE allow more than 16 HARQ processes.
   harq_process_num_field_size select_dci_harq_field_size(du_cell_index_t                             cell_idx,
                                                          const std::optional<ue_capability_summary>& ue_caps) const;
   harq_dl_feedback_disabled_mask

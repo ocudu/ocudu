@@ -7,6 +7,7 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/band_helper.h"
 #include "ocudu/ran/cyclic_prefix.h"
+#include "ocudu/scheduler/rrm/cell_rrm_config.h"
 #include "ocudu/support/error_handling.h"
 #include "ocudu/support/math/math_utils.h"
 #include <algorithm>
@@ -222,11 +223,11 @@ du_pdsch_resource_manager::select_max_nof_repetitions(du_cell_index_t           
 {
   const du_cell_config& cell_cfg = cell_cfg_list[cell_idx];
 
-  // 1. PDSCH repetitions disabled for the cell.
-  const unsigned max_rep_cfg = cell_cfg.ran.init_bwp.pdsch.max_nof_repetitions;
-  if (max_rep_cfg <= 1) {
+  // 1. The cell has no PDSCH repetitions: the app disables them, or the cell cannot build the list for them.
+  if (make_pdsch_rep_td_alloc_list(cell_cfg.ran).empty()) {
     return 1;
   }
+  const unsigned max_rep_cfg = cell_cfg.ran.init_bwp.pdsch.max_nof_repetitions;
 
   // 2 .The UE must support \e supportRepNumPDSCH-TDRA-r16 in the cell DL band.
   const nr_band band = cell_cfg.ran.dl_carrier.band;
