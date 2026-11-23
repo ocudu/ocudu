@@ -524,9 +524,12 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
                                        new_drb->gtpu_fwd_target->get_rx_upper_layer_interface());
       new_drb->dispatch_queue = std::move(expected_dispatch_queue.value());
 
-      // We are now in forwarding mode. PDCP will begin buffering PDUs until the SN status status is transfered.
-      // Both forwareded PDUs and new PDUs will be buffered.
-      new_drb->pdcp->get_tx_upper_control_interface().begin_buffering();
+      // We are now in forwarding mode. PDCP will begin buffering PDUs until the SN status is transferred.
+      // Both forwarded PDUs and new PDUs will be buffered. This is only done for AM, as in UM the PDCP state is reset
+      // and there is no forwarding of SDUs with PDCP SN.
+      if (drb_to_setup.pdcp_cfg.rlc_mod == pdcp_rlc_mode::am) {
+        new_drb->pdcp->get_tx_upper_control_interface().begin_buffering();
+      }
 
       logger.log_info("Allocated DL data forwarding tunnel for {}. tnl_info={}",
                       drb_to_setup.drb_id,
@@ -703,8 +706,10 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
       pdcp_tx_ctrl.set_count(tx_count);
 
       // We are now leaving forwarding mode, as we have the correct state now. Stop buffering and flush the buffered
-      // SDUs. Forwareded SDUs are flushed first, fresh ones after.
-      pdcp_tx_ctrl.end_buffering();
+      // SDUs. Forwarded SDUs are flushed first, fresh ones after. Only necessary for AM bearers.
+      if (pdcp_tx_ctrl.get_rlc_mode() == pdcp_rlc_mode::am) {
+        pdcp_tx_ctrl.end_buffering();
+      }
     }
 
     // Start DL data forwarding from source UP to target.

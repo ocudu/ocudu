@@ -299,10 +299,11 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf, std::optional<uint32_t> forward
   /// If this is a forwarded SDU, we need to estimate the COUNT
   uint32_t pdu_count;
   if (forward_sn.has_value()) {
-    expected<uint32_t> fwd_count = estimate_forwareded_sdu_count(*forward_sn);
+    expected<uint32_t> fwd_count = estimate_forwarded_sdu_count(*forward_sn);
     if (!fwd_count.has_value()) {
       logger.log_warning(
           "Dropping forwarded SDU. Cause COUNT larger then TX_NEXT. sn={} tx_next={}", *forward_sn, st.tx_next);
+      metrics.add_lost_sdus(1);
       return;
     }
     pdu_count = fwd_count.value();
@@ -1636,7 +1637,7 @@ void pdcp_entity_tx::buffer_forwarded_sdu(byte_buffer buf, uint32_t sn)
 {
   if (not forward_buffer.try_push(forward_sdu_info{std::move(buf), sn})) {
     if (cfg.custom.warn_on_drop) {
-      logger.log_warning("Dropping forwared SDU. SDU buffer is full");
+      logger.log_warning("Dropping forwarded SDU. SDU buffer is full");
     } else {
       logger.log_debug("Dropping forwarded SDU. SDU buffer is full");
     }
@@ -1645,7 +1646,7 @@ void pdcp_entity_tx::buffer_forwarded_sdu(byte_buffer buf, uint32_t sn)
   }
 }
 
-expected<uint32_t> pdcp_entity_tx::estimate_forwareded_sdu_count(uint32_t sn)
+expected<uint32_t> pdcp_entity_tx::estimate_forwarded_sdu_count(uint32_t sn)
 {
   uint32_t rcvd_hfn;
   uint32_t rcvd_count;
@@ -1677,7 +1678,6 @@ pdcp_count_info pdcp_entity_tx::get_count() const
   return count_info;
 }
 
-/// \brief Set the TX count for status transfer
 void pdcp_entity_tx::set_count(pdcp_count_info count_info)
 {
   uint32_t count = COUNT(count_info.hfn, count_info.sn);

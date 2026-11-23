@@ -148,6 +148,9 @@ public:
   void start_dl_forwarding(pdcp_tx_forward_notifier* tx_forward_) override;
 
   /// Get the TX SN size.
+  pdcp_rlc_mode get_rlc_mode() const override { return cfg.rlc_mode; }
+
+  /// Get the TX SN size.
   pdcp_sn_size get_sn_size() const override { return cfg.sn_size; }
 
   /// \brief Get the TX count for status transfer.
@@ -377,8 +380,8 @@ private:
 
   void handle_reordering_timeout();
 
-  /// TODO docs.
-  expected<uint32_t> estimate_forwareded_sdu_count(uint32_t sn);
+  /// \brief Estimate the PDCP COUNT from the received SN that was forwarded along the SDU.
+  expected<uint32_t> estimate_forwarded_sdu_count(uint32_t sn);
 
   pdcp_tx_metrics          metrics;
   pdcp_metrics_aggregator& metrics_agg;

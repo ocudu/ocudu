@@ -177,6 +177,9 @@ public:
   virtual bool resume()  = 0;
 
   /// Get the TX SN size.
+  virtual pdcp_rlc_mode get_rlc_mode() const = 0;
+
+  /// Get the TX SN size.
   virtual pdcp_sn_size get_sn_size() const = 0;
 
   /// Get the TX count for status transfer
