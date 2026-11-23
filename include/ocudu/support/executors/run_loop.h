@@ -31,6 +31,20 @@ public:
     }
   }
 
+  /// \brief Runs the dispatched tasks until the given predicate returns true, calling an idle handler whenever there
+  /// are none.
+  ///
+  /// The loop does not block while there are no tasks, so the idle handler should block or sleep for a while.
+  template <typename Predicate, typename IdleHandler>
+  void run_until(const Predicate& pred, IdleHandler&& on_idle)
+  {
+    while (not pred()) {
+      if (not worker.run_pending_tasks()) {
+        on_idle();
+      }
+    }
+  }
+
 private:
   /// Queue of dispatched tasks.
   manual_task_worker worker;

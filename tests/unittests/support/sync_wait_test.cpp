@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
+#include "ocudu/support/async/async_timer.h"
 #include "ocudu/support/async/execute_on_blocking.h"
 #include "ocudu/support/async/sync_wait.h"
 #include "ocudu/support/executors/task_worker.h"
@@ -65,4 +66,34 @@ TEST_F(SyncWaitTest, CompletesTaskThatDoesNotSuspend)
     });
   });
   ASSERT_EQ(value, 5);
+}
+
+TEST_F(SyncWaitTest, CallsIdleHandlerUntilTaskCompletes)
+{
+  static constexpr unsigned timeout_ms = 10;
+
+  unique_timer timer;
+  unsigned     nof_idle_calls = 0;
+  sync_wait(
+      [this, &timer](task_executor& exec) {
+        timer = timer_factory{timers, exec}.create_timer();
+        return launch_async([&timer](coro_context<async_task<void>>& ctx) {
+          CORO_BEGIN(ctx);
+          CORO_AWAIT(async_wait_for(timer, std::chrono::milliseconds(timeout_ms)));
+          CORO_RETURN();
+        });
+      },
+      // The task only completes when the idle handler advances the time.
+      [this, &nof_idle_calls]() {
+        timers.tick();
+        ++nof_idle_calls;
+      });
+  ASSERT_GE(nof_idle_calls, timeout_ms);
+}
+
+TEST_F(SyncWaitTest, ReturnsResultWithIdleHandler)
+{
+  std::thread::id worker_id = sync_wait([this](task_executor& exec) { return run_on_worker(exec); },
+                                        []() { std::this_thread::sleep_for(std::chrono::microseconds(100)); });
+  ASSERT_EQ(worker_id, worker.get_id());
 }
