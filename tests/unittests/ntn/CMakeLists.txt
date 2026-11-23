@@ -63,3 +63,8 @@ add_executable(reference_location_test reference_location_test.cpp)
 target_include_directories(reference_location_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(reference_location_test ocudu_lpp_lib ocudu_support ocudulog gtest gtest_main)
 gtest_discover_tests(reference_location_test)
+
+add_executable(ntn_propagator_reference_test ntn_propagator_reference_test.cpp)
+target_include_directories(ntn_propagator_reference_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(ntn_propagator_reference_test ocudu_ntn_lib ocudu_support ocudulog gtest gtest_main)
+gtest_discover_tests(ntn_propagator_reference_test)
