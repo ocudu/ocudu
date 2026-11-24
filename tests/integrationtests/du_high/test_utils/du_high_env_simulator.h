@@ -160,6 +160,10 @@ public:
   /// Angle of Arrival reported in the SRS indications of positioning SRS.
   test_helpers::srs_positioning_aoa srs_pos_aoa;
 
+  /// Optional hook applied to each auto-generated PUSCH CRC before it is forwarded to the DU-high. By default, all
+  /// CRCs are OK and carry no SINR.
+  unique_function<void(mac_crc_pdu&)> crc_modifier;
+
   ocudulog::basic_logger& test_logger = ocudulog::fetch_basic_logger("TEST");
 
 protected:

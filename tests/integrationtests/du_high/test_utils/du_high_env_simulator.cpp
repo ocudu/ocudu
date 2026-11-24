@@ -598,6 +598,11 @@ void du_high_env_simulator::handle_slot_results(du_cell_index_t cell_index)
       const static_vector<ul_sched_info, MAX_PUSCH_PDUS_PER_SLOT> puschs(pusch_list.begin(), pusch_list.end());
 
       mac_crc_indication_message crc_ind = test_helpers::create_crc_indication(sl_rx, puschs);
+      if (not crc_modifier.is_empty()) {
+        for (mac_crc_pdu& crc : crc_ind.crcs) {
+          crc_modifier(crc);
+        }
+      }
       this->du_hi->get_control_info_handler(cell_index).handle_crc(crc_ind);
 
       std::optional<mac_uci_indication_message> uci_ind = create_pusch_uci_indication(sl_rx, puschs);

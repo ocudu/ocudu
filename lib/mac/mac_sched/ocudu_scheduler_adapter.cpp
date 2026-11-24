@@ -39,6 +39,7 @@ make_scheduler_ue_reconfiguration_request(const mac_ue_reconfiguration_request& 
 ocudu_scheduler_adapter::ocudu_scheduler_adapter(const ocudu_mac_sched_config& params, rnti_manager& rnti_mng_) :
   rnti_mng(rnti_mng_),
   rlf_handler(params.mac_cfg, params.ctrl_exec),
+  cg_pusch_sinr_threshold_dB(params.sched_cfg.ue.cg_pusch_sinr_threshold_dB),
   ctrl_exec(params.ctrl_exec),
   timers(params.timers),
   logger(ocudulog::fetch_basic_logger("MAC")),
@@ -53,6 +54,12 @@ ocudu_scheduler_adapter::ocudu_scheduler_adapter(const ocudu_mac_sched_config& p
 
 void ocudu_scheduler_adapter::add_cell(const mac_scheduler_cell_creation_request& msg)
 {
+  // Create the configured grant PUSCH DTX detector with the first cell that has configured grants, as only the UEs of
+  // those cells have a CS-RNTI.
+  if (msg.cell_params.sched_req.ran.init_bwp.cg_cfg.has_value() and cg_dtx == nullptr) {
+    cg_dtx = std::make_unique<cg_dtx_detector>(cg_pusch_sinr_threshold_dB);
+  }
+
   // Setup UCI decoder for new cell.
   cell_handlers.emplace(msg.cell_params.cell_index, *this, msg.cell_params.sched_req);
 
@@ -83,6 +90,11 @@ async_task<bool> ocudu_scheduler_adapter::handle_ue_creation_request(const mac_u
 
     // Add UE to RLF handler.
     rlf_handler.add_ue(msg.ue_index, *msg.rlf_notifier);
+    // A new UE has no configured grant until its first reconfiguration. A reused ue_index must not inherit the
+    // CS-RNTI of the previous UE.
+    if (cg_dtx != nullptr) {
+      cg_dtx->set_cs_rnti(msg.ue_index, rnti_t::INVALID_RNTI);
+    }
 
     // In case of CFRA, store the RA preamble.
     if (msg.cfra_preamble_index.has_value()) {
@@ -107,6 +119,15 @@ async_task<bool> ocudu_scheduler_adapter::handle_ue_reconfiguration_request(cons
 {
   return launch_async([this, msg](coro_context<async_task<bool>>& ctx) {
     CORO_BEGIN(ctx);
+
+    // Store the CS-RNTI before the scheduler receives the configuration, so that it is known before the CRC of any
+    // configured grant PUSCH arrives. A configuration without CS-RNTI does not clear it: the MAC keeps the old
+    // CS-RNTI in the RNTI table until the scheduler stops using it, and the CRCs that the table maps to the UE on
+    // that CS-RNTI must still be recognized as configured grant PUSCHs. Once the table frees it, no CRC on that CS-RNTI
+    // reaches this UE anymore.
+    if (cg_dtx != nullptr and msg.assigned_cs_rnti.has_value()) {
+      cg_dtx->set_cs_rnti(msg.ue_index, msg.assigned_cs_rnti.value());
+    }
 
     // Reconfigure UE in the scheduler.
     sched_impl->handle_ue_reconfiguration_request(make_scheduler_ue_reconfiguration_request(msg));
@@ -398,6 +419,9 @@ ocudu_scheduler_adapter::cell_handler::cell_handler(ocudu_scheduler_adapter&    
   pos_handler(parent_.pos_handler->add_cell(sched_cfg.cell_index)),
   cell_idx(sched_cfg.cell_index),
   parent(parent_),
+  // The cell handler copies the pointer before the cell receives any CRC, so that adding a later cell with configured
+  // grants, which creates the detector, does not race with the CRC handling of the other cells.
+  cg_dtx(sched_cfg.ran.init_bwp.cg_cfg.has_value() ? parent_.cg_dtx.get() : nullptr),
   rach_handler(parent.rach_handler.add_cell(sched_cfg))
 {
 }
@@ -434,9 +458,15 @@ void ocudu_scheduler_adapter::cell_handler::handle_crc(const mac_crc_indication_
   for (const auto& crc : ind.crcs) {
     // If Msg3, ignore the CRC result.
     // Note: UE index is invalid for Msg3 CRCs because no UE has been allocated yet.
-    if (crc.ue_index != INVALID_DU_UE_INDEX) {
-      parent.rlf_handler.handle_crc(crc.ue_index, cell_idx, crc.tb_crc_success);
+    if (crc.ue_index == INVALID_DU_UE_INDEX) {
+      continue;
     }
+    // The UE skips a configured grant occasion when it has no data to send, so a DTX says nothing about the radio
+    // link. It neither increments nor resets the count of consecutive CRC KOs.
+    if (cg_dtx != nullptr and cg_dtx->is_dtx(crc.ue_index, crc.rnti, crc.tb_crc_success, crc.ul_sinr_dB)) {
+      continue;
+    }
+    parent.rlf_handler.handle_crc(crc.ue_index, cell_idx, crc.tb_crc_success);
   }
 }
 

@@ -15,6 +15,7 @@ add_executable(mac_test
         mac_ul_pdu_test.cpp
         mac_ul_processor_test.cpp
         mac_rlf_detector_test.cpp
+        cg_dtx_detector_test.cpp
         uci_cell_decoder_test.cpp
         mac_cell_processor_test.cpp
         mac_cell_pcap_writer_test.cpp

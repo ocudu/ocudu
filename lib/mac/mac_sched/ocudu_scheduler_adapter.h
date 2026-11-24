@@ -7,6 +7,7 @@
 
 #include "../mac_ctrl/mac_scheduler_configurator.h"
 #include "../rnti_manager.h"
+#include "cg_dtx_detector.h"
 #include "mac_rach_handler.h"
 #include "mac_scheduler_adapter.h"
 #include "positioning_handler.h"
@@ -135,6 +136,8 @@ private:
   private:
     const du_cell_index_t    cell_idx = INVALID_DU_CELL_INDEX;
     ocudu_scheduler_adapter& parent;
+    /// Detector of configured grant PUSCH DTXs, or nullptr if the cell has no configured grants.
+    const cg_dtx_detector* cg_dtx;
 
     // Handler of RACH indications for this cell.
     mac_cell_rach_handler_impl& rach_handler;
@@ -155,7 +158,11 @@ private:
   rnti_manager& rnti_mng;
 
   /// Detector of UE RLFs.
-  rlf_detector            rlf_handler;
+  rlf_detector rlf_handler;
+  /// Detector of configured grant PUSCH DTXs, or nullptr if no cell has configured grants.
+  std::unique_ptr<cg_dtx_detector> cg_dtx;
+  /// SINR threshold, in dB, below which a CRC KO of a configured grant PUSCH is a DTX.
+  const float             cg_pusch_sinr_threshold_dB;
   task_executor&          ctrl_exec;
   timer_manager&          timers;
   ocudulog::basic_logger& logger;

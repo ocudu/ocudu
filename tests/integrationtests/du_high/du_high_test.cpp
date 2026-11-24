@@ -20,6 +20,8 @@
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "ocudu/asn1/rrc_nr/cell_group_config.h"
 #include "ocudu/support/executors/task_worker.h"
+#include <algorithm>
+#include <limits>
 
 using namespace ocudu;
 using namespace odu;
@@ -816,6 +818,86 @@ TEST_F(du_high_cg_tester, when_all_drbs_removed_then_cs_rnti_is_deallocated)
     ASSERT_EQ(cell_grp_cfg.phys_cell_group_cfg.cs_rnti.type(), asn1::setup_release_opts::release)
         << "CS-RNTI should be released when all DRBs are removed";
   }
+}
+
+// Tests that the MAC RLF detection ignores the configured grant PUSCH occasions that the UE does not transmit, but not
+// the configured grant PUSCHs that fail to decode.
+class du_high_cg_rlf_tester : public du_high_env_simulator, public testing::Test
+{
+protected:
+  du_high_cg_rlf_tester() :
+    du_high_env_simulator([]() {
+      du_high_configuration du_cfg            = create_du_high_configuration();
+      du_cfg.ran.cells[0].ran.init_bwp.cg_cfg = cg_builder_params{};
+      // The test environment disables the MAC RLF detection with very large thresholds. Enable it for UL KOs only.
+      du_cfg.ran.mac_cfg.configs[0].max_consecutive_ul_kos = MAX_UL_KOS;
+      // Shorten the UE release timer started on RLF detection, to keep the test short. The timer is t310 + t311, as the
+      // UE context setup gives the UE SRB2 and a DRB; the default t311 (30 s) would make the test wait 30000 slots.
+      du_cfg.ran.cells[0].si.ue_timers_and_constants.t310 = std::chrono::milliseconds{50};
+      du_cfg.ran.cells[0].si.ue_timers_and_constants.t311 = std::chrono::milliseconds{1000};
+      return du_cfg;
+    }())
+  {
+    report_fatal_error_if_not(add_ue(rnti), "Failed to add UE");
+    report_fatal_error_if_not(run_rrc_setup(rnti), "Failed to run RRC setup");
+    report_fatal_error_if_not(run_ue_context_setup(rnti), "Failed to run UE context setup");
+  }
+
+  /// \brief Turns every configured grant PUSCH CRC into a KO with the given SINR, and runs the DU-high until it has
+  /// handled more configured grant CRC KOs than the RLF threshold, plus the UE release timer.
+  /// \return true if the DU-high requested the release of the UE.
+  bool cg_crc_kos_trigger_ue_release(float ul_sinr_dB)
+  {
+    unsigned nof_cg_kos = 0;
+    crc_modifier        = [this, ul_sinr_dB, &nof_cg_kos](mac_crc_pdu& crc) {
+      // This is the only UE, so a CRC on any other RNTI is for its configured grant PUSCH, on the CS-RNTI.
+      if (crc.rnti != rnti) {
+        crc.tb_crc_success = false;
+        crc.ul_sinr_dB     = ul_sinr_dB;
+        ++nof_cg_kos;
+      }
+    };
+
+    cu_notifier.f1ap_ul_msgs.clear();
+    const bool enough_kos =
+        run_until([&nof_cg_kos]() { return nof_cg_kos > MAX_UL_KOS; }, (MAX_UL_KOS + 1) * cg_period_slots * 2);
+    report_fatal_error_if_not(enough_kos, "Not enough configured grant PUSCHs were scheduled");
+
+    const bool released = run_until(
+        [this]() {
+          return std::any_of(cu_notifier.f1ap_ul_msgs.begin(), cu_notifier.f1ap_ul_msgs.end(), [this](const auto& msg) {
+            return test_helpers::is_valid_ue_context_release_request(msg.second, *ues.at(rnti).du_ue_id);
+          });
+        },
+        RELEASE_WAIT_SLOTS);
+    crc_modifier = {};
+    return released;
+  }
+
+  /// Consecutive UL KOs that trigger an RLF.
+  static constexpr unsigned MAX_UL_KOS = 20;
+  /// Slots to wait for the UE release request after the RLF, larger than the UE release timer (t310 + t311 = 1050 ms,
+  /// as the UE has SRB2 and a DRB, i.e., 1050 slots with the 15 kHz SCS of the test cell).
+  static constexpr unsigned RELEASE_WAIT_SLOTS = 1500;
+
+  /// Periodicity, in slots, of the configured grant of the cell.
+  const unsigned cg_period_slots = static_cast<unsigned>(du_high_cfg.ran.cells[0].ran.init_bwp.cg_cfg->periodicity);
+  /// SINR, in dB, below which a configured grant PUSCH CRC KO is a DTX.
+  const float cg_dtx_sinr_threshold_dB = du_high_cfg.ran.sched_cfg.ue.cg_pusch_sinr_threshold_dB;
+
+  const rnti_t rnti = to_rnti(0x4601);
+};
+
+TEST_F(du_high_cg_rlf_tester, when_ue_skips_cg_pusch_occasions_then_no_rlf_is_detected)
+{
+  // The UE did not transmit: the CRC is a KO with non-finite SINR.
+  ASSERT_FALSE(cg_crc_kos_trigger_ue_release(-std::numeric_limits<float>::infinity()));
+}
+
+TEST_F(du_high_cg_rlf_tester, when_cg_puschs_fail_to_decode_then_rlf_is_detected)
+{
+  // The UE transmitted, but the PUSCH failed to decode: the CRC is a KO with a SINR above the DTX threshold.
+  ASSERT_TRUE(cg_crc_kos_trigger_ue_release(cg_dtx_sinr_threshold_dB + 8.0F));
 }
 
 // A CG configuration that the scheduler rejects for the UE, which the app config validator would have refused at

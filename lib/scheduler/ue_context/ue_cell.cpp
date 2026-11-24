@@ -10,6 +10,7 @@
 #include "ue_drx_controller.h"
 #include "ocudu/ran/sch/tbs_calculator.h"
 #include "ocudu/scheduler/scheduler_feedback_handler.h"
+#include "ocudu/scheduler/support/cg_pusch_dtx.h"
 #include <cmath>
 
 using namespace ocudu;
@@ -206,9 +207,7 @@ expected<ue_cell::crc_outcome, ue_cell::crc_not_concluded> ue_cell::handle_crc_p
   // With CG, a CRC KO is assumed to be a DTX (PUSCH wasn't transmitted) when the SINR measurement is below
   // cg_pusch_sinr_threshold_dB, or it is non-finite. A CRC KO carrying no SINR at all is instead taken as a KO.
   const bool is_cg = h_ul->is_cg();
-  if (is_cg and not combined_crc_success and crc_pdu.ul_sinr_dB.has_value() and
-      (not std::isfinite(crc_pdu.ul_sinr_dB.value()) or
-       crc_pdu.ul_sinr_dB.value() < expert_cfg.cg_pusch_sinr_threshold_dB)) {
+  if (is_cg and is_cg_pusch_dtx(combined_crc_success, crc_pdu.ul_sinr_dB, expert_cfg.cg_pusch_sinr_threshold_dB)) {
     return crc_outcome{.tbs = units::bytes(0U), .pusch_transmitted = false, .is_cg = is_cg};
   }
 
