@@ -9,6 +9,7 @@
 #include "radio_difi_context_packet.h"
 #include "radio_difi_data_packet.h"
 #include "radio_difi_rx_stream.h"
+#include "radio_difi_stream_config.h"
 #include "radio_difi_tx_stream.h"
 #include "radio_difi_udp_socket.h"
 #include "tests/ocudu_test_requirements.h"
@@ -472,15 +473,20 @@ protected:
     rx->start(0);
   }
 
-  void TearDown() override
+  /// Stops and destroys both streams, so open() can bind the same port again.
+  void close()
   {
     if (tx) {
       tx->stop();
+      tx.reset();
     }
     if (rx) {
       rx->stop();
+      rx.reset();
     }
   }
+
+  void TearDown() override { close(); }
 
   /// Transmits a ramp of \p nof_samples where sample k is (k, -k), starting at tick \p ts.
   void transmit_ramp(unsigned nof_samples, uint64_t ts)
@@ -690,7 +696,6 @@ TEST_F(RxReassembly, QueuedSamplesAreConsumedWithoutWaitingWhenBehind)
   // A slow sample rate gives the span a long pacing budget, so draining it stays far inside that budget even under
   // a sanitizer or valgrind. The span carries the same bytes at any rate.
   constexpr double SLOW_SRATE = 115200.0;
-  ASSERT_NO_FATAL_FAILURE(open(15014, SLOW_SRATE));
 
   // One datagram anchors the timeline.
   constexpr unsigned NOF_ANCHOR_SAMPLES = DIFI_DEFAULT_PKT_SAMPLES;
@@ -700,42 +705,68 @@ TEST_F(RxReassembly, QueuedSamplesAreConsumedWithoutWaitingWhenBehind)
   constexpr unsigned NOF_SAMPLES = 3 * SLOT_LEN;
   const auto         span_budget =
       std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::duration<double>(NOF_SAMPLES / SLOW_SRATE));
-
-  // Target lag behind schedule. Kept small, so wake-up delays under load stay short of the 50 ms re-anchoring
-  // threshold.
-  constexpr std::chrono::milliseconds LAG{10};
-
-  // Queue the anchor and the span, 19 datagrams in all, up front. Transmission is slow under valgrind, and doing it
-  // here keeps it out of the lag measured below.
-  transmit_ramp(NOF_ANCHOR_SAMPLES, 0);
-  transmit_ramp(NOF_SAMPLES, NOF_ANCHOR_SAMPLES);
-
-  // Both buffers exist before the timed section. Filling a large one is slow under valgrind and would add to the lag.
-  simple_buffer_writer first(NOF_ANCHOR_SAMPLES);
-  simple_buffer_writer buf(NOF_SAMPLES);
-
-  // Anchor the timeline. The receiver anchors when it reads the first datagram, right after the call starts, so the
-  // start time stays a reliable reference even when the call itself wakes late, as it does under valgrind.
   const auto anchor_duration = std::chrono::duration_cast<std::chrono::microseconds>(
       std::chrono::duration<double>(NOF_ANCHOR_SAMPLES / SLOW_SRATE));
-  const auto anchor_start = std::chrono::steady_clock::now();
-  rx->receive(first);
 
-  // Sleep until the span is overdue by LAG.
-  std::this_thread::sleep_until(anchor_start + anchor_duration + span_budget + LAG);
+  // Target lag behind schedule.
+  constexpr std::chrono::milliseconds LAG{10};
+  // Mirrors the receiver re-anchoring threshold. A call that starts this far behind schedule re-anchors and paces
+  // the whole span by design, so it cannot show catch-up.
+  constexpr std::chrono::milliseconds MAX_TIMELINE_DEBT{50};
+  // Kept below that threshold, for the time between taking the start timestamp and the receiver reading its clock.
+  constexpr std::chrono::milliseconds DEBT_MARGIN{10};
+  // A loaded machine can wake the test too late for the scenario. Each attempt that does so is repeated.
+  constexpr unsigned MAX_NOF_ATTEMPTS = 5;
 
-  const auto t0 = std::chrono::steady_clock::now();
-  rx->receive(buf);
-  const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - t0);
+  for (unsigned attempt = 0; attempt != MAX_NOF_ATTEMPTS; ++attempt) {
+    close();
+    notifier.events.clear();
+    ASSERT_NO_FATAL_FAILURE(open(15014, SLOW_SRATE));
 
-  // Pacing would take the whole span budget, so anything approaching it means receive() waited rather than drained.
-  EXPECT_LT(elapsed.count(), span_budget.count() / 2)
-      << "Overdue queued samples must not be paced, this blocks catch-up";
+    // Queue the anchor and the span, 19 datagrams in all, up front. Transmission is slow under valgrind, and doing
+    // it here keeps it out of the lag measured below.
+    transmit_ramp(NOF_ANCHOR_SAMPLES, 0);
+    transmit_ramp(NOF_SAMPLES, NOF_ANCHOR_SAMPLES);
 
-  for (unsigned k = 0; k != NOF_SAMPLES; ++k) {
-    ASSERT_EQ(buf.data()[k], ramp_sample(k)) << "Mismatch at sample " << k;
+    // Both buffers exist before the timed section. Filling a large one is slow under valgrind and would add to the
+    // lag.
+    simple_buffer_writer first(NOF_ANCHOR_SAMPLES);
+    simple_buffer_writer buf(NOF_SAMPLES);
+
+    // Anchor the timeline. The receiver anchors when it reads the first datagram, one receive lag ahead of that
+    // read, so the anchor lies no earlier than the start of this call plus that lag.
+    const auto anchor_start = std::chrono::steady_clock::now();
+    rx->receive(first);
+    const auto anchor_end = std::chrono::steady_clock::now();
+
+    // The first call returns no earlier than its deadline, one anchor duration after the anchor. Sleeping from its
+    // return makes the span overdue by at least LAG, however late the receiver read the first datagram.
+    std::this_thread::sleep_until(anchor_end + span_budget + LAG);
+
+    const auto t0 = std::chrono::steady_clock::now();
+    rx->receive(buf);
+    const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - t0);
+
+    // Upper bound of how far behind schedule the second call started, from the earliest possible anchor. Past the
+    // re-anchoring threshold, scheduling delays rather than the receiver broke the scenario, so it is repeated.
+    const auto max_debt = t0 - (anchor_start + DIFI_DEFAULT_RX_LAG + anchor_duration + span_budget);
+    if (max_debt >= MAX_TIMELINE_DEBT - DEBT_MARGIN) {
+      continue;
+    }
+
+    // Pacing would take the whole span budget, so anything approaching it means receive() waited rather than
+    // drained.
+    EXPECT_LT(elapsed.count(), span_budget.count() / 2)
+        << "Overdue queued samples must not be paced, this blocks catch-up";
+
+    for (unsigned k = 0; k != NOF_SAMPLES; ++k) {
+      ASSERT_EQ(buf.data()[k], ramp_sample(k)) << "Mismatch at sample " << k;
+    }
+    EXPECT_TRUE(notifier.events.empty()) << "A fully queued span has no discontinuity";
+    return;
   }
-  EXPECT_TRUE(notifier.events.empty()) << "A fully queued span has no discontinuity";
+
+  GTEST_SKIP() << "Every attempt woke past the re-anchoring threshold, the machine is too loaded for this test";
 }
 
 // Samples queued ahead of the wall clock must not be handed over early: a peer sample-locked to this receiver
