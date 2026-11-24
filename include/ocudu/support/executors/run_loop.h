@@ -39,7 +39,7 @@ public:
   void run_until(const Predicate& pred, IdleHandler&& on_idle)
   {
     while (not pred()) {
-      if (not worker.run_pending_tasks()) {
+      if (not worker.try_run_next()) {
         on_idle();
       }
     }
