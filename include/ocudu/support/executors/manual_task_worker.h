@@ -35,7 +35,8 @@ public:
 
   [[nodiscard]] bool defer(unique_task task) override
   {
-    if (blocking_mode) {
+    // Blocking the owning thread on a full queue would deadlock, as it is the only one draining it.
+    if (blocking_mode and std::this_thread::get_id() != t_id) {
       pending_tasks.push_blocking(std::move(task));
       return true;
     }

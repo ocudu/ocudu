@@ -5,6 +5,7 @@
 #include "ocudu/support/async/async_timer.h"
 #include "ocudu/support/async/execute_on_blocking.h"
 #include "ocudu/support/async/sync_wait.h"
+#include "ocudu/support/executors/run_loop.h"
 #include "ocudu/support/executors/task_worker.h"
 #include "ocudu/support/timers.h"
 #include <gtest/gtest.h>
@@ -96,4 +97,24 @@ TEST_F(SyncWaitTest, ReturnsResultWithIdleHandler)
   std::thread::id worker_id = sync_wait([this](task_executor& exec) { return run_on_worker(exec); },
                                         []() { std::this_thread::sleep_for(std::chrono::microseconds(100)); });
   ASSERT_EQ(worker_id, worker.get_id());
+}
+
+TEST(RunLoopTest, RejectsTaskDispatchedFromOwnerThreadWhenQueueIsFull)
+{
+  static constexpr size_t queue_size = 2;
+
+  run_loop loop{queue_size};
+  bool     done            = false;
+  unsigned nof_accepted    = 0;
+  bool     overflow_result = true;
+  ASSERT_TRUE(loop.defer([&]() {
+    for (unsigned i = 0; i != queue_size; ++i) {
+      nof_accepted += loop.defer([]() {}) ? 1 : 0;
+    }
+    overflow_result = loop.defer([]() {});
+    done            = true;
+  }));
+  loop.run_until([&done]() { return done; });
+  ASSERT_EQ(nof_accepted, queue_size);
+  ASSERT_FALSE(overflow_result);
 }
