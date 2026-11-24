@@ -6,6 +6,7 @@
 
 #include "ocudu/adt/blocking_queue.h"
 #include "ocudu/support/executors/task_executor.h"
+#include <atomic>
 
 namespace ocudu {
 
@@ -37,8 +38,7 @@ public:
   {
     // Blocking the owning thread on a full queue would deadlock, as it is the only one draining it.
     if (blocking_mode and std::this_thread::get_id() != t_id) {
-      pending_tasks.push_blocking(std::move(task));
-      return true;
+      return pending_tasks.push_blocking(std::move(task)).has_value();
     }
     return pending_tasks.try_push(std::move(task)).has_value();
   }
@@ -58,9 +58,9 @@ public:
 
   void request_stop()
   {
-    // A dropped stop task would leave run_next_blocking() waiting forever.
+    // Stopping right away would drop the tasks a full queue already accepted, so stop once they ran.
     if (not defer([this]() { stop(); })) {
-      stop();
+      stop_requested.store(true, std::memory_order_relaxed);
     }
   }
 
@@ -77,6 +77,7 @@ public:
         ret = true;
       }
     } while (success);
+    stop_if_drained();
     return ret;
   }
 
@@ -87,6 +88,7 @@ public:
     unique_task t;
     bool        success = pending_tasks.try_pop(t);
     if (not success) {
+      stop_if_drained();
       return false;
     }
     t();
@@ -97,6 +99,9 @@ public:
   bool run_next_blocking()
   {
     assert_thread_id();
+    if (stop_if_drained()) {
+      return false;
+    }
     bool        success = false;
     unique_task t       = pending_tasks.pop_blocking(&success);
     if (not success) {
@@ -107,6 +112,15 @@ public:
   }
 
 private:
+  bool stop_if_drained()
+  {
+    if (stop_requested.load(std::memory_order_relaxed) and pending_tasks.empty()) {
+      stop();
+      return true;
+    }
+    return false;
+  }
+
   bool has_thread_id() const { return t_id != std::thread::id{}; }
 
   void assert_thread_id()
@@ -118,6 +132,8 @@ private:
   blocking_queue<unique_task> pending_tasks;
   bool                        blocking_mode;
   bool                        explicit_mode;
+  /// Set when a stop was requested but its task could not be queued.
+  std::atomic<bool> stop_requested{false};
 };
 
 } // namespace ocudu
