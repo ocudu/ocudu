@@ -58,7 +58,10 @@ public:
 
   void request_stop()
   {
-    (void)defer([this]() { stop(); });
+    // A dropped stop task would leave run_next_blocking() waiting forever.
+    if (not defer([this]() { stop(); })) {
+      stop();
+    }
   }
 
   /// Run all pending tasks until queue is emptied.
