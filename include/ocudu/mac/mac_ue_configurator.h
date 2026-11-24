@@ -89,8 +89,8 @@ struct mac_ue_reconfiguration_request {
   du_ue_index_t   ue_index;
   du_cell_index_t pcell_index;
   rnti_t          crnti;
-  /// When true, the UE has a configured grant and needs a CS-RNTI. The MAC controller generates one if the UE does not
-  /// hold one yet. When false, the MAC controller releases the CS-RNTI the UE holds, if any.
+  /// When true, the UE has a configured grant and needs a CS-RNTI. The MAC allocates one if the UE does not hold one
+  /// yet. When false, the MAC frees the CS-RNTI the UE holds, if any, once the scheduler applies the new configuration.
   bool cs_rnti_requested = false;
   /// When set, carries the generated CS-RNTI for this UE that needs to be passed to the scheduler.
   /// If not set, the scheduler won't associate any CS-RNTI with this UE.
@@ -107,8 +107,8 @@ struct mac_ue_reconfiguration_request {
 struct mac_ue_reconfiguration_response {
   du_ue_index_t ue_index;
   bool          result;
-  /// When set, indicates the CS-RNTI allocated to this UE, either by this reconfiguration or by a previous one.
-  /// If not set, the UE holds no CS-RNTI.
+  /// When \c result is true, the CS-RNTI the UE holds, allocated by this reconfiguration or by a previous one; not set
+  /// if the UE holds no CS-RNTI. Not set when \c result is false.
   std::optional<rnti_t> cs_rnti_allocated;
 };
 

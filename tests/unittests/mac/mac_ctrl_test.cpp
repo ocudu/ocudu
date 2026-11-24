@@ -285,3 +285,69 @@ TEST_F(mac_controller_test, when_cg_is_kept_in_reconfiguration_then_cs_rnti_is_k
   ASSERT_EQ(t_kept.get().cs_rnti_allocated, saved_cs_rnti);
   ASSERT_EQ(mac_ctrl.find_ue(to_du_ue_index(0))->cs_rnti, saved_cs_rnti);
 }
+
+TEST_F(mac_controller_test, when_scheduler_rejects_cg_activation_then_cs_rnti_is_freed)
+{
+  auto&  ctrl_cfg = static_cast<mac_ctrl_configurator&>(mac_ctrl);
+  rnti_t ue_crnti = ctrl_cfg.add_ue(to_du_ue_index(0), to_du_cell_index(0), rnti_t::INVALID_RNTI);
+  ASSERT_NE(ue_crnti, rnti_t::INVALID_RNTI);
+
+  // Reconfigure UE with configured grant, but the scheduler rejects the new configuration.
+  sched_cfg_adapter.ue_reconf_result = false;
+  mac_ue_reconfiguration_request reconfig_cg{};
+  reconfig_cg.ue_index          = to_du_ue_index(0);
+  reconfig_cg.pcell_index       = to_du_cell_index(0);
+  reconfig_cg.crnti             = ue_crnti;
+  reconfig_cg.cs_rnti_requested = true;
+
+  async_task<mac_ue_reconfiguration_response>         t_cg = mac_ctrl.handle_ue_reconfiguration_request(reconfig_cg);
+  lazy_task_launcher<mac_ue_reconfiguration_response> launcher_cg(t_cg);
+  ASSERT_TRUE(t_cg.ready());
+  ASSERT_FALSE(t_cg.get().result);
+  ASSERT_FALSE(t_cg.get().cs_rnti_allocated.has_value());
+
+  // The scheduler has no configured grant for the UE, so the CS-RNTI allocated for it is freed and only the C-RNTI is
+  // left in the RNTI table.
+  ASSERT_EQ(mac_ctrl.find_ue(to_du_ue_index(0))->cs_rnti, rnti_t::INVALID_RNTI);
+  ASSERT_EQ(rnti_table.nof_ues(), 1);
+  ASSERT_TRUE(rnti_table.has_rnti(ue_crnti));
+}
+
+TEST_F(mac_controller_test, when_scheduler_rejects_cg_deactivation_then_cs_rnti_is_kept)
+{
+  auto&  ctrl_cfg = static_cast<mac_ctrl_configurator&>(mac_ctrl);
+  rnti_t ue_crnti = ctrl_cfg.add_ue(to_du_ue_index(0), to_du_cell_index(0), rnti_t::INVALID_RNTI);
+  ASSERT_NE(ue_crnti, rnti_t::INVALID_RNTI);
+
+  // Reconfigure UE with configured grant → allocates CS-RNTI.
+  mac_ue_reconfiguration_request reconfig_cg{};
+  reconfig_cg.ue_index          = to_du_ue_index(0);
+  reconfig_cg.pcell_index       = to_du_cell_index(0);
+  reconfig_cg.crnti             = ue_crnti;
+  reconfig_cg.cs_rnti_requested = true;
+
+  async_task<mac_ue_reconfiguration_response>         t_cg = mac_ctrl.handle_ue_reconfiguration_request(reconfig_cg);
+  lazy_task_launcher<mac_ue_reconfiguration_response> launcher_cg(t_cg);
+  ASSERT_TRUE(t_cg.ready());
+  ASSERT_TRUE(t_cg.get().result);
+  ASSERT_TRUE(t_cg.get().cs_rnti_allocated.has_value());
+  const rnti_t cs_rnti = t_cg.get().cs_rnti_allocated.value();
+
+  // Reconfigure UE without configured grant, but the scheduler rejects the new configuration.
+  sched_cfg_adapter.ue_reconf_result = false;
+  mac_ue_reconfiguration_request reconfig_no_cg{};
+  reconfig_no_cg.ue_index          = to_du_ue_index(0);
+  reconfig_no_cg.pcell_index       = to_du_cell_index(0);
+  reconfig_no_cg.crnti             = ue_crnti;
+  reconfig_no_cg.cs_rnti_requested = false;
+
+  async_task<mac_ue_reconfiguration_response> t_no_cg = mac_ctrl.handle_ue_reconfiguration_request(reconfig_no_cg);
+  lazy_task_launcher<mac_ue_reconfiguration_response> launcher_no_cg(t_no_cg);
+  ASSERT_TRUE(t_no_cg.ready());
+  ASSERT_FALSE(t_no_cg.get().result);
+  ASSERT_FALSE(t_no_cg.get().cs_rnti_allocated.has_value());
+
+  // The scheduler keeps the configured grant on the old CS-RNTI, so the CS-RNTI stays mapped to the UE.
+  ASSERT_EQ(mac_ctrl.find_ue(to_du_ue_index(0))->cs_rnti, cs_rnti);
+  ASSERT_EQ(rnti_table[cs_rnti], to_du_ue_index(0));
+}

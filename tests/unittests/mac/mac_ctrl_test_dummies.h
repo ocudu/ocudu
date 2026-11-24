@@ -182,6 +182,8 @@ class mac_scheduler_dummy_adapter : public mac_scheduler_configurator
 public:
   manual_event<bool>                   ue_created_ev;
   std::optional<mac_ue_create_request> last_ue_create_request;
+  /// Result of the next UE reconfigurations, i.e., whether the scheduler applies them.
+  bool ue_reconf_result = true;
 
   test_helpers::dummy_mac_scheduler_adapter cell_cfg;
 

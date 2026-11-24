@@ -108,57 +108,11 @@ async_task<mac_ue_delete_response> mac_controller::handle_ue_delete_request(cons
 async_task<mac_ue_reconfiguration_response>
 mac_controller::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg)
 {
-  // Detect whether configured grant (CG) is present in the new configuration.
-  bool has_cg_in_request = msg.cs_rnti_requested;
-
   mac_ue_context* ue_ctx = find_ue(msg.ue_index);
   ocudu_assert(ue_ctx != nullptr, "Requested MAC UE reconfiguration for a UE that hasn't been found");
-
-  const bool            had_cs_rnti = ue_ctx->cs_rnti != rnti_t::INVALID_RNTI;
-  std::optional<rnti_t> cs_rnti     = {};
-
-  if (has_cg_in_request and not had_cs_rnti) {
-    // CG activation: allocate a new CS-RNTI.
-    rnti_t new_cs_rnti = rnti_table.allocate(/* is_cs_rnti */ true);
-    if (new_cs_rnti == rnti_t::INVALID_RNTI) {
-      logger.warning("{}: Failed to allocate CS-RNTI for configured grant",
-                     mac_log_prefix(msg.ue_index, msg.crnti, "MAC UE Reconfiguration"));
-    } else {
-      if (not rnti_table.add_ue(new_cs_rnti, msg.ue_index, /* is_cs_rnti */ true)) {
-        logger.warning("{}: CS-RNTI={} collided in RNTI table",
-                       mac_log_prefix(msg.ue_index, msg.crnti, "MAC UE Reconfiguration"),
-                       new_cs_rnti);
-      } else {
-        cs_rnti         = new_cs_rnti;
-        ue_ctx->cs_rnti = new_cs_rnti;
-        logger.debug("{}: Allocated CS-RNTI={} for configured grant",
-                     mac_log_prefix(msg.ue_index, msg.crnti, "MAC UE Reconfiguration"),
-                     new_cs_rnti);
-      }
-    }
-  } else if (has_cg_in_request and had_cs_rnti) {
-    // CG kept: report the CS-RNTI the UE already holds, so that the DU keeps it in the UE configuration.
-    cs_rnti = ue_ctx->cs_rnti;
-  } else if (not has_cg_in_request and had_cs_rnti) {
-    // CG deactivation: free the CS-RNTI.
-    logger.debug("{}: Deallocating CS-RNTI={} (configured grant deactivated)",
-                 mac_log_prefix(msg.ue_index, msg.crnti, "MAC UE Reconfiguration"),
-                 ue_ctx->cs_rnti);
-    rnti_table.rem_ue(ue_ctx->cs_rnti, /* is_cs_rnti */ true);
-    ue_ctx->cs_rnti = rnti_t::INVALID_RNTI;
-  }
-
-  if (cs_rnti.has_value()) {
-    // Patch the CS-RNTI into the request copy before forwarding to the scheduler.
-    mac_ue_reconfiguration_request patched_msg = msg;
-    patched_msg.assigned_cs_rnti               = cs_rnti;
-    if (patched_msg.phy_cell_group_cfg.has_value()) {
-      patched_msg.phy_cell_group_cfg->cs_rnti = cs_rnti.value();
-    }
-    return launch_async<mac_ue_reconfiguration_procedure>(patched_msg, cfg, ul_unit, dl_unit, sched_cfg, cs_rnti);
-  }
-
-  return launch_async<mac_ue_reconfiguration_procedure>(msg, cfg, ul_unit, dl_unit, sched_cfg);
+  // The DU manager serializes the procedures of a UE, so its reconfigurations never overlap and its context outlives
+  // each of them.
+  return launch_async<mac_ue_reconfiguration_procedure>(msg, cfg, *ue_ctx, rnti_table, ul_unit, dl_unit, sched_cfg);
 }
 
 void mac_controller::handle_ue_config_applied(du_ue_index_t ue_index)
