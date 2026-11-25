@@ -21,19 +21,27 @@ public:
   gtpu_tunnel_pdcp_impl(cu_up_ue_index_t                            ue_index,
                         gtpu_tunnel_pdcp_config                     cfg,
                         dlt_pcap&                                   gtpu_pcap,
-                        gtpu_tunnel_pdcp_rx_lower_layer_notifier&   rx_lower,
-                        gtpu_tunnel_common_tx_upper_layer_notifier& tx_upper) :
+                        gtpu_tunnel_pdcp_rx_lower_layer_notifier*   rx_lower,
+                        gtpu_tunnel_common_tx_upper_layer_notifier* tx_upper) :
     logger(ocudulog::fetch_basic_logger("GTPU"))
   {
-    rx = std::make_unique<gtpu_tunnel_pdcp_rx_impl>(ue_index, cfg.rx, rx_lower);
-    tx = std::make_unique<gtpu_tunnel_pdcp_tx_impl>(ue_index, cfg.tx, gtpu_pcap, tx_upper);
+    if (rx_lower != nullptr) {
+      rx = std::make_unique<gtpu_tunnel_pdcp_rx_impl>(ue_index, cfg.rx, *rx_lower);
+    }
+    if (tx_upper != nullptr) {
+      tx = std::make_unique<gtpu_tunnel_pdcp_tx_impl>(ue_index, cfg.tx, gtpu_pcap, *tx_upper);
+    }
   }
   ~gtpu_tunnel_pdcp_impl() override = default;
 
   void stop() final
   {
-    tx->stop();
-    rx->stop();
+    if (tx) {
+      tx->stop();
+    }
+    if (rx) {
+      rx->stop();
+    }
   }
   gtpu_tunnel_common_rx_upper_layer_interface* get_rx_upper_layer_interface() final { return rx.get(); }
   gtpu_tunnel_pdcp_tx_lower_layer_interface*   get_tx_lower_layer_interface() final { return tx.get(); }

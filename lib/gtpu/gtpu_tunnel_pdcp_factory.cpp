@@ -12,5 +12,5 @@ using namespace ocudu;
 
 std::unique_ptr<gtpu_tunnel_pdcp> ocudu::create_gtpu_tunnel_pdcp(gtpu_tunnel_pdcp_creation_message& msg)
 {
-  return std::make_unique<gtpu_tunnel_pdcp_impl>(msg.ue_index, msg.cfg, *msg.gtpu_pcap, *msg.rx_lower, *msg.tx_upper);
+  return std::make_unique<gtpu_tunnel_pdcp_impl>(msg.ue_index, msg.cfg, *msg.gtpu_pcap, msg.rx_lower, msg.tx_upper);
 }
